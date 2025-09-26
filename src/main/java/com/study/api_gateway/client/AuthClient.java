@@ -1,9 +1,7 @@
 package com.study.api_gateway.client;
 
 
-import com.study.api_gateway.dto.auth.request.ConsentRequest;
-import com.study.api_gateway.dto.auth.request.LoginRequest;
-import com.study.api_gateway.dto.auth.request.SignupRequest;
+import com.study.api_gateway.dto.auth.request.*;
 import com.study.api_gateway.dto.auth.response.LoginResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,6 +55,51 @@ public class AuthClient {
 
         return webClient.get()
                 .uri(uriString)
+                .retrieve()
+                .bodyToMono(Boolean.class);
+    }
+
+    public Mono<Boolean> resendEmail(String email) {
+        String uriString = UriComponentsBuilder.fromPath("/api/auth/emails/{email}")
+                .buildAndExpand(email)
+                .toUriString();
+
+        return webClient.post()
+                .uri(uriString)
+                .retrieve()
+                .bodyToMono(Boolean.class);
+    }
+
+    public Mono<Boolean> sendCode(String email) {
+        String uriString = UriComponentsBuilder.fromPath("/api/auth/emails/{email}/code")
+                .buildAndExpand(email)
+                .toUriString();
+
+        return webClient.post()
+                .uri(uriString)
+                .retrieve()
+                .bodyToMono(Boolean.class);
+    }
+
+    public Mono<LoginResponse> refreshToken(TokenRefreshRequest req) {
+        String uriString = UriComponentsBuilder.fromPath("/api/auth/login/refreshToken")
+                .toUriString();
+
+
+        return webClient.post()
+                .uri(uriString)
+                .bodyValue(req)
+                .retrieve()
+                .bodyToMono(LoginResponse.class);
+    }
+
+    public Mono<Boolean> changePassword(PasswordChangeRequest req) {
+        String uriString = UriComponentsBuilder.fromPath("/api/auth/passwordChange/changePassword")
+                .toUriString();
+
+        return webClient.put()
+                .uri(uriString)
+                .bodyValue(req)
                 .retrieve()
                 .bodyToMono(Boolean.class);
     }
