@@ -71,4 +71,9 @@ public class AuthController {
         return authClient.sendCode(email);
     }
 
+    @PostMapping("/withdraw/{userId}")
+    public Mono<Boolean> withdraw(@PathVariable String userId, @RequestParam String withdrawReason) {
+        return authClient.withdraw(userId, withdrawReason);
+    }
+
 }

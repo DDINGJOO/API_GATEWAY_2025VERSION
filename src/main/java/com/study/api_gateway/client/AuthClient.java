@@ -103,4 +103,16 @@ public class AuthClient {
                 .retrieve()
                 .bodyToMono(Boolean.class);
     }
+
+    public Mono<Boolean> withdraw(String userId, String withdrawReason) {
+        String uriString = UriComponentsBuilder.fromPath("/api/auth/withdraw/{userId}")
+                .queryParam("withdrawReason", withdrawReason)
+                .buildAndExpand(userId)
+                .toUriString();
+
+        return webClient.delete()
+                .uri(uriString)
+                .retrieve()
+                .bodyToMono(Boolean.class);
+    }
 }
