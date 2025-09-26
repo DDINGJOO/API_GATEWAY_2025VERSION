@@ -3,3 +3,4 @@ server:
 service:
   auth:
     url: ${AUTH_URL}
+    port: ${AUTH_PORT}

@@ -8,9 +8,16 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class WebClientConfig {
+    @Value("${service.auth.url}")
+    private String AuthDns;
+    @Value("${service.auth.port}")
+    private String AuthPort;
+
+
     @Bean
-    public WebClient authWebClient(WebClient.Builder builder,
-                                    @Value("${service.auth.url}") String url) {
+    public WebClient authWebClient(WebClient.Builder builder) {
+        String url = "http://%s:%s".formatted(AuthDns, AuthPort);
+
         return builder
                 .baseUrl(url)
                 .build();
