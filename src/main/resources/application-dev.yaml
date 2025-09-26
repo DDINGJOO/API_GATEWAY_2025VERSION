@@ -1,0 +1,5 @@
+server:
+  port: 9000
+service:
+  auth:
+    url: ${AUTH_URL}
