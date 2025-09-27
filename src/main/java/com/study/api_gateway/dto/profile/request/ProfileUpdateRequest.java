@@ -15,7 +15,7 @@ import java.util.Map;
 public class ProfileUpdateRequest {
     private String nickname;
     private City city;
-
+    private String imageId;
     private boolean chattable;
     private boolean publicProfile;
 
