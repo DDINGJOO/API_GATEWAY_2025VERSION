@@ -97,4 +97,17 @@ public class ProfileClient {
                 .retrieve()
                 .bodyToFlux(UserResponse.class);
     }
+
+    public Mono<Boolean> validateProfile(String type, String value ){
+        String uriString = UriComponentsBuilder.fromPath(PREFIX + "/validate")
+                .queryParam("type", type)
+                .queryParam("value", value)
+                .toUriString();
+
+
+        return webClient.post()
+                .uri(uriString)
+                .retrieve()
+                .bodyToMono(Boolean.class);
+    }
 }
