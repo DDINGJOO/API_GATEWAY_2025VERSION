@@ -20,9 +20,26 @@ public class WebClientConfig {
     private String ProfilePort;
 
 
+    @Value("${service.image.url}")
+    private String ImageDns;
+    @Value("${service.image.port}")
+    private String ImagePort;
+
+    private String normalizeHost(String raw) {
+        if (raw == null) return "";
+        // 공백 제거
+        String s = raw.trim();
+        // scheme 제거 (http:// 또는 https://)
+        s = s.replaceFirst("(?i)^https?://", "");
+        // 만약 포트가 이미 포함되어 있다면 그대로 사용하게(포트는 별도로 붙이지 않음)
+        return s;
+    }
+
+
     @Bean
     public WebClient authWebClient(WebClient.Builder builder) {
-        String url = "http://%s:%s".formatted(AuthDns, AuthPort);
+        String host = normalizeHost(AuthDns);
+        String url = "http://%s:%s".formatted(host, AuthPort);
 
         return builder
                 .baseUrl(url)
@@ -31,7 +48,20 @@ public class WebClientConfig {
 
     @Bean
     public WebClient profileWebClient(WebClient.Builder builder) {
-        String url = "http://%s:%s".formatted(ProfileDns, ProfilePort);
+        String host = normalizeHost(ProfileDns);
+        String url = "http://%s:%s".formatted(host, ProfilePort);
+
+
+        return builder
+                .baseUrl(url)
+                .build();
+    }
+
+    @Bean
+    public WebClient imageWebClient(WebClient.Builder builder) {
+        String host = normalizeHost(ImageDns);
+        String url = "http://%s:%s".formatted(host, ImagePort);
+
 
         return builder
                 .baseUrl(url)

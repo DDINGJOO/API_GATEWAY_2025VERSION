@@ -18,7 +18,6 @@ public class AuthClient {
 
     public AuthClient(@Qualifier(value = "authWebClient") WebClient webClient) {
         this.webClient = webClient;
-
     }
 
 
@@ -63,6 +62,7 @@ public class AuthClient {
         String uriString = UriComponentsBuilder.fromPath("/api/auth/emails/{email}")
                 .buildAndExpand(email)
                 .toUriString();
+
 
         return webClient.post()
                 .uri(uriString)
