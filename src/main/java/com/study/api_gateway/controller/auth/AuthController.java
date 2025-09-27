@@ -9,6 +9,8 @@ import com.study.api_gateway.dto.auth.request.TokenRefreshRequest;
 import com.study.api_gateway.dto.auth.response.LoginResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -34,24 +36,23 @@ public class AuthController {
     //TODO : 에러 컨벤션 및 베이스 리스폰스 객체 생성 고려
     @PostMapping("/signup")
     public Mono<Boolean> signup(@RequestBody SignupRequest req) {
-        return  authClient.signup(req.getEmail(), req.getPassword(), req.getPasswordConfirm(), req.getConsentReqs());
-//        return result.flatMap(success -> {
-//            if (Boolean.TRUE.equals(success)) {
-//                return login(new LoginRequest(req.getEmail(), req.getPassword()));
-//            }
-//            return Mono.empty();
-//        });
-
-//        .onErrorMap(throwable -> {
-//            if (throwable instanceof org.springframework.web.reactive.function.client.WebClientResponseException webEx) {
-//                return new org.springframework.web.server.ResponseStatusException(
-//                        webEx.getStatusCode(),
-//                        webEx.getResponseBodyAsString(),
-//                        webEx
-//                );
-//            }
-//            return throwable;
-//        });
+        var result =   authClient.signup(req.getEmail(), req.getPassword(), req.getPasswordConfirm(), req.getConsentReqs());
+        return result.flatMap(success -> {
+            if (Boolean.TRUE.equals(success)) {
+                return login(new LoginRequest(req.getEmail(), req.getPassword()));
+            }
+            return Mono.empty();
+        })
+        .onErrorMap(throwable -> {
+            if (throwable instanceof WebClientResponseException webEx) {
+                return new ResponseStatusException(
+                        webEx.getStatusCode(),
+                        webEx.getResponseBodyAsString(),
+                        webEx
+                );
+            }
+            return throwable;
+        }).hasElement();
     }
 
 

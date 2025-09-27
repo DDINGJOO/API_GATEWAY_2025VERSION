@@ -1,0 +1,90 @@
+# docker-compose.yml — Compose 방식(비-Swarm)으로 다중 auth-server 인스턴스 정의
+version: "3.7"
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-auth
+    ports:
+      - "9010:80"
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/logs:/var/log/nginx
+
+    depends_on:
+      - gateway-server-1
+      - gateway-server-2
+      - gateway-server-3
+    networks:
+      - auth-network
+
+
+
+
+  # auth-server 인스턴스들을 개별 서비스로 정의 (Compose는 deploy.replicas를 적용하지 않으므로 이렇게 복수 서비스로 표현)
+  gateway-server-1:
+    image: ddingsh9/gateway-server:1.1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env.prod
+    container_name: gateway-server-1
+    networks:
+      - gateway-network
+      - infra-network
+
+
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  gateway-server-2:
+    image: ddingsh9/gateway-server:1.3
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env.prod
+    container_name: gateway-server-2
+    networks:
+      - gateway-network
+      - infra-network
+
+
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  gateway-server-3:
+    image: ddingsh9/gateway-server:1.3
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env.prod
+    container_name: gateway-server-3
+    networks:
+      - gateway-network
+      - infra-network
+
+
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+
+networks:
+  gateway-network:
+    driver: bridge
+    name: gateway-network
+  infra-network:
+    external: true
+    name: infra-network
+
