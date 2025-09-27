@@ -1,6 +1,7 @@
 package com.study.api_gateway.dto.profile;
 
 
+import com.study.api_gateway.dto.profile.enums.City;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
