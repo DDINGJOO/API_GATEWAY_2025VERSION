@@ -33,14 +33,14 @@ public class AuthController {
 
     //TODO : 에러 컨벤션 및 베이스 리스폰스 객체 생성 고려
     @PostMapping("/signup")
-    public Mono<LoginResponse> signup(@RequestBody SignupRequest req) {
-        Mono<Boolean> result = authClient.signup(req.getEmail(), req.getPassword(), req.getPasswordConfirm(), req.getConsentReqs());
-        return result.flatMap(success -> {
-            if (Boolean.TRUE.equals(success)) {
-                return login(new LoginRequest(req.getEmail(), req.getPassword()));
-            }
-            return Mono.empty();
-        });
+    public Mono<Boolean> signup(@RequestBody SignupRequest req) {
+        return  authClient.signup(req.getEmail(), req.getPassword(), req.getPasswordConfirm(), req.getConsentReqs());
+//        return result.flatMap(success -> {
+//            if (Boolean.TRUE.equals(success)) {
+//                return login(new LoginRequest(req.getEmail(), req.getPassword()));
+//            }
+//            return Mono.empty();
+//        });
 
 //        .onErrorMap(throwable -> {
 //            if (throwable instanceof org.springframework.web.reactive.function.client.WebClientResponseException webEx) {
@@ -66,7 +66,7 @@ public class AuthController {
         return authClient.resendEmail(email);
     }
 
-    @PostMapping("/{email}/code")
+    @PostMapping("/emails/{email}/code")
     public Mono<Boolean> sendCode(@PathVariable(name= "email") String email) {
         return authClient.sendCode(email);
     }
