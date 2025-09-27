@@ -48,8 +48,7 @@ public class ProfileClient {
     public Mono<Boolean> updateProfileVer1(String userId, ProfileUpdateRequest req)
     {
 
-        String uriString = UriComponentsBuilder.fromPath(PREFIX + "/ver1")
-                .queryParam("userId", userId)
+        String uriString = UriComponentsBuilder.fromPath(PREFIX +"/"+userId +"/ver1")
                 .toUriString();
 
         return webClient.put()
@@ -62,8 +61,7 @@ public class ProfileClient {
     public Mono<Boolean> updateProfileVer2(String userId, ProfileUpdateRequest req)
     {
 
-        String uriString = UriComponentsBuilder.fromPath(PREFIX + "/ver2")
-                .queryParam("userId", userId)
+        String uriString = UriComponentsBuilder.fromPath(PREFIX +"/"+ userId +"/ver2")
                 .toUriString();
 
         return webClient.put()
