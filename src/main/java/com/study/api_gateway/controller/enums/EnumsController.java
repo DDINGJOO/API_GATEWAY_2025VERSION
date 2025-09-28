@@ -1,11 +1,13 @@
 package com.study.api_gateway.controller.enums;
 
 
+import com.study.api_gateway.client.AuthClient;
 import com.study.api_gateway.client.ProfileClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -16,6 +18,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class EnumsController {
     private final ProfileClient profileClient;
+    private final AuthClient authClient;
 
     @GetMapping("/genres")
     public Mono<ResponseEntity<Map<Integer,String>>> genres(){
@@ -26,6 +29,12 @@ public class EnumsController {
     @GetMapping("/instruments")
     public Mono<ResponseEntity<Map<Integer,String>>> instruments(){
         return profileClient.fetchInstruments()
+                .map(ResponseEntity::ok);
+    }
+
+    @GetMapping("/consents")
+    public Mono<ResponseEntity<Map<String,?>>> consents(@RequestParam(name = "all") Boolean all){
+        return authClient.fetchAllConsents(all)
                 .map(ResponseEntity::ok);
     }
 }

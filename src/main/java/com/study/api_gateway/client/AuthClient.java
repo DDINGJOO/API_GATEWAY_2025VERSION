@@ -5,11 +5,13 @@ import com.study.api_gateway.dto.auth.request.*;
 import com.study.api_gateway.dto.auth.response.LoginResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
+import java.util.HashMap;
 import java.util.List;
 
 @Component
@@ -102,5 +104,16 @@ public class AuthClient {
                 .uri(uriString)
                 .retrieve()
                 .bodyToMono(Boolean.class);
+    }
+
+    public Mono<HashMap<String, ?>> fetchAllConsents(Boolean all){
+        String uriString = UriComponentsBuilder.fromPath("/api/auth/enums/consents")
+                .queryParam("all", all)
+                .toUriString();
+
+        return webClient.get()
+                .uri(uriString)
+                .retrieve()
+                .bodyToMono(ParameterizedTypeReference.forType(HashMap.class));
     }
 }
