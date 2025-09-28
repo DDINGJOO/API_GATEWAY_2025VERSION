@@ -23,7 +23,7 @@ services:
 
   # auth-server 인스턴스들을 개별 서비스로 정의 (Compose는 deploy.replicas를 적용하지 않으므로 이렇게 복수 서비스로 표현)
   gateway-server-1:
-    image: ddingsh9/gateway-server:1.1
+    image: ddingsh9/gateway-server:1.1.8
     build:
       context: .
       dockerfile: Dockerfile
@@ -46,7 +46,7 @@ services:
       retries: 3
 
   gateway-server-2:
-    image: ddingsh9/gateway-server:1.3
+    image: ddingsh9/gateway-server:1.1.8
     build:
       context: .
       dockerfile: Dockerfile
@@ -70,7 +70,7 @@ services:
         max-file: "3"
 
   gateway-server-3:
-    image: ddingsh9/gateway-server:1.3
+    image: ddingsh9/gateway-server:1.1.8
     build:
       context: .
       dockerfile: Dockerfile
