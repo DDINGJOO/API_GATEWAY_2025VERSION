@@ -2,6 +2,7 @@ package com.study.api_gateway.client;
 
 
 import com.study.api_gateway.dto.auth.request.*;
+import com.study.api_gateway.dto.auth.response.ConsentsTable;
 import com.study.api_gateway.dto.auth.response.LoginResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class AuthClient {
@@ -106,7 +108,7 @@ public class AuthClient {
                 .bodyToMono(Boolean.class);
     }
 
-    public Mono<HashMap<String, ?>> fetchAllConsents(Boolean all){
+    public Mono<Map<String, ConsentsTable>> fetchAllConsents(Boolean all){
         String uriString = UriComponentsBuilder.fromPath("/api/auth/enums/consents")
                 .queryParam("all", all)
                 .toUriString();
@@ -114,6 +116,6 @@ public class AuthClient {
         return webClient.get()
                 .uri(uriString)
                 .retrieve()
-                .bodyToMono(ParameterizedTypeReference.forType(HashMap.class));
+                .bodyToMono(new ParameterizedTypeReference<Map<String, ConsentsTable>>() {});
     }
 }

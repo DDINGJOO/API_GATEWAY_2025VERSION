@@ -44,6 +44,15 @@ public class ProfileClient {
                 .bodyToMono(new ParameterizedTypeReference<Map<Integer, String>>() {});
     }
 
+    public Mono<Map<String, String>> fetchLocations() {
+        String uriString = UriComponentsBuilder.fromPath(PREFIX + "/locations")
+                .toUriString();
+        return webClient.get()
+                .uri(uriString)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {});
+    }
+
 
     public Mono<Boolean> updateProfileVer1(String userId, ProfileUpdateRequest req)
     {
