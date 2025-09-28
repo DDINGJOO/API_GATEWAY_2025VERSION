@@ -37,6 +37,10 @@ public class ProfileController {
         return profileClient.updateProfileVer2(userId,req);
     }
 
+    @GetMapping("/validate")
+    public Mono<Boolean> validateProfile(@RequestParam String type, @RequestParam String value){
+        return profileClient.validateProfile(type,value);
+    }
 
 
 

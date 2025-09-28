@@ -33,7 +33,11 @@ services:
     networks:
       - gateway-network
       - infra-network
-
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
@@ -59,6 +63,11 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 
   gateway-server-3:
     image: ddingsh9/gateway-server:1.3
@@ -71,6 +80,11 @@ services:
     networks:
       - gateway-network
       - infra-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 
 
     healthcheck:
@@ -78,7 +92,19 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
-
+  log-cleaner:
+    image: alpine:3.19
+    container_name: gateway-log-cleaner
+    restart: unless-stopped
+    volumes:
+      - /var/log/nginx:/host/nginx/logs:ro
+      - ./logs:/host/logs:rw
+    command: >
+      sh -c "while true; do
+        find /host/nginx/logs -type f -name '*.log' -mtime +1 -delete || true;
+        find /host/logs -type f -name '*.log' -mtime +1 -delete || true;
+        sleep 3600;
+      done"
 
 networks:
   gateway-network:

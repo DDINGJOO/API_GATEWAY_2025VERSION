@@ -62,13 +62,9 @@ public class AuthController {
         return authClient.confirmEmail(email, code);
     }
 
-    @PostMapping("/emails/{email}")
-    public Mono<Boolean> resendEmail(@PathVariable(name= "email") String email) {
-        return authClient.resendEmail(email);
-    }
 
-    @PostMapping("/emails/{email}/code")
-    public Mono<Boolean> sendCode(@PathVariable(name= "email") String email) {
+    @PostMapping("/emails/{email}")
+    public Mono<Void> sendCode(@PathVariable(name= "email") String email) {
         return authClient.sendCode(email);
     }
 

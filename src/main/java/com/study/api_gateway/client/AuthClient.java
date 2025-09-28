@@ -58,19 +58,7 @@ public class AuthClient {
                 .bodyToMono(Boolean.class);
     }
 
-    public Mono<Boolean> resendEmail(String email) {
-        String uriString = UriComponentsBuilder.fromPath("/api/auth/emails/{email}")
-                .buildAndExpand(email)
-                .toUriString();
-
-
-        return webClient.post()
-                .uri(uriString)
-                .retrieve()
-                .bodyToMono(Boolean.class);
-    }
-
-    public Mono<Boolean> sendCode(String email) {
+    public Mono<Void> sendCode(String email) {
         String uriString = UriComponentsBuilder.fromPath("/api/auth/emails/{email}/code")
                 .buildAndExpand(email)
                 .toUriString();
@@ -78,7 +66,7 @@ public class AuthClient {
         return webClient.post()
                 .uri(uriString)
                 .retrieve()
-                .bodyToMono(Boolean.class);
+                .bodyToMono(Void.class);
     }
 
     public Mono<LoginResponse> refreshToken(TokenRefreshRequest req) {
