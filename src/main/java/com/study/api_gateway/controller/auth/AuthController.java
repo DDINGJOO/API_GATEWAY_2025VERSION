@@ -6,7 +6,6 @@ import com.study.api_gateway.dto.auth.request.LoginRequest;
 import com.study.api_gateway.dto.auth.request.PasswordChangeRequest;
 import com.study.api_gateway.dto.auth.request.SignupRequest;
 import com.study.api_gateway.dto.auth.request.TokenRefreshRequest;
-import com.study.api_gateway.dto.auth.response.LoginResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
