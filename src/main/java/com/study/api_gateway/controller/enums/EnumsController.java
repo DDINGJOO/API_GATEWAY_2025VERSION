@@ -56,7 +56,7 @@ public class EnumsController {
 
     @GetMapping("/reference-type")
     public Mono<ResponseEntity<BaseResponse>> referenceType(){
-        return imageClient.getExtensions()
+        return imageClient.getReferenceType()
                 .map(result -> BaseResponse.success(result, Map.of("path", "/api/images/enums/referenceTypes")));
     }
 }
