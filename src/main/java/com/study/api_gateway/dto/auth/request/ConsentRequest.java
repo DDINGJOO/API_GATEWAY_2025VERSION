@@ -1,5 +1,6 @@
 package com.study.api_gateway.dto.auth.request;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,7 +11,9 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class ConsentRequest {
-    private String consent;
+    @NotBlank
+    private String consentName;
+    @NotBlank
     private String version;
     private boolean consented;
 }

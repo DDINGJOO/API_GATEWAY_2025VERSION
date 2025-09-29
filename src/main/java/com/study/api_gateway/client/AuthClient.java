@@ -63,7 +63,7 @@ public class AuthClient {
     }
 
     public Mono<Void> sendCode(String email) {
-        String uriString = UriComponentsBuilder.fromPath("/api/auth/emails/{email}/code")
+        String uriString = UriComponentsBuilder.fromPath("/api/auth/emails/{email}")
                 .buildAndExpand(email)
                 .toUriString();
 
