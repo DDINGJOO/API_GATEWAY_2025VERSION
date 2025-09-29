@@ -3,6 +3,7 @@ package com.study.api_gateway.controller.enums;
 
 import com.study.api_gateway.client.AuthClient;
 import com.study.api_gateway.client.ProfileClient;
+import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.dto.auth.response.ConsentsTable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,27 +23,26 @@ public class EnumsController {
     private final AuthClient authClient;
 
     @GetMapping("/genres")
-    public Mono<ResponseEntity<Map<Integer,String>>> genres(){
+    public Mono<ResponseEntity<BaseResponse>> genres(){
         return profileClient.fetchGenres()
-                .map(ResponseEntity::ok);
+                .map(result -> BaseResponse.success(result, Map.of("path", "/bff/v1/enums/genres")));
     }
 
     @GetMapping("/instruments")
-    public Mono<ResponseEntity<Map<Integer,String>>> instruments(){
+    public Mono<ResponseEntity<BaseResponse>> instruments(){
         return profileClient.fetchInstruments()
-                .map(ResponseEntity::ok);
+                .map(result -> BaseResponse.success(result, Map.of("path", "/bff/v1/enums/instruments")));
     }
 
     @GetMapping("/locations")
-    public Mono<ResponseEntity<Map<String,String>>> locations(){
+    public Mono<ResponseEntity<BaseResponse>> locations(){
         return profileClient.fetchLocations()
-                .map(ResponseEntity::ok);
+                .map(result -> BaseResponse.success(result, Map.of("path", "/bff/v1/enums/locations")));
     }
 
     @GetMapping("/consents")
-    public Mono<ResponseEntity<Map<String, ConsentsTable>>> consents(@RequestParam(name = "all") Boolean all){
-        var result = authClient.fetchAllConsents(all);
-        return result.map(ResponseEntity::ok);
-
+    public Mono<ResponseEntity<BaseResponse>> consents(@RequestParam(name = "all") Boolean all){
+        return authClient.fetchAllConsents(all)
+                .map(result -> BaseResponse.success(result, Map.of("path", "/bff/v1/enums/consents")));
     }
 }

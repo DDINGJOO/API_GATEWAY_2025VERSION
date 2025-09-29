@@ -18,6 +18,7 @@ public class ProfileUpdateRequest {
 
     private boolean chattable;
     private boolean publicProfile;
+    private String profileImageId;
 
     private Map<Integer,String> genres;
     private Map<Integer,String> instruments;
