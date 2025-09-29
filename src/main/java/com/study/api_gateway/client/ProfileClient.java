@@ -36,7 +36,7 @@ public class ProfileClient {
     }
 
     public Mono<Map<Integer, String>> fetchInstruments() {
-        String uriString = UriComponentsBuilder.fromPath(PREFIX + "/instruments")
+        String uriString = UriComponentsBuilder.fromPath(PREFIX + "/enums/instruments")
                 .toUriString();
         return webClient.get()
                 .uri(uriString)
@@ -45,7 +45,7 @@ public class ProfileClient {
     }
 
     public Mono<Map<String, String>> fetchLocations() {
-        String uriString = UriComponentsBuilder.fromPath(PREFIX + "/locations")
+        String uriString = UriComponentsBuilder.fromPath(PREFIX + "/enums/locations")
                 .toUriString();
         return webClient.get()
                 .uri(uriString)
@@ -57,7 +57,7 @@ public class ProfileClient {
     public Mono<Boolean> updateProfileVer1(String userId, ProfileUpdateRequest req)
     {
 
-        String uriString = UriComponentsBuilder.fromPath(PREFIX +"/"+userId +"/ver1")
+        String uriString = UriComponentsBuilder.fromPath(PREFIX +"/profiles/"+userId +"/ver1")
                 .toUriString();
 
         return webClient.put()
@@ -70,7 +70,7 @@ public class ProfileClient {
     public Mono<Boolean> updateProfileVer2(String userId, ProfileUpdateRequest req)
     {
 
-        String uriString = UriComponentsBuilder.fromPath(PREFIX +"/"+ userId +"/ver2")
+        String uriString = UriComponentsBuilder.fromPath(PREFIX +"/peofiles/"+ userId +"/ver2")
                 .toUriString();
 
         return webClient.put()
