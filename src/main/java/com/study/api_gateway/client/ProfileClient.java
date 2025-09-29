@@ -81,7 +81,7 @@ public class ProfileClient {
     }
 
     public Mono<UserResponse> fetchProfile(String userId){
-        String uriString = UriComponentsBuilder.fromPath(PREFIX + "/" + userId)
+        String uriString = UriComponentsBuilder.fromPath(PREFIX + "/profiles/" + userId)
                 .toUriString();
 
         return webClient.get()
