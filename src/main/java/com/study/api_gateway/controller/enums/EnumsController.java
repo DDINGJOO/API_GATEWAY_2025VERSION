@@ -2,6 +2,7 @@ package com.study.api_gateway.controller.enums;
 
 
 import com.study.api_gateway.client.AuthClient;
+import com.study.api_gateway.client.ImageClient;
 import com.study.api_gateway.client.ProfileClient;
 import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.dto.auth.response.ConsentsTable;
@@ -21,6 +22,7 @@ import java.util.Map;
 public class EnumsController {
     private final ProfileClient profileClient;
     private final AuthClient authClient;
+    private final ImageClient imageClient;
 
     @GetMapping("/genres")
     public Mono<ResponseEntity<BaseResponse>> genres(){
@@ -44,5 +46,17 @@ public class EnumsController {
     public Mono<ResponseEntity<BaseResponse>> consents(@RequestParam(name = "all") Boolean all){
         return authClient.fetchAllConsents(all)
                 .map(result -> BaseResponse.success(result, Map.of("path", "/bff/v1/enums/consents")));
+    }
+
+    @GetMapping("/extensions")
+    public Mono<ResponseEntity<BaseResponse>> extensions(){
+        return imageClient.getExtensions()
+                .map(result -> BaseResponse.success(result, Map.of("path", "/api/images/enums/extensions")));
+    }
+
+    @GetMapping("/reference-type")
+    public Mono<ResponseEntity<BaseResponse>> referenceType(){
+        return imageClient.getExtensions()
+                .map(result -> BaseResponse.success(result, Map.of("path", "/api/images/enums/referenceTypes")));
     }
 }
