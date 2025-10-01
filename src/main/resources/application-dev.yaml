@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT}
 service:
   auth:
     url: ${AUTH_URL}
@@ -12,3 +12,8 @@ service:
   image:
     url: ${IMAGE_URL}
     port: ${IMAGE_PORT}
+
+  article:
+    url: ${ARTICLE_URL}
+    port: ${ARTICLE_PORT}
+

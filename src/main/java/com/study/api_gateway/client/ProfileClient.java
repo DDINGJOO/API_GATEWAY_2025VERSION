@@ -70,7 +70,7 @@ public class ProfileClient {
     public Mono<Boolean> updateProfileVer2(String userId, ProfileUpdateRequest req)
     {
 
-        String uriString = UriComponentsBuilder.fromPath(PREFIX +"/peofiles/"+ userId +"/ver2")
+        String uriString = UriComponentsBuilder.fromPath(PREFIX +"/profiles/"+ userId +"/ver2")
                 .toUriString();
 
         return webClient.put()

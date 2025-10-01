@@ -14,9 +14,9 @@ public class ImageConfirmService {
         this.imageClient = imageClient;
     }
 
-    public Mono<Void> confirmImage(String imageId)
+    public Mono<Void> confirmImage(String referenceId,String imageId)
     {
-        return imageClient.confirmImage(imageId);
+        return imageClient.confirmImage(referenceId,imageId);
     }
 
 

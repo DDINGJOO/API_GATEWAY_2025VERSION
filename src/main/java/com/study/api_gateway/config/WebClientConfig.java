@@ -24,6 +24,11 @@ public class WebClientConfig {
     private String ImageDns;
     @Value("${service.image.port}")
     private String ImagePort;
+	
+	@Value("${service.article.url}")
+	private String ArticleDns;
+	@Value("${service.article.port}")
+	private String ArticlePort;
 
     private String normalizeHost(String raw) {
         if (raw == null) return "";
@@ -67,5 +72,15 @@ public class WebClientConfig {
                 .baseUrl(url)
                 .build();
     }
+	
+	@Bean
+	public WebClient articleWebClient(WebClient.Builder builder) {
+		String host = normalizeHost(ArticleDns);
+		String url = "http://%s:%s".formatted(host, ArticlePort);
+		
+		return builder
+				.baseUrl(url)
+				.build();
+	}
 
 }

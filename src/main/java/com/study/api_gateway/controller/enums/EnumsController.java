@@ -1,20 +1,21 @@
 package com.study.api_gateway.controller.enums;
 
 
+import com.study.api_gateway.client.ArticleClient;
 import com.study.api_gateway.client.AuthClient;
 import com.study.api_gateway.client.ImageClient;
 import com.study.api_gateway.client.ProfileClient;
 import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.dto.auth.response.ConsentsTable;
+import com.study.api_gateway.util.ResponseFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/bff/v1/enums")
@@ -23,40 +24,54 @@ public class EnumsController {
     private final ProfileClient profileClient;
     private final AuthClient authClient;
     private final ImageClient imageClient;
+    private final ResponseFactory responseFactory;
+	private final ArticleClient articleClient;
 
     @GetMapping("/genres")
-    public Mono<ResponseEntity<BaseResponse>> genres(){
+    public Mono<ResponseEntity<BaseResponse>> genres(ServerHttpRequest request){
         return profileClient.fetchGenres()
-                .map(result -> BaseResponse.success(result, Map.of("path", "/bff/v1/enums/genres")));
+                .map(result -> responseFactory.ok(result, request));
     }
 
     @GetMapping("/instruments")
-    public Mono<ResponseEntity<BaseResponse>> instruments(){
+    public Mono<ResponseEntity<BaseResponse>> instruments(ServerHttpRequest request){
         return profileClient.fetchInstruments()
-                .map(result -> BaseResponse.success(result, Map.of("path", "/bff/v1/enums/instruments")));
+                .map(result -> responseFactory.ok(result, request));
     }
 
     @GetMapping("/locations")
-    public Mono<ResponseEntity<BaseResponse>> locations(){
+    public Mono<ResponseEntity<BaseResponse>> locations(ServerHttpRequest request){
         return profileClient.fetchLocations()
-                .map(result -> BaseResponse.success(result, Map.of("path", "/bff/v1/enums/locations")));
+                .map(result -> responseFactory.ok(result, request));
     }
 
     @GetMapping("/consents")
-    public Mono<ResponseEntity<BaseResponse>> consents(@RequestParam(name = "all") Boolean all){
+    public Mono<ResponseEntity<BaseResponse>> consents(@RequestParam(name = "all") Boolean all, ServerHttpRequest request){
         return authClient.fetchAllConsents(all)
-                .map(result -> BaseResponse.success(result, Map.of("path", "/bff/v1/enums/consents")));
+                .map(result -> responseFactory.ok(result, request));
     }
 
     @GetMapping("/extensions")
-    public Mono<ResponseEntity<BaseResponse>> extensions(){
+    public Mono<ResponseEntity<BaseResponse>> extensions(ServerHttpRequest request){
         return imageClient.getExtensions()
-                .map(result -> BaseResponse.success(result, Map.of("path", "/api/images/enums/extensions")));
+                .map(result -> responseFactory.ok(result, request));
     }
 
-    @GetMapping("/reference-type")
-    public Mono<ResponseEntity<BaseResponse>> referenceType(){
+    @GetMapping("/reference-types")
+    public Mono<ResponseEntity<BaseResponse>> referenceType(ServerHttpRequest request){
         return imageClient.getReferenceType()
-                .map(result -> BaseResponse.success(result, Map.of("path", "/api/images/enums/referenceTypes")));
+                .map(result -> responseFactory.ok(result, request));
     }
+	
+	@GetMapping("/articles/boards")
+	public Mono<ResponseEntity<BaseResponse>> boards(ServerHttpRequest request){
+		return articleClient.getBoards()
+				.map(result -> responseFactory.ok(result, request));
+	}
+	
+	@GetMapping("/articles/keywords")
+	public Mono<ResponseEntity<BaseResponse>> articleKeywords(ServerHttpRequest request){
+		return articleClient.getKeywords()
+				.map(result -> responseFactory.ok(result, request));
+	}
 }

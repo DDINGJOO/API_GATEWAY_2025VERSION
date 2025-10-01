@@ -2,6 +2,7 @@ package com.study.api_gateway.client;
 
 
 import com.study.api_gateway.dto.auth.response.ConsentsTable;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,7 @@ import reactor.core.publisher.Mono;
 import java.util.Map;
 
 @Component
+@Slf4j
 public class ImageClient {
     private final WebClient webClient;
 
@@ -21,13 +23,14 @@ public class ImageClient {
 
 
 
-    public Mono<Void> confirmImage(String imageId){
+    public Mono<Void> confirmImage(String referenceId,String imageId){
 
-        String uriString = UriComponentsBuilder.fromPath("/api/images/"+imageId)
+        String uriString = UriComponentsBuilder.fromPath("/api/images/"+referenceId+"/confirm")
+                .queryParam("imageId",imageId)
                 .toUriString();
 
-
-        return webClient.post()
+        log.info("confirmImage uriString : {}",uriString);
+        return webClient.patch()
                 .uri(uriString)
                 .retrieve()
                 .bodyToMono(Void.class);
