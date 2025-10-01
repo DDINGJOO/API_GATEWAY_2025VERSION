@@ -13,12 +13,14 @@ import java.util.Map;
 @NoArgsConstructor
 @Builder
 public class ProfileUpdateRequest {
+
+    private String profileImageId;
     private String nickname;
-    private City city;
-    private String imageId;
+    private String city;
+
     private boolean chattable;
     private boolean publicProfile;
-    private String profileImageId;
+    private Character sex;
 
     private Map<Integer,String> genres;
     private Map<Integer,String> instruments;
