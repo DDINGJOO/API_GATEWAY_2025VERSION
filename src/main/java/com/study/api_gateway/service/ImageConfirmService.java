@@ -5,6 +5,8 @@ import com.study.api_gateway.client.ImageClient;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Service
 public class ImageConfirmService {
 
@@ -14,9 +16,9 @@ public class ImageConfirmService {
         this.imageClient = imageClient;
     }
 
-    public Mono<Void> confirmImage(String referenceId,String imageId)
+    public Mono<Void> confirmImage(String referenceId, List<String> imageIds)
     {
-        return imageClient.confirmImage(referenceId,imageId);
+        return imageClient.confirmImage(referenceId,imageIds);
     }
 
 
