@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -35,7 +36,17 @@ public class ImageClient {
                 .retrieve()
                 .bodyToMono(Void.class);
     }
-
+	
+	
+	public Mono<Void> confirmImages(String referenceId, List<String> imageIds){
+		String uriString = UriComponentsBuilder.fromPath("/api/images/"+referenceId+"/confirm")
+				.queryParam("imageIds",imageIds)
+				.toUriString();
+		return webClient.patch()
+				.uri(uriString)
+				.retrieve()
+				.bodyToMono(Void.class);
+	}
 
     public Mono<Map<String,String >> getExtensions(){
         String uriString = UriComponentsBuilder.fromPath("/api/enums/extensions")

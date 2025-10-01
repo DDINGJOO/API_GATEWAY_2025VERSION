@@ -15,6 +15,8 @@ public class ArticleCreateRequest {
 	private String content;
 	private String writerId;
 	
+	private List<String> imageUrls;
+	
 	
 	private List<?> keywords;
 	private Object board;
