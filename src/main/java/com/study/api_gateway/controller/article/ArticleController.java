@@ -1,6 +1,7 @@
 package com.study.api_gateway.controller.article;
 
 import com.study.api_gateway.client.ArticleClient;
+import com.study.api_gateway.client.CommentClient;
 import com.study.api_gateway.dto.Article.request.ArticleCreateRequest;
 import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.service.ImageConfirmService;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/bff/v1/communities/articles")
@@ -21,6 +23,7 @@ import java.util.List;
 @Validated
 public class ArticleController {
 	private final ArticleClient articleClient;
+	private final CommentClient commentClient;
 	private final ImageConfirmService imageConfirmService;
 	private final ResponseFactory responseFactory;
 	
@@ -58,8 +61,18 @@ public class ArticleController {
 	
 	@GetMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> getArticle(@PathVariable String articleId, ServerHttpRequest req) {
-		return articleClient.getArticle(articleId)
-				.map(result -> responseFactory.ok(result, req));
+		return Mono.zip(
+				articleClient.getArticle(articleId),
+				commentClient.getCommentsByArticle(articleId)
+		)
+		.map(tuple -> {
+			var article = tuple.getT1();
+			var comments = tuple.getT2();
+			return responseFactory.ok(Map.of(
+					"article", article,
+					"comments", comments
+			), req);
+		});
 	}
 	
 	@GetMapping
