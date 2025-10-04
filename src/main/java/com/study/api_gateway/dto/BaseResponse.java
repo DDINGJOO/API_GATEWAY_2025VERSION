@@ -1,10 +1,12 @@
 package com.study.api_gateway.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,11 +28,22 @@ import java.util.Map;
 @AllArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(name = "BaseResponse", description = "BFF 공통 응답 래퍼",
+        example = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"example\": \"실제 엔드포인트별 응답 데이터가 위치합니다.\"\n  },\n  \"request\": {\n    \"method\": \"GET\",\n    \"path\": \"/bff/v1/...\"\n  }\n}")
 public class BaseResponse {
 
+    @Schema(description = "요청 성공 여부", example = "true")
     private boolean isSuccess;
+
+    @Schema(description = "비즈니스/상태 코드 (대개 HTTP 상태 코드)", example = "200")
     private int code;
+
+    @Schema(description = "실제 응답 데이터. 엔드포인트에 따라 객체/배열/불리언/문자열이 될 수 있습니다.",
+            anyOf = {Object.class, Map.class, List.class, String.class, Boolean.class})
     private Object data;
+
+    @Schema(description = "요청 관련 메타데이터", implementation = Map.class,
+            example = "{\n  \"method\": \"GET\",\n  \"path\": \"/bff/v1/...\"\n}")
     private Map<String, Object> request;
 
     // 성공 응답 생성 (기본 HTTP 200)
