@@ -8,6 +8,12 @@ import com.study.api_gateway.dto.profile.request.ProfileUpdateRequest;
 import com.study.api_gateway.dto.profile.response.UserResponse;
 import com.study.api_gateway.service.ImageConfirmService;
 import com.study.api_gateway.util.ResponseFactory;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -28,6 +34,13 @@ public class ProfileController {
     private final ImageConfirmService imageConfirmService;
     private final ResponseFactory responseFactory;
 
+    @Operation(summary = "프로필 목록 조회")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BaseResponse.class),
+                            examples = @ExampleObject(name = "ProfilesList", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": [ { \"userId\": \"u1\" } ],\n  \"request\": { \"path\": \"/bff/v1/profiles\" }\n}")))
+    })
     @GetMapping
     public Mono<ResponseEntity<BaseResponse>> fetchProfiles(@RequestParam String userId, @RequestParam ProfileSearchCriteria req, @RequestParam String cursor, @RequestParam int size, ServerHttpRequest request){
         return profileClient.fetchProfiles(userId, req, cursor, size)
@@ -35,12 +48,26 @@ public class ProfileController {
                 .map(result -> responseFactory.ok(result, request));
     }
 
+    @Operation(summary = "프로필 단건 조회")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BaseResponse.class),
+                            examples = @ExampleObject(name = "ProfileOne", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": { \"userId\": \"u1\", \"nickname\": \"닉\" },\n  \"request\": { \"path\": \"/bff/v1/profiles/{userId}\" }\n}")))
+    })
     @GetMapping("/{userId}")
     public Mono<ResponseEntity<BaseResponse>> fetchProfile(@PathVariable String userId, ServerHttpRequest request){
         return profileClient.fetchProfile(userId)
                 .map(result -> responseFactory.ok(result, request));
     }
 
+    @Operation(summary = "프로필 수정 ver1")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BaseResponse.class),
+                            examples = @ExampleObject(name = "ProfileUpdateV1", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": \"updated\",\n  \"request\": { \"path\": \"/bff/v1/profiles/{userId}/ver1\" }\n}")))
+    })
     @PutMapping("/{userId}/ver1")
     public Mono<ResponseEntity<BaseResponse>> updateProfile(@PathVariable String userId, @RequestBody ProfileUpdateRequest req, ServerHttpRequest request){
 		List<String> imageIds = new ArrayList<>();
@@ -49,7 +76,7 @@ public class ProfileController {
                     if (Boolean.TRUE.equals(success)) {
                         if (req.getProfileImageId() != null) {
                             log.info("imageId = {} , userId = {}", req.getProfileImageId(), userId);
-							imageIds.add(req.getProfileImageId());
+						imageIds.add(req.getProfileImageId());
                             return imageConfirmService.confirmImage(userId,imageIds)
                                     .thenReturn(responseFactory.ok("updated", request, HttpStatus.OK));
                         }
@@ -59,6 +86,13 @@ public class ProfileController {
                 });
     }
 
+    @Operation(summary = "프로필 수정 ver2")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BaseResponse.class),
+                            examples = @ExampleObject(name = "ProfileUpdateV2", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": \"updated\",\n  \"request\": { \"path\": \"/bff/v1/profiles/{userId}/ver2\" }\n}")))
+    })
     @PutMapping("/{userId}/ver2")
     public Mono<ResponseEntity<BaseResponse>> updateProfile2(@PathVariable String userId, @RequestBody ProfileUpdateRequest req, ServerHttpRequest request){
         return profileClient.updateProfileVer2(userId, req)
