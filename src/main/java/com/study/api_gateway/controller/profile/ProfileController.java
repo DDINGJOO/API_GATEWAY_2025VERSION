@@ -16,6 +16,9 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @RestController
 @RequestMapping("/bff/v1/profiles")
 @RequiredArgsConstructor
@@ -40,12 +43,14 @@ public class ProfileController {
 
     @PutMapping("/{userId}/ver1")
     public Mono<ResponseEntity<BaseResponse>> updateProfile(@PathVariable String userId, @RequestBody ProfileUpdateRequest req, ServerHttpRequest request){
+		List<String> imageIds = new ArrayList<>();
         return profileClient.updateProfileVer1(userId, req)
                 .flatMap(success -> {
                     if (Boolean.TRUE.equals(success)) {
                         if (req.getProfileImageId() != null) {
                             log.info("imageId = {} , userId = {}", req.getProfileImageId(), userId);
-                            return imageConfirmService.confirmImage(userId, req.getProfileImageId())
+							imageIds.add(req.getProfileImageId());
+                            return imageConfirmService.confirmImage(userId,imageIds)
                                     .thenReturn(responseFactory.ok("updated", request, HttpStatus.OK));
                         }
                         return Mono.just(responseFactory.ok("updated", request, HttpStatus.OK));

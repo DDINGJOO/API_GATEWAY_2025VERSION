@@ -17,3 +17,7 @@ service:
     url: ${ARTICLE_URL}
     port: ${ARTICLE_PORT}
 
+  comment:
+    url: ${COMMENT_URL}
+    port: ${COMMENT_PORT}
+
