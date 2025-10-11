@@ -91,7 +91,7 @@ public class ProfileClient {
     }
 	
 	public Flux<UserResponse> fetchProfiles(ProfileSearchCriteria req, String cursor, int size) {
-        String uriString = UriComponentsBuilder.fromPath(PREFIX)
+		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/profiles")
                 .queryParam("city", req.getCity())
                 .queryParam("genres", req.getGenres())
                 .queryParam("instruments", req.getInstruments())
