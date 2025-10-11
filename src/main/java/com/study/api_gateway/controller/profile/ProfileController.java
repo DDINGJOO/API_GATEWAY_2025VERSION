@@ -47,7 +47,7 @@ public class ProfileController {
     @GetMapping
     public Mono<ResponseEntity<BaseResponse>> fetchProfiles(@RequestParam(required = false) String city, @RequestParam(required = false) String nickname, @RequestParam(required = false) List<Integer> genres, @RequestParam(required = false) List<Integer> instruments, @RequestParam(required = false) Character sex, @RequestParam(required = false) String cursor, @RequestParam(required = false) int size, ServerHttpRequest request) {
 	    ProfileSearchCriteria req = ProfileSearchCriteria.builder()
-			    .city(City.valueOf(city))
+			    .city(city != null ? City.valueOf(city) : null)
 			    .nickName(nickname)
 			    .genres(genres)
 			    .instruments(instruments)
