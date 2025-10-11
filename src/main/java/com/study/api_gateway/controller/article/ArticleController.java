@@ -22,6 +22,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/bff/v1/communities/articles")
@@ -99,10 +100,10 @@ public class ArticleController {
 	@GetMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> getArticle(@PathVariable String articleId, ServerHttpRequest req) {
 		return Mono.zip(
-				articleClient.getArticle(articleId),
-						commentClient.getCommentsByArticle(articleId),
+						articleClient.getArticle(articleId),
+						commentClient.getCommentsByArticle(articleId, 0, 10, "visibleCount"),
 						likeClient.getLikeDetail(categoryId, articleId)
-		)
+				)
 				.map(tuple3 -> responseFactory.ok(Map.of(
 						"article", tuple3.getT1(),
 						"comments", tuple3.getT2(),
@@ -129,14 +130,17 @@ public class ArticleController {
 	{
 		return articleClient.fetchArticleCursorPageResponse(size, cursorId, board, keyword, title, content, writerIds)
 				.flatMap(page -> {
-					java.util.List<String> ids = page.getItems() == null ? java.util.List.of() : page.getItems().stream()
+					List<String> ids = page.getItems() == null ? List.of() : page.getItems().stream()
 							.map(com.study.api_gateway.dto.Article.response.ArticleResponse::getArticleId)
-							.filter(java.util.Objects::nonNull)
+							.filter(Objects::nonNull)
 							.toList();
-					return likeClient.getLikeCounts(categoryId, ids)
-							.map(counts -> responseFactory.ok(java.util.Map.of(
+					Mono<List<com.study.api_gateway.dto.gaechu.LikeCountResponse>> likeCountsMono = likeClient.getLikeCounts(categoryId, ids);
+					Mono<Map<String, Integer>> commentCountsMono = commentClient.getCountsForArticles(ids);
+					return Mono.zip(likeCountsMono, commentCountsMono)
+							.map(tuple2 -> responseFactory.ok(Map.of(
 									"page", page,
-									"likeCounts", counts
+									"likeCounts", tuple2.getT1(),
+									"commentCounts", tuple2.getT2()
 							), req));
 				});
 	}

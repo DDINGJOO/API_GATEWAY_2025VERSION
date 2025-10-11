@@ -43,11 +43,21 @@ public class CommentClient {
     }
 
     public Mono<List<Map<String, Object>>> getCommentsByArticle(String articleId) {
+	    // backward-compatible default: no pagination params
+	    return getCommentsByArticle(articleId, null, null, null);
+    }
+	
+	public Mono<List<Map<String, Object>>> getCommentsByArticle(String articleId, Integer page, Integer pageSize, String mode) {
         String uri = UriComponentsBuilder.fromPath("/api/comments/article/{articleId}")
                 .buildAndExpand(articleId)
                 .toUriString();
+		UriComponentsBuilder queryBuilder = UriComponentsBuilder.fromUriString(uri);
+		if (page != null) queryBuilder.queryParam("page", page);
+		if (pageSize != null) queryBuilder.queryParam("pageSize", pageSize);
+		if (mode != null && !mode.isBlank()) queryBuilder.queryParam("mode", mode);
+		String finalUri = queryBuilder.toUriString();
         return webClient.get()
-                .uri(uri)
+		        .uri(finalUri)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<>() {});
     }
@@ -103,4 +113,15 @@ public class CommentClient {
                 .retrieve()
                 .bodyToMono(Void.class);
     }
+	
+	// New: counts for multiple articles
+	public Mono<Map<String, Integer>> getCountsForArticles(List<String> articleIds) {
+		String uri = UriComponentsBuilder.fromPath("/api/comments/articles/counts").toUriString();
+		return webClient.post()
+				.uri(uri)
+				.bodyValue(articleIds)
+				.retrieve()
+				.bodyToMono(new ParameterizedTypeReference<>() {
+				});
+	}
 }
