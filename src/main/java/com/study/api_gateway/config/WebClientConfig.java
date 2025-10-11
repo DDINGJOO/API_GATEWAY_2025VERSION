@@ -34,6 +34,11 @@ public class WebClientConfig {
 	private String CommentDns;
 	@Value("${service.comment.port}")
 	private String CommentPort;
+	
+	@Value("${service.gaechu.url}")
+	private String GaechuDns;
+	@Value("${service.gaechu.port}")
+	private String GaechuPort;
 
     private String normalizeHost(String raw) {
         if (raw == null) return "";
@@ -92,6 +97,16 @@ public class WebClientConfig {
 	public WebClient commentWebClient(WebClient.Builder builder) {
 		String host = normalizeHost(CommentDns);
 		String url = "http://%s:%s".formatted(host, CommentPort);
+		
+		return builder
+				.baseUrl(url)
+				.build();
+	}
+	
+	@Bean
+	public WebClient gaechuWebClient(WebClient.Builder builder) {
+		String host = normalizeHost(GaechuDns);
+		String url = "http://%s:%s".formatted(host, GaechuPort);
 		
 		return builder
 				.baseUrl(url)

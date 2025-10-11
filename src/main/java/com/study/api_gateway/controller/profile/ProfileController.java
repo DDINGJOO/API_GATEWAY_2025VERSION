@@ -1,11 +1,11 @@
 package com.study.api_gateway.controller.profile;
 
 
+import com.study.api_gateway.client.LikeClient;
 import com.study.api_gateway.client.ProfileClient;
 import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.dto.profile.ProfileSearchCriteria;
 import com.study.api_gateway.dto.profile.request.ProfileUpdateRequest;
-import com.study.api_gateway.dto.profile.response.UserResponse;
 import com.study.api_gateway.service.ImageConfirmService;
 import com.study.api_gateway.util.ResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +33,8 @@ public class ProfileController {
     private final ProfileClient profileClient;
     private final ImageConfirmService imageConfirmService;
     private final ResponseFactory responseFactory;
+	private final LikeClient likeClient;
+	private final String categoryId = "PROFILE";
 
     @Operation(summary = "프로필 목록 조회")
     @ApiResponses({
@@ -57,8 +59,13 @@ public class ProfileController {
     })
     @GetMapping("/{userId}")
     public Mono<ResponseEntity<BaseResponse>> fetchProfile(@PathVariable String userId, ServerHttpRequest request){
-        return profileClient.fetchProfile(userId)
-                .map(result -> responseFactory.ok(result, request));
+	    return reactor.core.publisher.Mono.zip(
+			    profileClient.fetchProfile(userId),
+			    likeClient.getUserLikedCounts(categoryId, userId)
+	    ).map(tuple2 -> responseFactory.ok(java.util.Map.of(
+			    "profile", tuple2.getT1(),
+			    "liked", tuple2.getT2()
+	    ), request));
     }
 
     @Operation(summary = "프로필 수정 ver1")
