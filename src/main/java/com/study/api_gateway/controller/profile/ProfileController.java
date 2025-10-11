@@ -23,7 +23,6 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -76,39 +75,39 @@ public class ProfileController {
 	    ), request));
     }
 
-    @Operation(summary = "프로필 수정 ver1")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "성공",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BaseResponse.class),
-                            examples = @ExampleObject(name = "ProfileUpdateV1", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": \"updated\",\n  \"request\": { \"path\": \"/bff/v1/profiles/{userId}/ver1\" }\n}")))
-    })
-    @PutMapping("/{userId}/ver1")
-    public Mono<ResponseEntity<BaseResponse>> updateProfile(@PathVariable String userId, @RequestBody ProfileUpdateRequest req, ServerHttpRequest request){
-		List<String> imageIds = new ArrayList<>();
-        return profileClient.updateProfileVer1(userId, req)
-                .flatMap(success -> {
-                    if (Boolean.TRUE.equals(success)) {
-                        if (req.getProfileImageId() != null) {
-                            log.info("imageId = {} , userId = {}", req.getProfileImageId(), userId);
-						imageIds.add(req.getProfileImageId());
-                            return imageConfirmService.confirmImage(userId,imageIds)
-                                    .thenReturn(responseFactory.ok("updated", request, HttpStatus.OK));
-                        }
-                        return Mono.just(responseFactory.ok("updated", request, HttpStatus.OK));
-                    }
-                    return Mono.just(responseFactory.error("update failed", HttpStatus.BAD_REQUEST, request));
-                });
-    }
-
-    @Operation(summary = "프로필 수정 ver2")
+//    @Operation(summary = "프로필 수정 ver1")
+//    @ApiResponses({
+//            @ApiResponse(responseCode = "200", description = "성공",
+//                    content = @Content(mediaType = "application/json",
+//                            schema = @Schema(implementation = BaseResponse.class),
+//                            examples = @ExampleObject(name = "ProfileUpdateV1", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": \"updated\",\n  \"request\": { \"path\": \"/bff/v1/profiles/{userId}/ver1\" }\n}")))
+//    })
+//    @PutMapping("/{userId}/ver1")
+//    public Mono<ResponseEntity<BaseResponse>> updateProfile(@PathVariable String userId, @RequestBody ProfileUpdateRequest req, ServerHttpRequest request){
+//		List<String> imageIds = new ArrayList<>();
+//        return profileClient.updateProfileVer1(userId, req)
+//                .flatMap(success -> {
+//                    if (Boolean.TRUE.equals(success)) {
+//                        if (req.getProfileImageId() != null) {
+//                            log.info("imageId = {} , userId = {}", req.getProfileImageId(), userId);
+//						imageIds.add(req.getProfileImageId());
+//                            return imageConfirmService.confirmImage(userId,imageIds)
+//                                    .thenReturn(responseFactory.ok("updated", request, HttpStatus.OK));
+//                        }
+//                        return Mono.just(responseFactory.ok("updated", request, HttpStatus.OK));
+//                    }
+//                    return Mono.just(responseFactory.error("update failed", HttpStatus.BAD_REQUEST, request));
+//                });
+//    }
+	
+	@Operation(summary = "프로필 수정")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "성공",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = BaseResponse.class),
                             examples = @ExampleObject(name = "ProfileUpdateV2", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": \"updated\",\n  \"request\": { \"path\": \"/bff/v1/profiles/{userId}/ver2\" }\n}")))
     })
-    @PutMapping("/{userId}/ver2")
+	@PutMapping("/{userId}")
     public Mono<ResponseEntity<BaseResponse>> updateProfile2(@PathVariable String userId, @RequestBody ProfileUpdateRequest req, ServerHttpRequest request){
         return profileClient.updateProfileVer2(userId, req)
                 .map(success -> Boolean.TRUE.equals(success)
