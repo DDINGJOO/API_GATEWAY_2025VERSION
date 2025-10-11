@@ -89,10 +89,9 @@ public class ProfileClient {
                 .retrieve()
                 .bodyToMono(UserResponse.class);
     }
-
-    public Flux<UserResponse> fetchProfiles(String userId, ProfileSearchCriteria req, String cursor, int size){
+	
+	public Flux<UserResponse> fetchProfiles(ProfileSearchCriteria req, String cursor, int size) {
         String uriString = UriComponentsBuilder.fromPath(PREFIX)
-                .queryParam("userId", userId)
                 .queryParam("city", req.getCity())
                 .queryParam("genres", req.getGenres())
                 .queryParam("instruments", req.getInstruments())

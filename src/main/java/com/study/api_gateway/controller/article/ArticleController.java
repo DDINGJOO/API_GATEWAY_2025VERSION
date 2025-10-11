@@ -95,7 +95,7 @@ public class ArticleController {
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
 						schema = @Schema(implementation = BaseResponse.class),
-						examples = @ExampleObject(name = "ArticleDetailWithComments", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"article\": {\n      \"articleId\": \"article-1\",\n      \"title\": \"제목\"\n    },\n    \"comments\": [\n      { \"commentId\": \"c1\", \"contents\": \"첫 댓글\" }\n    ]\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/{articleId}\"\n  }\n}")))
+							examples = @ExampleObject(name = "ArticleDetailWithComments", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"article\": {\n      \"articleId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n      \"title\": \"공연 함께 하실 분\",\n      \"content\": \"같이 즐겁게 공연하실 분을 찾습니다.\",\n      \"writerId\": \"user_123\",\n      \"board\": { \"1\": \"공지사항\" },\n      \"imageUrls\": {},\n      \"keywords\": { \"10\": \"중요\" },\n      \"lastestUpdateId\": \"2025-10-11T17:52:27\"\n    },\n    \"comments\": [\n      { \"commentId\": \"c1\", \"writerId\": \"user_123\", \"contents\": \"첫 댓글\", \"isOwn\": true, \"replies\": [] }\n    ],\n    \"likeDetail\": { \"likeCount\": 0, \"isOwn\": false }\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/{articleId}\"\n  }\n}")))
 	})
 	@GetMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> getArticle(@PathVariable String articleId, ServerHttpRequest req) {
@@ -104,11 +104,33 @@ public class ArticleController {
 						commentClient.getCommentsByArticle(articleId, 0, 10, "visibleCount"),
 						likeClient.getLikeDetail(categoryId, articleId)
 				)
-				.map(tuple3 -> responseFactory.ok(Map.of(
+				.map(tuple3 -> {
+					// Try to resolve current userId from headers (placeholder until token parsing is added)
+					String currentUserId = resolveCurrentUserId(req);
+					
+					// Build likeDetail without referenceId and likerIds; add isOwn if current user liked
+					com.study.api_gateway.dto.gaechu.LikeDetailResponse ld = tuple3.getT3();
+					java.util.Map<String, Object> likeDetail = new java.util.LinkedHashMap<>();
+					int likeCount = ld == null || ld.getLikeCount() == null ? 0 : ld.getLikeCount();
+					likeDetail.put("likeCount", likeCount);
+					boolean isOwnLike = false;
+					if (currentUserId != null && ld != null && ld.getLikerIds() != null) {
+						isOwnLike = ld.getLikerIds().stream().filter(java.util.Objects::nonNull).anyMatch(currentUserId::equals);
+					}
+					likeDetail.put("isOwn", isOwnLike);
+					
+					// Sanitize comments: remove keys referenceId and articleId; add isOwn if writerId == currentUserId; handle nested replies
+					java.util.List<java.util.Map<String, Object>> rawComments = tuple3.getT2();
+					java.util.List<java.util.Map<String, Object>> comments = rawComments == null ? java.util.List.of() : rawComments.stream()
+							.map(c -> sanitizeCommentMap(c, currentUserId))
+							.toList();
+					
+					return responseFactory.ok(java.util.Map.of(
 						"article", tuple3.getT1(),
-						"comments", tuple3.getT2(),
-						"likeDetail", tuple3.getT3()
-				), req));
+							"comments", comments,
+							"likeDetail", likeDetail
+					), req);
+				});
 	}
 	
 	@Operation(summary = "게시글 목록 조회")
@@ -116,7 +138,7 @@ public class ArticleController {
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
 						schema = @Schema(implementation = BaseResponse.class),
-						examples = @ExampleObject(name = "ArticleListSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"items\": [ { \"articleId\": \"article-1\" } ],\n    \"nextCursor\": \"abc\"\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles\"\n  }\n}")))
+							examples = @ExampleObject(name = "ArticleListSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"page\": {\n      \"items\": [\n        {\n          \"articleId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n          \"title\": \"공연 함께 하실 분\",\n          \"content\": \"같이 즐겁게 공연하실 분을 찾습니다.\",\n          \"writerId\": \"user_123\",\n          \"board\": { \"1\": \"공지사항\" },\n          \"imageUrls\": {},\n          \"keywords\": { \"10\": \"중요\" },\n          \"lastestUpdateId\": \"2025-10-11T17:52:27\",\n          \"commentCount\": 0,\n          \"likeCount\": 0\n        }\n      ],\n      \"nextCursorUpdatedAt\": \"2025-10-11T17:52:23\",\n      \"nextCursorId\": \"6ad747b9-0f34-48ad-8dba-5afa2f7b822f\",\n      \"hasNext\": false,\n      \"size\": 10\n    },\n    \"likeCounts\": [\n      {\n        \"referenceId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n        \"likeCount\": 0\n      }\n    ],\n    \"commentCounts\": {\n      \"42840044-0f3e-482c-b5d5-0883af43e63e\": 0\n    }\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles?size=10\"\n  }\n}")))
 	})
 	@GetMapping
 	public Mono<ResponseEntity<BaseResponse>> getArticles(      @RequestParam(required = false) Integer size,
@@ -137,11 +159,87 @@ public class ArticleController {
 					Mono<List<com.study.api_gateway.dto.gaechu.LikeCountResponse>> likeCountsMono = likeClient.getLikeCounts(categoryId, ids);
 					Mono<Map<String, Integer>> commentCountsMono = commentClient.getCountsForArticles(ids);
 					return Mono.zip(likeCountsMono, commentCountsMono)
-							.map(tuple2 -> responseFactory.ok(Map.of(
-									"page", page,
-									"likeCounts", tuple2.getT1(),
-									"commentCounts", tuple2.getT2()
-							), req));
+							.map(tuple2 -> {
+								// Build quick lookup maps for counts
+								Map<String, Integer> likeCountMap = tuple2.getT1() == null ? Map.of() : tuple2.getT1().stream()
+										.filter(Objects::nonNull)
+										.collect(java.util.stream.Collectors.toMap(
+												com.study.api_gateway.dto.gaechu.LikeCountResponse::getReferenceId,
+												lc -> lc.getLikeCount() == null ? 0 : lc.getLikeCount()
+										));
+								Map<String, Integer> commentCountMap = tuple2.getT2() == null ? Map.of() : tuple2.getT2();
+								
+								// Enrich items by embedding counts
+								java.util.List<java.util.Map<String, Object>> enrichedItems = page.getItems() == null ? java.util.List.of() : page.getItems().stream()
+										.map(item -> {
+											java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+											m.put("articleId", item.getArticleId());
+											m.put("title", item.getTitle());
+											m.put("content", item.getContent());
+											m.put("writerId", item.getWriterId());
+											m.put("board", item.getBoard());
+											m.put("imageUrls", item.getImageUrls());
+											m.put("keywords", item.getKeywords());
+											m.put("lastestUpdateId", item.getLastestUpdateId());
+											m.put("commentCount", commentCountMap.getOrDefault(item.getArticleId(), 0));
+											m.put("likeCount", likeCountMap.getOrDefault(item.getArticleId(), 0));
+											return m;
+										})
+										.toList();
+								
+								java.util.Map<String, Object> pageMap = new java.util.LinkedHashMap<>();
+								pageMap.put("items", enrichedItems);
+								pageMap.put("nextCursorUpdatedAt", page.getNextCursorUpdatedAt());
+								pageMap.put("nextCursorId", page.getNextCursorId());
+								pageMap.put("hasNext", page.isHasNext());
+								pageMap.put("size", page.getSize());
+								
+								// Keep original aggregated counts for backward compatibility
+								return responseFactory.ok(java.util.Map.of(
+										"page", pageMap
+								), req);
+							});
 				});
+	}
+	
+	private String resolveCurrentUserId(ServerHttpRequest req) {
+		if (req == null || req.getHeaders() == null) return null;
+		String[] headerKeys = new String[]{
+				"X-USER-ID", "X-User-Id", "X-USERID", "X-USER", "User-Id", "userId"
+		};
+		for (String k : headerKeys) {
+			String v = req.getHeaders().getFirst(k);
+			if (v != null && !v.isBlank()) return v;
+		}
+		return null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private java.util.Map<String, Object> sanitizeCommentMap(java.util.Map<String, Object> c, String currentUserId) {
+		java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+		if (c == null) return m;
+		for (java.util.Map.Entry<String, Object> e : c.entrySet()) {
+			String key = e.getKey();
+			Object value = e.getValue();
+			if ("referenceId".equals(key) || "articleId".equals(key)) {
+				continue; // drop
+			}
+			if ("replies".equals(key) && value instanceof java.util.List<?> listVal) {
+				java.util.List<java.util.Map<String, Object>> cleaned = new java.util.ArrayList<>();
+				for (Object o : listVal) {
+					if (o instanceof java.util.Map<?, ?> mm) {
+						cleaned.add(sanitizeCommentMap((java.util.Map<String, Object>) mm, currentUserId));
+					}
+				}
+				m.put("replies", cleaned);
+			} else {
+				m.put(key, value);
+			}
+		}
+		// Add isOwn flag if we can determine writerId
+		Object writerIdObj = m.get("writerId");
+		boolean isOwn = currentUserId != null && writerIdObj != null && currentUserId.equals(String.valueOf(writerIdObj));
+		m.put("isOwn", isOwn);
+		return m;
 	}
 }

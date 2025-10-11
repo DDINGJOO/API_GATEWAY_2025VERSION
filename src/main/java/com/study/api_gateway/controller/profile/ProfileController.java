@@ -45,7 +45,7 @@ public class ProfileController {
                             examples = @ExampleObject(name = "ProfilesList", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": [ { \"userId\": \"u1\" } ],\n  \"request\": { \"path\": \"/bff/v1/profiles\" }\n}")))
     })
     @GetMapping
-    public Mono<ResponseEntity<BaseResponse>> fetchProfiles(@RequestParam String userId, @RequestParam(required = false) String city, @RequestParam(required = false) String nickname,@RequestParam(required = false) List<Integer> genres, @RequestParam(required = false) List<Integer> instruments, @RequestParam(required = false) Character sex, @RequestParam(required = false) String cursor, @RequestParam(required = false) int size, ServerHttpRequest request){
+    public Mono<ResponseEntity<BaseResponse>> fetchProfiles(@RequestParam(required = false) String city, @RequestParam(required = false) String nickname, @RequestParam(required = false) List<Integer> genres, @RequestParam(required = false) List<Integer> instruments, @RequestParam(required = false) Character sex, @RequestParam(required = false) String cursor, @RequestParam(required = false) int size, ServerHttpRequest request) {
 	    ProfileSearchCriteria req = ProfileSearchCriteria.builder()
 			    .city(City.valueOf(city))
 			    .nickName(nickname)
@@ -53,7 +53,7 @@ public class ProfileController {
 			    .instruments(instruments)
 			    .sex(sex)
 			    .build();
-        return profileClient.fetchProfiles(userId, req, cursor, size)
+	    return profileClient.fetchProfiles(req, cursor, size)
                 .collectList()
                 .map(result -> responseFactory.ok(result, request));
     }

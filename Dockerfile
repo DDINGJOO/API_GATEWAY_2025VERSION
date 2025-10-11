@@ -9,7 +9,7 @@ COPY src ./src
 
 
 # 권한 부여 및 빌드 (테스트 생략)
-RUN chmod +x ./gradlew && ./gradlew clean bootJar
+RUN chmod +x ./gradlew && ./gradlew --no-daemon --refresh-dependencies clean bootJar
 
 # 빌드 결과 확인 (디버깅용)
 RUN ls -la /app/build/libs

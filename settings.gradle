@@ -1,1 +1,9 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+        maven { url "https://repo.spring.io/release" } // 필요시 추가 (Spring 릴리스 저장소)
+    }
+}
+
 rootProject.name = 'API_GATEWAY'
