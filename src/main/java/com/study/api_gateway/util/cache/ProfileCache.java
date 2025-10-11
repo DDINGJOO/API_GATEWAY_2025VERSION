@@ -22,4 +22,14 @@ public interface ProfileCache {
 	 * Store profile summaries into cache. Implementations may ignore TTL for now.
 	 */
 	Mono<Void> putAll(Map<String, BatchUserSummaryResponse> profiles);
+	
+	/**
+	 * Evict single user's cached profile summary if present.
+	 */
+	Mono<Void> evict(String userId);
+	
+	/**
+	 * Evict multiple users' cached profile summaries if present.
+	 */
+	Mono<Void> evictAll(Collection<String> userIds);
 }

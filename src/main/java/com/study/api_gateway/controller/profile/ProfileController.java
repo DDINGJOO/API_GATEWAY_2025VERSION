@@ -4,11 +4,10 @@ package com.study.api_gateway.controller.profile;
 import com.study.api_gateway.client.LikeClient;
 import com.study.api_gateway.client.ProfileClient;
 import com.study.api_gateway.dto.BaseResponse;
-import com.study.api_gateway.dto.profile.ProfileSearchCriteria;
-import com.study.api_gateway.dto.profile.enums.City;
 import com.study.api_gateway.dto.profile.request.ProfileUpdateRequest;
 import com.study.api_gateway.service.ImageConfirmService;
 import com.study.api_gateway.util.ResponseFactory;
+import com.study.api_gateway.util.cache.ProfileCache;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -34,6 +33,7 @@ public class ProfileController {
     private final ImageConfirmService imageConfirmService;
     private final ResponseFactory responseFactory;
 	private final LikeClient likeClient;
+	private final ProfileCache profileCache; // 프로필 수정 성공 시 캐시 무효화에 사용
 	private final String categoryId = "PROFILE";
 
     @Operation(summary = "프로필 목록 조회")
@@ -44,15 +44,15 @@ public class ProfileController {
                             examples = @ExampleObject(name = "ProfilesList", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": [ { \"userId\": \"u1\" } ],\n  \"request\": { \"path\": \"/bff/v1/profiles\" }\n}")))
     })
     @GetMapping
-    public Mono<ResponseEntity<BaseResponse>> fetchProfiles(@RequestParam(required = false) String city, @RequestParam(required = false) String nickname, @RequestParam(required = false) List<Integer> genres, @RequestParam(required = false) List<Integer> instruments, @RequestParam(required = false) Character sex, @RequestParam(required = false) String cursor, @RequestParam(required = false) int size, ServerHttpRequest request) {
-	    ProfileSearchCriteria req = ProfileSearchCriteria.builder()
-			    .city(city != null ? City.valueOf(city) : null)
-			    .nickName(nickname)
-			    .genres(genres)
-			    .instruments(instruments)
-			    .sex(sex)
-			    .build();
-	    return profileClient.fetchProfiles(req, cursor, size)
+    public Mono<ResponseEntity<BaseResponse>> fetchProfiles(@RequestParam(required = false) String city,
+                                                            @RequestParam(required = false) String nickname,
+                                                            @RequestParam(required = false) List<Integer> genres,
+                                                            @RequestParam(required = false) List<Integer> instruments,
+                                                            @RequestParam(required = false) Character sex,
+                                                            @RequestParam(required = false) String cursor,
+                                                            @RequestParam(required = false) Integer size,
+                                                            ServerHttpRequest request) {
+	    return profileClient.fetchProfiles(city, nickname, genres, instruments, sex, cursor, size)
                 .collectList()
                 .map(result -> responseFactory.ok(result, request));
     }
@@ -110,9 +110,16 @@ public class ProfileController {
 	@PutMapping("/{userId}")
     public Mono<ResponseEntity<BaseResponse>> updateProfile2(@PathVariable String userId, @RequestBody ProfileUpdateRequest req, ServerHttpRequest request){
         return profileClient.updateProfileVer2(userId, req)
-                .map(success -> Boolean.TRUE.equals(success)
-                        ? responseFactory.ok("updated", request, HttpStatus.OK)
-                        : responseFactory.error("update failed", HttpStatus.BAD_REQUEST, request)
-                );
+		        .map(success -> {
+			        if (Boolean.TRUE.equals(success)) {
+				        // 프로필 수정 성공 시, 해당 사용자 캐시를 비동기로 무효화하여 이후 조회에서 최신 정보를 받도록 처리
+				        profileCache.evict(userId)
+						        .doOnError(e -> log.warn("Failed to evict profile cache after update userId={}: {}", userId, e.toString()))
+						        .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())
+						        .subscribe();
+				        return responseFactory.ok("updated", request, HttpStatus.OK);
+			        }
+			        return responseFactory.error("update failed", HttpStatus.BAD_REQUEST, request);
+		        });
     }
 }

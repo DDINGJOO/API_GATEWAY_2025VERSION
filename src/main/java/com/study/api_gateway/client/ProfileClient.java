@@ -1,7 +1,6 @@
 package com.study.api_gateway.client;
 
 
-import com.study.api_gateway.dto.profile.ProfileSearchCriteria;
 import com.study.api_gateway.dto.profile.request.ProfileUpdateRequest;
 import com.study.api_gateway.dto.profile.response.BatchUserSummaryResponse;
 import com.study.api_gateway.dto.profile.response.UserResponse;
@@ -116,12 +115,13 @@ public class ProfileClient {
                 .bodyToMono(UserResponse.class);
     }
 	
-	public Flux<UserResponse> fetchProfiles(ProfileSearchCriteria req, String cursor, int size) {
+	public Flux<UserResponse> fetchProfiles(String city, String nickname, java.util.List<Integer> genres, java.util.List<Integer> instruments, Character sex, String cursor, Integer size) {
 		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/profiles")
-                .queryParam("city", req.getCity())
-                .queryParam("genres", req.getGenres())
-                .queryParam("instruments", req.getInstruments())
-                .queryParam("sex", req.getSex())
+				.queryParam("city", city)
+				.queryParam("nickName", nickname) // 프로필 서버는 nickName 파라미터명을 사용
+				.queryParam("genres", genres)
+				.queryParam("instruments", instruments)
+				.queryParam("sex", sex)
                 .queryParam("cursor", cursor)
                 .queryParam("size", size)
                 .toUriString();

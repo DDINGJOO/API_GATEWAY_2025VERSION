@@ -33,6 +33,10 @@ public class ProfileEnrichmentUtil {
 			"userId", "writerId", "ownerId", "creatorId", "likerId", "senderId", "receiverId"
 	);
 	
+	// 프로필 기본값: 닉네임/이미지 URL이 없을 때 응답에 채워넣는 값
+	private static final String DEFAULT_NICKNAME = "상어크앙";
+	private static final String DEFAULT_PROFILE_IMAGE_URL = "와방쌘 상어";
+	
 	private static final int BATCH_SIZE = 200; // 대량 방어용 내부 분할 크기
 	private static final int SOFT_CAP = 5000; // 너무 큰 요청에 대한 소프트 상한
 	
@@ -224,10 +228,11 @@ public class ProfileEnrichmentUtil {
 		}
 		if (uid == null) return;
 		BatchUserSummaryResponse p = profileMap.get(uid);
-		if (p == null) return;
-		// add nickname/profileImageUrl; keep key names concise for consumer
-		m.put("nickname", p.getNickname());
-		m.put("profileImageUrl", p.getProfileImageUrl());
+		// 닉네임/프로필 이미지가 없을 때 기본값으로 채웁니다.
+		String nickname = (p == null || isBlank(p.getNickname())) ? DEFAULT_NICKNAME : p.getNickname();
+		String imageUrl = (p == null || isBlank(p.getProfileImageUrl())) ? DEFAULT_PROFILE_IMAGE_URL : p.getProfileImageUrl();
+		m.put("nickname", nickname);
+		m.put("profileImageUrl", imageUrl);
 	}
 	
 	/**
@@ -310,10 +315,10 @@ public class ProfileEnrichmentUtil {
 			}
 			if (uid != null) {
 				BatchUserSummaryResponse p = profileMap.get(uid);
-				if (p != null) {
-					m.put("nickname", p.getNickname());
-					m.put("profileImageUrl", p.getProfileImageUrl());
-				}
+				String nickname = (p == null || isBlank(p.getNickname())) ? DEFAULT_NICKNAME : p.getNickname();
+				String imageUrl = (p == null || isBlank(p.getProfileImageUrl())) ? DEFAULT_PROFILE_IMAGE_URL : p.getProfileImageUrl();
+				m.put("nickname", nickname);
+				m.put("profileImageUrl", imageUrl);
 			}
 			for (Object v : m.values()) {
 				if (v instanceof Map<?, ?> || v instanceof List<?>) {
@@ -329,5 +334,8 @@ public class ProfileEnrichmentUtil {
 		}
 	}
 	
+	private boolean isBlank(String s) {
+		return s == null || s.trim().isEmpty();
+	}
 	
 }

@@ -3,7 +3,14 @@ package com.study.api_gateway.util.cache;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.study.api_gateway.dto.profile.response.BatchUserSummaryResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -16,6 +23,10 @@ import java.util.*;
  * ProfileCache 추상화(getAll/putAll)에 맞춰 구현하여, 유틸에서 캐시 선조회 후 미스만 원격 호출하도록 지원합니다.
  */
 @Slf4j
+@Component
+@Primary
+@ConditionalOnBean(ReactiveRedisTemplate.class)
+@ConditionalOnProperty(name = "app.profile.cache.redis.enabled", havingValue = "true", matchIfMissing = false)
 public class RedisProfileCache implements ProfileCache {
 	
 	private static final String KEY_PREFIX = "profile:summary:";
@@ -23,10 +34,14 @@ public class RedisProfileCache implements ProfileCache {
 	private final ObjectMapper mapper;
 	private final Duration ttl; // 예: Duration.ofHours(1)
 	
-	public RedisProfileCache(ReactiveRedisTemplate<String, String> redis, ObjectMapper mapper, Duration ttl) {
+	public RedisProfileCache(
+			@Qualifier("reactiveStringRedisTemplate") ReactiveRedisTemplate<String, String> redis,
+			ObjectMapper mapper,
+			@Value("${app.profile.cache.ttl:PT1H}") Duration ttl
+	) {
 		this.redis = redis;
 		this.mapper = mapper;
-		this.ttl = ttl;
+		this.ttl = ttl != null ? ttl : Duration.ofHours(1);
 	}
 	
 	private String keyFor(String userId) {
@@ -92,5 +107,32 @@ public class RedisProfileCache implements ProfileCache {
 		}
 		if (ops.isEmpty()) return Mono.empty();
 		return Mono.when(ops).then();
+	}
+	
+	/**
+	 * 단일 유저 캐시 제거
+	 */
+	@Override
+	public Mono<Void> evict(String userId) {
+		if (userId == null || userId.isBlank()) return Mono.empty();
+		return redis.delete(Mono.just(keyFor(userId)))
+				.doOnError(e -> log.warn("Failed to evict profile cache for userId={}: {}", userId, e.toString()))
+				.then();
+	}
+	
+	/**
+	 * 여러 유저 캐시 일괄 제거
+	 */
+	@Override
+	public Mono<Void> evictAll(Collection<String> userIds) {
+		if (userIds == null || userIds.isEmpty()) return Mono.empty();
+		List<String> keys = new ArrayList<>();
+		for (String id : userIds) {
+			if (id != null && !id.isBlank()) keys.add(keyFor(id));
+		}
+		if (keys.isEmpty()) return Mono.empty();
+		return redis.delete(Flux.fromIterable(keys))
+				.doOnError(e -> log.warn("Failed to evict multiple profile caches size={}: {}", keys.size(), e.toString()))
+				.then();
 	}
 }
