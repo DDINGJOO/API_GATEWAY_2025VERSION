@@ -2,6 +2,7 @@ package com.study.api_gateway.util.cache;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.study.api_gateway.dto.profile.response.BatchUserSummaryResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import reactor.core.publisher.Mono;
 
@@ -14,6 +15,7 @@ import java.util.*;
  * <p>
  * ProfileCache 추상화(getAll/putAll)에 맞춰 구현하여, 유틸에서 캐시 선조회 후 미스만 원격 호출하도록 지원합니다.
  */
+@Slf4j
 public class RedisProfileCache implements ProfileCache {
 	
 	private static final String KEY_PREFIX = "profile:summary:";
@@ -49,6 +51,9 @@ public class RedisProfileCache implements ProfileCache {
 		return redis.opsForValue().multiGet(keys)
 				.defaultIfEmpty(Collections.emptyList())
 				.map(values -> {
+					if (values.size() != keys.size()) {
+						log.debug("Redis multiGet size mismatch keys={} values={}", keys.size(), values.size());
+					}
 					Map<String, BatchUserSummaryResponse> result = new LinkedHashMap<>();
 					for (int i = 0; i < ids.size(); i++) {
 						String json = (values.size() > i) ? values.get(i) : null;
@@ -58,7 +63,9 @@ public class RedisProfileCache implements ProfileCache {
 							if (v != null && v.getUserId() != null) {
 								result.put(ids.get(i), v);
 							}
-						} catch (Exception ignored) {
+						} catch (Exception e) {
+							String sample = json.length() > 128 ? json.substring(0, 128) + "..." : json;
+							log.warn("Failed to deserialize profile cache entry for key={}, sample={}: {}", keys.get(i), sample, e.toString());
 						}
 					}
 					return result;
@@ -79,7 +86,8 @@ public class RedisProfileCache implements ProfileCache {
 			try {
 				String json = mapper.writeValueAsString(v);
 				ops.add(redis.opsForValue().set(keyFor(userId), json, ttl));
-			} catch (Exception ignored) {
+			} catch (Exception e1) {
+				log.warn("Failed to serialize profile for userId={}: {}", userId, e1.toString());
 			}
 		}
 		if (ops.isEmpty()) return Mono.empty();

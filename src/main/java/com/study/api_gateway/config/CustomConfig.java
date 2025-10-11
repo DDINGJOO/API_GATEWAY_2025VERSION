@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.study.api_gateway.util.cache.ProfileCache;
 import com.study.api_gateway.util.cache.RedisProfileCache;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,7 +27,11 @@ public class CustomConfig {
 	@Bean
 	@Primary
 	@ConditionalOnBean(name = "reactiveRedisTemplate")
-	public ProfileCache profileCache(@Qualifier("reactiveRedisTemplate") ReactiveRedisTemplate<String, String> redis, ObjectMapper mapper) {
-		return new RedisProfileCache(redis, mapper, Duration.ofHours(1));
+	public ProfileCache profileCache(
+			@Qualifier("reactiveRedisTemplate") ReactiveRedisTemplate<String, String> redis,
+			ObjectMapper mapper,
+			@Value("${profile.cache.ttl-seconds:3600}") long ttlSeconds
+	) {
+		return new RedisProfileCache(redis, mapper, Duration.ofSeconds(ttlSeconds));
 	}
 }

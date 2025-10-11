@@ -10,11 +10,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 @Component
 @Slf4j
@@ -152,6 +155,24 @@ public class ProfileClient {
 				.bodyValue(userIds)
 				.retrieve()
 				.bodyToMono(new ParameterizedTypeReference<java.util.List<BatchUserSummaryResponse>>() {
+				})
+				.timeout(java.time.Duration.ofSeconds(2))
+				.retryWhen(reactor.util.retry.Retry.backoff(2, java.time.Duration.ofMillis(200))
+						.filter(this::isTransient))
+				.onErrorResume(e -> {
+					log.warn("fetchUserSummariesBatch failed for ids.size={} : {}", userIds == null ? 0 : userIds.size(), e.toString());
+					return Mono.just(java.util.Collections.emptyList());
 				});
     }
+	
+	private boolean isTransient(Throwable t) {
+		// 네트워크 지연, 일시적 장애로 추정되는 경우에만 재시도
+		if (t instanceof TimeoutException) return true;
+		if (t instanceof WebClientRequestException) return true;
+		if (t instanceof WebClientResponseException ex) {
+			int status = ex.getRawStatusCode();
+			return status >= 500 && status < 600; // 서버 오류만 재시도
+		}
+		return false;
+	}
 }

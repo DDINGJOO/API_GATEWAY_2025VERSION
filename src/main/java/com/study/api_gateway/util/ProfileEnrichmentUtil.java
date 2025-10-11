@@ -4,6 +4,7 @@ import com.study.api_gateway.client.ProfileClient;
 import com.study.api_gateway.dto.profile.response.BatchUserSummaryResponse;
 import com.study.api_gateway.util.cache.ProfileCache;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -23,13 +24,17 @@ import java.util.stream.Collectors;
  * 4) 캐시 결과와 API 결과를 머지 후, 대상 응답에 닉네임/프로필 이미지를 주입
  */
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class ProfileEnrichmentUtil {
 	
 	// 유저 관련 ID로 추정되는 키 목록 (확장 가능)
-	private static final java.util.Set<String> USER_ID_KEYS = java.util.Set.of(
+	private static final Set<String> USER_ID_KEYS = Set.of(
 			"userId", "writerId", "ownerId", "creatorId", "likerId", "senderId", "receiverId"
 	);
+	
+	private static final int BATCH_SIZE = 200; // 대량 방어용 내부 분할 크기
+	private static final int SOFT_CAP = 5000; // 너무 큰 요청에 대한 소프트 상한
 	
 	private final ProfileClient profileClient;
 	private final ProfileCache profileCache; // placeholder for future Redis integration
@@ -94,16 +99,28 @@ public class ProfileEnrichmentUtil {
 	 */
 	private Mono<Map<String, BatchUserSummaryResponse>> loadProfiles(Set<String> userIds) {
 		if (userIds == null || userIds.isEmpty()) return Mono.just(Map.of());
-		return profileCache.getAll(userIds)
+		// 너무 큰 요청에 대해서는 소프트 상한을 적용하고 경고 로그만 남김
+		final Set<String> idsToUse;
+		if (userIds.size() > SOFT_CAP) {
+			log.warn("profile enrichment requested for too many userIds: size={} > cap={}, truncating", userIds.size(), SOFT_CAP);
+			idsToUse = userIds.stream().limit(SOFT_CAP).collect(Collectors.toCollection(LinkedHashSet::new));
+		} else {
+			idsToUse = new LinkedHashSet<>(userIds);
+		}
+		return profileCache.getAll(idsToUse)
+				.onErrorResume(e -> {
+					log.warn("profile cache getAll failed: {}", e.toString());
+					return Mono.just(Map.of());
+				})
 				.defaultIfEmpty(Map.of())
 				.flatMap(cached -> {
-					Set<String> missing = new LinkedHashSet<>(userIds);
+					Set<String> missing = new LinkedHashSet<>(idsToUse);
 					missing.removeAll(cached.keySet());
 					Mono<Map<String, BatchUserSummaryResponse>> fetchedMono;
 					if (missing.isEmpty()) {
 						fetchedMono = Mono.just(Map.of());
 					} else {
-						fetchedMono = profileClient.fetchUserSummariesBatch(new ArrayList<>(missing))
+						fetchedMono = fetchInBatches(new ArrayList<>(missing))
 								.defaultIfEmpty(List.of())
 								.map(list -> list.stream()
 										.filter(Objects::nonNull)
@@ -111,7 +128,8 @@ public class ProfileEnrichmentUtil {
 								// 캐시 저장은 응답 체인과 분리하여 비동기로 처리합니다.
 								// 즉시 map을 반환하여 응답 구성을 진행하고, putAll은 fire-and-forget으로 수행합니다.
 								.doOnNext(map -> profileCache.putAll(map)
-										.onErrorResume(e -> Mono.empty())
+										.doOnError(e -> log.warn("failed to write profiles to cache: {}", e.toString()))
+										.subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())
 										.subscribe());
 					}
 					return fetchedMono.map(fetched -> {
@@ -122,6 +140,18 @@ public class ProfileEnrichmentUtil {
 						return merged;
 					});
 				});
+	}
+	
+	private Mono<List<BatchUserSummaryResponse>> fetchInBatches(List<String> ids) {
+		if (ids == null || ids.isEmpty()) return Mono.just(List.of());
+		List<List<String>> parts = new ArrayList<>();
+		for (int i = 0; i < ids.size(); i += BATCH_SIZE) {
+			parts.add(ids.subList(i, Math.min(i + BATCH_SIZE, ids.size())));
+		}
+		return reactor.core.publisher.Flux.fromIterable(parts)
+				.concatMap(profileClient::fetchUserSummariesBatch)
+				.collectList()
+				.map(listOfLists -> listOfLists.stream().filter(java.util.Objects::nonNull).flatMap(java.util.Collection::stream).collect(java.util.stream.Collectors.toList()));
 	}
 	
 	/**
