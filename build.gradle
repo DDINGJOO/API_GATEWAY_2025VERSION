@@ -28,6 +28,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     // OpenAPI/Swagger UI for Spring WebFlux (springdoc)
     implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.13'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

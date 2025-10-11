@@ -5,6 +5,7 @@ import com.study.api_gateway.client.CommentClient;
 import com.study.api_gateway.dto.Article.request.ArticleCreateRequest;
 import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.service.ImageConfirmService;
+import com.study.api_gateway.util.ProfileEnrichmentUtil;
 import com.study.api_gateway.util.ResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,6 +35,7 @@ public class ArticleController {
 	private final ImageConfirmService imageConfirmService;
 	private final ResponseFactory responseFactory;
 	private final com.study.api_gateway.client.LikeClient likeClient;
+	private final ProfileEnrichmentUtil profileEnrichmentUtil;
 	
 	private final String categoryId = "ARTICLE";
 	
@@ -104,7 +106,7 @@ public class ArticleController {
 						commentClient.getCommentsByArticle(articleId, 0, 10, "visibleCount"),
 						likeClient.getLikeDetail(categoryId, articleId)
 				)
-				.map(tuple3 -> {
+				.flatMap(tuple3 -> {
 					// Try to resolve current userId from headers (placeholder until token parsing is added)
 					String currentUserId = resolveCurrentUserId(req);
 					
@@ -125,11 +127,26 @@ public class ArticleController {
 							.map(c -> sanitizeCommentMap(c, currentUserId))
 							.toList();
 					
-					return responseFactory.ok(java.util.Map.of(
-						"article", tuple3.getT1(),
-							"comments", comments,
-							"likeDetail", likeDetail
-					), req);
+					// Build article map to allow adding profile info
+					com.study.api_gateway.dto.Article.response.ArticleResponse ar = tuple3.getT1();
+					java.util.Map<String, Object> articleMap = new java.util.LinkedHashMap<>();
+					if (ar != null) {
+						articleMap.put("articleId", ar.getArticleId());
+						articleMap.put("title", ar.getTitle());
+						articleMap.put("content", ar.getContent());
+						articleMap.put("writerId", ar.getWriterId());
+						articleMap.put("board", ar.getBoard());
+						articleMap.put("imageUrls", ar.getImageUrls());
+						articleMap.put("keywords", ar.getKeywords());
+						articleMap.put("lastestUpdateId", ar.getLastestUpdateId());
+					}
+					
+					return profileEnrichmentUtil.enrichArticleAndComments(articleMap, comments)
+							.map(ac -> {
+								java.util.Map<String, Object> data = new java.util.LinkedHashMap<>(ac);
+								data.put("likeDetail", likeDetail);
+								return responseFactory.ok(data, req);
+							});
 				});
 	}
 	
@@ -169,8 +186,8 @@ public class ArticleController {
 										));
 								Map<String, Integer> commentCountMap = tuple2.getT2() == null ? Map.of() : tuple2.getT2();
 								
-								// Enrich items by embedding counts
-								java.util.List<java.util.Map<String, Object>> enrichedItems = page.getItems() == null ? java.util.List.of() : page.getItems().stream()
+								// Enrich items by embedding counts first
+								java.util.List<java.util.Map<String, Object>> items = page.getItems() == null ? java.util.List.of() : page.getItems().stream()
 										.map(item -> {
 											java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
 											m.put("articleId", item.getArticleId());
@@ -186,19 +203,20 @@ public class ArticleController {
 											return m;
 										})
 										.toList();
-								
-								java.util.Map<String, Object> pageMap = new java.util.LinkedHashMap<>();
-								pageMap.put("items", enrichedItems);
-								pageMap.put("nextCursorUpdatedAt", page.getNextCursorUpdatedAt());
-								pageMap.put("nextCursorId", page.getNextCursorId());
-								pageMap.put("hasNext", page.isHasNext());
-								pageMap.put("size", page.getSize());
-								
-								// Keep original aggregated counts for backward compatibility
-								return responseFactory.ok(java.util.Map.of(
-										"page", pageMap
-								), req);
-							});
+								// Now enrich with profile nickname and image (deduped)
+								return items;
+							})
+							.flatMap(items -> profileEnrichmentUtil.enrichItemList(items)
+									.map(enrichedItems -> {
+										java.util.Map<String, Object> pageMap = new java.util.LinkedHashMap<>();
+										pageMap.put("items", enrichedItems);
+										pageMap.put("nextCursorUpdatedAt", page.getNextCursorUpdatedAt());
+										pageMap.put("nextCursorId", page.getNextCursorId());
+										pageMap.put("hasNext", page.isHasNext());
+										pageMap.put("size", page.getSize());
+										return responseFactory.ok(java.util.Map.of("page", pageMap), req);
+									})
+							);
 				});
 	}
 	

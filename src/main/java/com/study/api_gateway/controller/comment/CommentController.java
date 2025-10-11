@@ -28,6 +28,7 @@ import reactor.core.publisher.Mono;
 public class CommentController {
     private final CommentClient commentClient;
     private final ResponseFactory responseFactory;
+	private final com.study.api_gateway.util.ProfileEnrichmentUtil profileEnrichmentUtil;
 
 //    // 1) 루트 댓글 생성
 //    @Operation(summary = "루트 댓글 생성",
@@ -91,13 +92,17 @@ public class CommentController {
 				return Mono.just(responseFactory.ok("articleId는 필수입니다.", req, HttpStatus.BAD_REQUEST));
 			}
 			return commentClient.createRootComment(root)
-					.map(result -> responseFactory.ok(result, req, HttpStatus.CREATED));
+					.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
+							.map(enriched -> responseFactory.ok(enriched, req, HttpStatus.CREATED))
+					);
 		} else {
 			ReplyCreateRequest reply = new ReplyCreateRequest();
 			reply.setWriterId(request.getWriterId());
 			reply.setContents(request.getContents());
 			return commentClient.createReply(parentId, reply)
-					.map(result -> responseFactory.ok(result, req, HttpStatus.CREATED));
+					.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
+							.map(enriched -> responseFactory.ok(enriched, req, HttpStatus.CREATED))
+					);
 		}
     }
 	
@@ -117,7 +122,9 @@ public class CommentController {
 	                                                       @RequestParam(required = false, defaultValue = "visibleCount") String mode,
 	                                                       ServerHttpRequest req) {
 		return commentClient.getCommentsByArticle(articleId, page, 10, mode)
-                .map(result -> responseFactory.ok(result, req));
+				.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
+						.map(enriched -> responseFactory.ok(enriched, req))
+				);
     }
 
 //    // 4) 특정 부모의 대댓글 목록 조회
@@ -217,7 +224,7 @@ public class CommentController {
                                                          @RequestParam String writerId,
                                                          ServerHttpRequest req) {
         return commentClient.softDelete(id, writerId)
-		        .thenReturn(responseFactory.ok(null, req, org.springframework.http.HttpStatus.NO_CONTENT));
+		        .thenReturn(responseFactory.ok(null, req, HttpStatus.NO_CONTENT));
     }
 
 //    // 9) 여러 게시글에 대한 댓글 수 조회
