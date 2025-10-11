@@ -32,6 +32,9 @@ public class ArticleController {
 	private final CommentClient commentClient;
 	private final ImageConfirmService imageConfirmService;
 	private final ResponseFactory responseFactory;
+	private final com.study.api_gateway.client.LikeClient likeClient;
+	
+	private final String categoryId = "ARTICLE";
 	
 	@Operation(summary = "게시글 생성")
 	@ApiResponses({
@@ -97,16 +100,14 @@ public class ArticleController {
 	public Mono<ResponseEntity<BaseResponse>> getArticle(@PathVariable String articleId, ServerHttpRequest req) {
 		return Mono.zip(
 				articleClient.getArticle(articleId),
-				commentClient.getCommentsByArticle(articleId)
+						commentClient.getCommentsByArticle(articleId),
+						likeClient.getLikeDetail(categoryId, articleId)
 		)
-		.map(tuple -> {
-			var article = tuple.getT1();
-			var comments = tuple.getT2();
-			return responseFactory.ok(Map.of(
-					"article", article,
-					"comments", comments
-			), req);
-		});
+				.map(tuple3 -> responseFactory.ok(Map.of(
+						"article", tuple3.getT1(),
+						"comments", tuple3.getT2(),
+						"likeDetail", tuple3.getT3()
+				), req));
 	}
 	
 	@Operation(summary = "게시글 목록 조회")
@@ -127,6 +128,16 @@ public class ArticleController {
 	                                                                         ServerHttpRequest req)
 	{
 		return articleClient.fetchArticleCursorPageResponse(size, cursorId, board, keyword, title, content, writerIds)
-				.map(result -> responseFactory.ok(result, req));
+				.flatMap(page -> {
+					java.util.List<String> ids = page.getItems() == null ? java.util.List.of() : page.getItems().stream()
+							.map(com.study.api_gateway.dto.Article.response.ArticleResponse::getArticleId)
+							.filter(java.util.Objects::nonNull)
+							.toList();
+					return likeClient.getLikeCounts(categoryId, ids)
+							.map(counts -> responseFactory.ok(java.util.Map.of(
+									"page", page,
+									"likeCounts", counts
+							), req));
+				});
 	}
 }

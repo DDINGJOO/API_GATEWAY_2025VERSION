@@ -21,3 +21,7 @@ service:
     url: ${COMMENT_URL}
     port: ${COMMENT_PORT}
 
+  gaechu:
+    url: ${GAECHU_URL}
+    port: ${GAECHU_PORT}
+
