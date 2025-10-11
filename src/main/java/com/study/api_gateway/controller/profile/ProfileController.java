@@ -5,6 +5,7 @@ import com.study.api_gateway.client.LikeClient;
 import com.study.api_gateway.client.ProfileClient;
 import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.dto.profile.ProfileSearchCriteria;
+import com.study.api_gateway.dto.profile.enums.City;
 import com.study.api_gateway.dto.profile.request.ProfileUpdateRequest;
 import com.study.api_gateway.service.ImageConfirmService;
 import com.study.api_gateway.util.ResponseFactory;
@@ -44,7 +45,14 @@ public class ProfileController {
                             examples = @ExampleObject(name = "ProfilesList", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": [ { \"userId\": \"u1\" } ],\n  \"request\": { \"path\": \"/bff/v1/profiles\" }\n}")))
     })
     @GetMapping
-    public Mono<ResponseEntity<BaseResponse>> fetchProfiles(@RequestParam String userId, @RequestParam ProfileSearchCriteria req, @RequestParam String cursor, @RequestParam int size, ServerHttpRequest request){
+    public Mono<ResponseEntity<BaseResponse>> fetchProfiles(@RequestParam String userId, @RequestParam(required = false) String city, @RequestParam(required = false) String nickname,@RequestParam(required = false) List<Integer> genres, @RequestParam(required = false) List<Integer> instruments, @RequestParam(required = false) Character sex, @RequestParam(required = false) String cursor, @RequestParam(required = false) int size, ServerHttpRequest request){
+	    ProfileSearchCriteria req = ProfileSearchCriteria.builder()
+			    .city(City.valueOf(city))
+			    .nickName(nickname)
+			    .genres(genres)
+			    .instruments(instruments)
+			    .sex(sex)
+			    .build();
         return profileClient.fetchProfiles(userId, req, cursor, size)
                 .collectList()
                 .map(result -> responseFactory.ok(result, request));
