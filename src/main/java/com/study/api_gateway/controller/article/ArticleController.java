@@ -3,7 +3,10 @@ package com.study.api_gateway.controller.article;
 import com.study.api_gateway.client.ArticleClient;
 import com.study.api_gateway.client.CommentClient;
 import com.study.api_gateway.dto.Article.request.ArticleCreateRequest;
+import com.study.api_gateway.dto.Article.response.ArticleResponse;
 import com.study.api_gateway.dto.BaseResponse;
+import com.study.api_gateway.dto.gaechu.LikeCountResponse;
+import com.study.api_gateway.dto.gaechu.LikeDetailResponse;
 import com.study.api_gateway.service.ImageConfirmService;
 import com.study.api_gateway.util.ProfileEnrichmentUtil;
 import com.study.api_gateway.util.ResponseFactory;
@@ -21,9 +24,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/bff/v1/communities/articles")
@@ -111,7 +116,7 @@ public class ArticleController {
 					String currentUserId = resolveCurrentUserId(req);
 					
 					// Build likeDetail without referenceId and likerIds; add isOwn if current user liked
-					com.study.api_gateway.dto.gaechu.LikeDetailResponse ld = tuple3.getT3();
+					LikeDetailResponse ld = tuple3.getT3();
 					java.util.Map<String, Object> likeDetail = new java.util.LinkedHashMap<>();
 					int likeCount = ld == null || ld.getLikeCount() == null ? 0 : ld.getLikeCount();
 					likeDetail.put("likeCount", likeCount);
@@ -160,7 +165,7 @@ public class ArticleController {
 	@GetMapping
 	public Mono<ResponseEntity<BaseResponse>> getArticles(      @RequestParam(required = false) Integer size,
 	                                                                         @RequestParam(required = false) String cursorId,
-	                                                                         @RequestParam(required = false) Object board,
+	                                                            @RequestParam(required = false) String board,
 	                                                                         @RequestParam(required = false) List<?> keyword,
 	                                                                         @RequestParam(required = false) String title,
 	                                                                         @RequestParam(required = false) String content,
@@ -170,26 +175,26 @@ public class ArticleController {
 		return articleClient.fetchArticleCursorPageResponse(size, cursorId, board, keyword, title, content, writerIds)
 				.flatMap(page -> {
 					List<String> ids = page.getItems() == null ? List.of() : page.getItems().stream()
-							.map(com.study.api_gateway.dto.Article.response.ArticleResponse::getArticleId)
+							.map(ArticleResponse::getArticleId)
 							.filter(Objects::nonNull)
 							.toList();
-					Mono<List<com.study.api_gateway.dto.gaechu.LikeCountResponse>> likeCountsMono = likeClient.getLikeCounts(categoryId, ids);
+					Mono<List<LikeCountResponse>> likeCountsMono = likeClient.getLikeCounts(categoryId, ids);
 					Mono<Map<String, Integer>> commentCountsMono = commentClient.getCountsForArticles(ids);
 					return Mono.zip(likeCountsMono, commentCountsMono)
 							.map(tuple2 -> {
 								// Build quick lookup maps for counts
 								Map<String, Integer> likeCountMap = tuple2.getT1() == null ? Map.of() : tuple2.getT1().stream()
 										.filter(Objects::nonNull)
-										.collect(java.util.stream.Collectors.toMap(
-												com.study.api_gateway.dto.gaechu.LikeCountResponse::getReferenceId,
+										.collect(Collectors.toMap(
+												LikeCountResponse::getReferenceId,
 												lc -> lc.getLikeCount() == null ? 0 : lc.getLikeCount()
 										));
 								Map<String, Integer> commentCountMap = tuple2.getT2() == null ? Map.of() : tuple2.getT2();
 								
 								// Enrich items by embedding counts first
-								java.util.List<java.util.Map<String, Object>> items = page.getItems() == null ? java.util.List.of() : page.getItems().stream()
+								List<Map<String, Object>> items = page.getItems() == null ? List.of() : page.getItems().stream()
 										.map(item -> {
-											java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+											Map<String, Object> m = new LinkedHashMap<>();
 											m.put("articleId", item.getArticleId());
 											m.put("title", item.getTitle());
 											m.put("content", item.getContent());

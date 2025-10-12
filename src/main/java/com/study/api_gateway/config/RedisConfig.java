@@ -1,6 +1,5 @@
 package com.study.api_gateway.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
@@ -25,10 +24,6 @@ public class RedisConfig {
 		return new ReactiveRedisTemplate<>(connectionFactory, context);
 	}
 	
-	@Bean
-	public ObjectMapper objectMapper() {
-		return new ObjectMapper();
-	}
 	
 	
 }

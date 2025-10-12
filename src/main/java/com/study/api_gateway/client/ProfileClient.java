@@ -116,22 +116,27 @@ public class ProfileClient {
     }
 	
 	public Flux<UserResponse> fetchProfiles(String city, String nickname, java.util.List<Integer> genres, java.util.List<Integer> instruments, Character sex, String cursor, Integer size) {
-		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/profiles")
-				.queryParam("city", city)
-				.queryParam("nickName", nickname) // 프로필 서버는 nickName 파라미터명을 사용
-				.queryParam("genres", genres)
-				.queryParam("instruments", instruments)
-				.queryParam("sex", sex)
-                .queryParam("cursor", cursor)
-                .queryParam("size", size)
-                .toUriString();
+		UriComponentsBuilder builder = UriComponentsBuilder.fromPath(PREFIX + "/profiles");
+		// 프로필 서버는 제공된 필터만 전달해야 하며, null/빈 값은 쿼리에 포함하지 않습니다.
+		if (city != null && !city.isBlank()) builder.queryParam("city", city);
+		// nickname 파라미터명은 백엔드 스펙에 맞춰 nickName 사용
+		if (nickname != null && !nickname.isBlank()) builder.queryParam("nickName", nickname);
+		if (genres != null && !genres.isEmpty())
+			builder.queryParam("genres", String.join(",", genres.stream().map(String::valueOf).toList()));
+		if (instruments != null && !instruments.isEmpty())
+			builder.queryParam("instruments", String.join(",", instruments.stream().map(String::valueOf).toList()));
+		if (sex != null) builder.queryParam("sex", sex);
+		if (cursor != null && !cursor.isBlank()) builder.queryParam("cursor", cursor);
+		if (size != null) builder.queryParam("size", size);
+		String uriString = builder.toUriString();
 		
 		log.info("fetchProfiles uriString : {}", uriString);
 
         return webClient.get()
                 .uri(uriString)
                 .retrieve()
-                .bodyToFlux(UserResponse.class);
+		        .bodyToMono(com.study.api_gateway.dto.profile.response.UserPageResponse.class)
+		        .flatMapMany(page -> reactor.core.publisher.Flux.fromIterable(page == null || page.getContent() == null ? java.util.List.of() : page.getContent()));
     }
 
     public Mono<Boolean> validateProfile(String type, String value ){

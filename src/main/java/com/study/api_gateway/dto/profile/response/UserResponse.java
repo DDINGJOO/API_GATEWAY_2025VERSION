@@ -1,6 +1,5 @@
 package com.study.api_gateway.dto.profile.response;
 
-import com.study.api_gateway.dto.profile.enums.City;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -26,7 +25,7 @@ public class UserResponse {
 	@Schema(description = "연주 가능한 악기 목록", example = "[\"GUITAR\", \"BASS\"]")
     private List<String> instruments;
 	@Schema(description = "활동 지역", example = "SEOUL")
-    private City city;
+	private String city;
 	@Schema(description = "닉네임", example = "딩주")
     private String nickname;
 	@Schema(description = "채팅 가능 여부", example = "true")
