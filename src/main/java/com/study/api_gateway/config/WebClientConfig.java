@@ -39,6 +39,11 @@ public class WebClientConfig {
 	private String GaechuDns;
 	@Value("${service.gaechu.port}")
 	private String GaechuPort;
+	
+	@Value("${service.activity.url}")
+	private String ActivityDns;
+	@Value("${service.activity.port}")
+	private String ActivityPort;
 
     private String normalizeHost(String raw) {
         if (raw == null) return "";
@@ -107,6 +112,16 @@ public class WebClientConfig {
 	public WebClient gaechuWebClient(WebClient.Builder builder) {
 		String host = normalizeHost(GaechuDns);
 		String url = "http://%s:%s".formatted(host, GaechuPort);
+		
+		return builder
+				.baseUrl(url)
+				.build();
+	}
+	
+	@Bean
+	public WebClient activitiesClient(WebClient.Builder builder) {
+		String host = normalizeHost(ActivityDns);
+		String url = "http://%s:%s".formatted(host, ActivityPort);
 		
 		return builder
 				.baseUrl(url)
