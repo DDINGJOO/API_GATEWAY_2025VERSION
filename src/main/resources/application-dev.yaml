@@ -24,4 +24,7 @@ service:
   gaechu:
     url: ${GAECHU_URL}
     port: ${GAECHU_PORT}
+  activity:
+    url: ${ACTIVITY_URL}
+    port: ${ACTIVITY_PORT}
 
