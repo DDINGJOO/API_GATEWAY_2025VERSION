@@ -1,7 +1,7 @@
 package com.study.api_gateway.controller.article;
 
 import com.study.api_gateway.client.EventClient;
-import com.study.api_gateway.dto.Article.request.ArticleCreateRequest;
+import com.study.api_gateway.dto.Article.request.EventArticleCreateRequest;
 import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.service.ImageConfirmService;
 import com.study.api_gateway.util.ProfileEnrichmentUtil;
@@ -42,7 +42,8 @@ public class EventController {
 							examples = @ExampleObject(name = "EventCreateSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"articleId\": \"event-1\",\n    \"title\": \"밴드 페스티벌\",\n    \"content\": \"연말 페스티벌입니다.\",\n    \"eventStartDate\": \"2025-12-24T18:00:00\",\n    \"eventEndDate\": \"2025-12-26T23:00:00\"\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/events\"\n  }\n}")))
 	})
 	@PostMapping()
-	public Mono<ResponseEntity<BaseResponse>> postEvent(@RequestBody ArticleCreateRequest request, ServerHttpRequest req) {
+	public Mono<ResponseEntity<BaseResponse>> postEvent(@RequestBody EventArticleCreateRequest request, ServerHttpRequest req) {
+	
 		return eventClient.postEvent(request)
 				.flatMap(result -> {
 					List<String> imageIds = request.getImageUrls();
@@ -62,7 +63,7 @@ public class EventController {
 							examples = @ExampleObject(name = "EventUpdateSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"articleId\": \"event-1\",\n    \"title\": \"수정된 이벤트\"\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/events/{articleId}\"\n  }\n}")))
 	})
 	@PutMapping("/{articleId}")
-	public Mono<ResponseEntity<BaseResponse>> updateEvent(@PathVariable String articleId, @RequestBody ArticleCreateRequest request, ServerHttpRequest req) {
+	public Mono<ResponseEntity<BaseResponse>> updateEvent(@PathVariable String articleId, @RequestBody EventArticleCreateRequest request, ServerHttpRequest req) {
 		return eventClient.updateEvent(articleId, request)
 				.flatMap(result -> {
 					List<String> imageIds = request.getImageUrls();
