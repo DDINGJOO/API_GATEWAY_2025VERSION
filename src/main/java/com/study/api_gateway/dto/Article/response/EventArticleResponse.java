@@ -6,12 +6,12 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Schema(name = "EventArticleResponse", description = "이벤트 게시글 응답",
 		example = "{\n  \"articleId\": \"evt_001\",\n  \"title\": \"밴드 페스티벌\",\n  \"content\": \"연말 밴드 페스티벌이 열립니다.\",\n  \"writerId\": \"user_123\",\n  \"board\": { \"3\": \"EVENT\" },\n  \"LastestUpdateId\": \"2025-01-10T12:34:56\",\n  \"imageUrls\": { \"img_1\": \"https://cdn.example.com/images/img_1.png\" },\n  \"keywords\": { \"10\": \"MUSIC\" },\n  \"eventStartDate\": \"2025-12-24T18:00:00\",\n  \"eventEndDate\": \"2025-12-26T23:00:00\"\n}")
 public class EventArticleResponse extends ArticleResponse {

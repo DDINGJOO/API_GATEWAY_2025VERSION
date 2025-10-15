@@ -3,6 +3,7 @@ package com.study.api_gateway.dto.Article.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -24,6 +25,11 @@ public class ArticleCreateRequest {
 	@Schema(description = "이미지 ID 목록", example = "[\"img_1\", \"img_2\"]")
 	private List<String> imageUrls;
 	
+	
+	@Schema(description = "이벤트 시작 날짜", example = "2025-12-24T18:00:00")
+	private LocalDateTime eventStartDate;
+	@Schema(description = "이벤트 종료 날짜", example = "2025-12-26T23:00:00")
+	private LocalDateTime eventEndDate;
 	
 	@Schema(description = "키워드 ID 목록", example = "[10, 12]")
 	private List<?> keywords;
