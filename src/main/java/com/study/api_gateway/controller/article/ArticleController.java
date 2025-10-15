@@ -31,7 +31,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/bff/v1/communities/articles")
+@RequestMapping("/bff/v1/communities/articles/regular")
 @RequiredArgsConstructor
 @Validated
 public class ArticleController {
@@ -44,12 +44,12 @@ public class ArticleController {
 	
 	private final String categoryId = "ARTICLE";
 	
-	@Operation(summary = "게시글 생성")
+	@Operation(summary = "일반 게시글 생성")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
 						schema = @Schema(implementation = BaseResponse.class),
-						examples = @ExampleObject(name = "ArticleCreateSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"articleId\": \"article-1\",\n    \"title\": \"제목\",\n    \"content\": \"내용\",\n    \"imageUrls\": [\"img-1\"]\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles\"\n  }\n}")))
+							examples = @ExampleObject(name = "ArticleCreateSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"articleId\": \"article-1\",\n    \"title\": \"제목\",\n    \"content\": \"내용\",\n    \"imageUrls\": [\"img-1\"]\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/regular\"\n  }\n}")))
 	})
 	@PostMapping()
 	public Mono<ResponseEntity<BaseResponse>> postArticle(@RequestBody ArticleCreateRequest request, ServerHttpRequest req) {
@@ -64,12 +64,12 @@ public class ArticleController {
 				});
 	}
 	
-	@Operation(summary = "게시글 수정")
+	@Operation(summary = "일반 게시글 수정")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
 						schema = @Schema(implementation = BaseResponse.class),
-						examples = @ExampleObject(name = "ArticleUpdateSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"articleId\": \"article-1\",\n    \"title\": \"수정된 제목\"\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/{articleId}\"\n  }\n}")))
+							examples = @ExampleObject(name = "ArticleUpdateSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"articleId\": \"article-1\",\n    \"title\": \"수정된 제목\"\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/regular/{articleId}\"\n  }\n}")))
 	})
 	@PutMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> updateArticle(@PathVariable String articleId, @RequestBody ArticleCreateRequest request, ServerHttpRequest req) {
@@ -84,12 +84,12 @@ public class ArticleController {
 				});
 	}
 	
-	@Operation(summary = "게시글 삭제")
+	@Operation(summary = "일반 게시글 삭제")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
 						schema = @Schema(implementation = BaseResponse.class),
-						examples = @ExampleObject(name = "ArticleDeleteSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": \"deleted\",\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/{articleId}\"\n  }\n}")))
+							examples = @ExampleObject(name = "ArticleDeleteSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": \"deleted\",\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/regular/{articleId}\"\n  }\n}")))
 	})
 	@DeleteMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> deleteArticle(@PathVariable String articleId, ServerHttpRequest req) {
@@ -97,12 +97,12 @@ public class ArticleController {
 				.thenReturn(responseFactory.ok("deleted", req, HttpStatus.OK));
 	}
 	
-	@Operation(summary = "게시글 단건 조회(댓글 포함)")
+	@Operation(summary = "일반 게시글 단건 조회(댓글 포함)")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
 						schema = @Schema(implementation = BaseResponse.class),
-							examples = @ExampleObject(name = "ArticleDetailWithComments", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"article\": {\n      \"articleId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n      \"title\": \"공연 함께 하실 분\",\n      \"content\": \"같이 즐겁게 공연하실 분을 찾습니다.\",\n      \"writerId\": \"user_123\",\n      \"board\": { \"1\": \"공지사항\" },\n      \"imageUrls\": {},\n      \"keywords\": { \"10\": \"중요\" },\n      \"lastestUpdateId\": \"2025-10-11T17:52:27\"\n    },\n    \"comments\": [\n      { \"commentId\": \"c1\", \"writerId\": \"user_123\", \"contents\": \"첫 댓글\", \"isOwn\": true, \"replies\": [] }\n    ],\n    \"likeDetail\": { \"likeCount\": 0, \"isOwn\": false }\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/{articleId}\"\n  }\n}")))
+							examples = @ExampleObject(name = "ArticleDetailWithComments", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"article\": {\n      \"articleId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n      \"title\": \"공연 함께 하실 분\",\n      \"content\": \"같이 즐겁게 공연하실 분을 찾습니다.\",\n      \"writerId\": \"user_123\",\n      \"board\": { \"1\": \"공지사항\" },\n      \"imageUrls\": {},\n      \"keywords\": { \"10\": \"중요\" },\n      \"lastestUpdateId\": \"2025-10-11T17:52:27\"\n    },\n    \"comments\": [\n      { \"commentId\": \"c1\", \"writerId\": \"user_123\", \"contents\": \"첫 댓글\", \"isOwn\": true, \"replies\": [] }\n    ],\n    \"likeDetail\": { \"likeCount\": 0, \"isOwn\": false }\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/regular/{articleId}\"\n  }\n}")))
 	})
 	@GetMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> getArticle(@PathVariable String articleId, ServerHttpRequest req) {
@@ -155,12 +155,12 @@ public class ArticleController {
 				});
 	}
 	
-	@Operation(summary = "게시글 목록 조회")
+	@Operation(summary = "일반 게시글 목록 조회")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
 						schema = @Schema(implementation = BaseResponse.class),
-							examples = @ExampleObject(name = "ArticleListSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"page\": {\n      \"items\": [\n        {\n          \"articleId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n          \"title\": \"공연 함께 하실 분\",\n          \"content\": \"같이 즐겁게 공연하실 분을 찾습니다.\",\n          \"writerId\": \"user_123\",\n          \"board\": { \"1\": \"공지사항\" },\n          \"imageUrls\": {},\n          \"keywords\": { \"10\": \"중요\" },\n          \"lastestUpdateId\": \"2025-10-11T17:52:27\",\n          \"commentCount\": 0,\n          \"likeCount\": 0\n        }\n      ],\n      \"nextCursorUpdatedAt\": \"2025-10-11T17:52:23\",\n      \"nextCursorId\": \"6ad747b9-0f34-48ad-8dba-5afa2f7b822f\",\n      \"hasNext\": false,\n      \"size\": 10\n    },\n    \"likeCounts\": [\n      {\n        \"referenceId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n        \"likeCount\": 0\n      }\n    ],\n    \"commentCounts\": {\n      \"42840044-0f3e-482c-b5d5-0883af43e63e\": 0\n    }\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles?size=10\"\n  }\n}")))
+							examples = @ExampleObject(name = "ArticleListSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"page\": {\n      \"items\": [\n        {\n          \"articleId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n          \"title\": \"공연 함께 하실 분\",\n          \"content\": \"같이 즐겁게 공연하실 분을 찾습니다.\",\n          \"writerId\": \"user_123\",\n          \"board\": { \"1\": \"공지사항\" },\n          \"imageUrls\": {},\n          \"keywords\": { \"10\": \"중요\" },\n          \"lastestUpdateId\": \"2025-10-11T17:52:27\",\n          \"commentCount\": 0,\n          \"likeCount\": 0\n        }\n      ],\n      \"nextCursorUpdatedAt\": \"2025-10-11T17:52:23\",\n      \"nextCursorId\": \"6ad747b9-0f34-48ad-8dba-5afa2f7b822f\",\n      \"hasNext\": false,\n      \"size\": 10\n    },\n    \"likeCounts\": [\n      {\n        \"referenceId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n        \"likeCount\": 0\n      }\n    ],\n    \"commentCounts\": {\n      \"42840044-0f3e-482c-b5d5-0883af43e63e\": 0\n    }\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/regular?size=10\"\n  }\n}")))
 	})
 	@GetMapping
 	public Mono<ResponseEntity<BaseResponse>> getArticles(      @RequestParam(required = false) Integer size,

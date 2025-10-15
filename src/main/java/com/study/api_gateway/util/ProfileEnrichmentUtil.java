@@ -68,6 +68,25 @@ public class ProfileEnrichmentUtil {
 	}
 	
 	/**
+	 * 단일 게시글 보강
+	 * - 단일 게시글 맵에서 writerId를 찾아 프로필 정보를 주입합니다.
+	 *
+	 * @param article 게시글 본문 맵 (writerId 포함 가능)
+	 * @return nickname, profileImageUrl이 주입된 게시글 맵을 포함하는 Mono
+	 */
+	public Mono<Map<String, Object>> enrichArticle(Map<String, Object> article) {
+		if (article == null) return Mono.just(new LinkedHashMap<>());
+		Set<String> userIds = new LinkedHashSet<>();
+		collectUserIds(article, userIds);
+		if (userIds.isEmpty()) return Mono.just(article);
+		return loadProfiles(userIds)
+				.map(profileMap -> {
+					applyProfile(article, profileMap);
+					return article;
+				});
+	}
+	
+	/**
 	 * 게시글 및 댓글 트리 보강
 	 * - 단일 게시글 맵과, 대댓글(replies)을 포함할 수 있는 댓글 리스트를 함께 보강합니다.
 	 * - 게시글/댓글/대댓글에서 writerId 또는 userId를 모두 수집하여 한 번에 조회합니다.

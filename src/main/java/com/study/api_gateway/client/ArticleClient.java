@@ -25,9 +25,9 @@ public class ArticleClient {
 	
 	
 	public Mono<ArticleResponse> postArticle(ArticleCreateRequest request) {
-		String uriString = UriComponentsBuilder.fromPath("/api/articles")
+		String uriString = UriComponentsBuilder.fromPath("/api/articles/regular")
 				.toUriString();
-		
+
 		return webClient.post()
 				.uri(uriString)
 				.bodyValue(request)
@@ -36,10 +36,10 @@ public class ArticleClient {
 	}
 	
 	public Mono<ArticleResponse> getArticle(String articleId) {
-		String uriString = UriComponentsBuilder.fromPath("/api/articles/{articleId}")
+		String uriString = UriComponentsBuilder.fromPath("/api/articles/regular/{articleId}")
 				.buildAndExpand(articleId)
 				.toUriString();
-		
+
 		return webClient.get()
 				.uri(uriString)
 				.retrieve()
@@ -47,7 +47,7 @@ public class ArticleClient {
 	}
 	
 	public Mono<Void> deleteArticle(String articleId) {
-		String uriString = UriComponentsBuilder.fromPath("/api/articles/{articleId}")
+		String uriString = UriComponentsBuilder.fromPath("/api/articles/regular/{articleId}")
 				.buildAndExpand(articleId)
 				.toUriString();
 		
@@ -59,7 +59,7 @@ public class ArticleClient {
 	
 	public Mono<ArticleResponse> updateArticle(String articleId , ArticleCreateRequest req)
 	{
-		String uriString = UriComponentsBuilder.fromPath("/api/articles/{articleId}")
+		String uriString = UriComponentsBuilder.fromPath("/api/articles/regular/{articleId}")
 				.buildAndExpand(articleId)
 				.toUriString();
 		
@@ -71,7 +71,7 @@ public class ArticleClient {
 	}
 	
 	public Mono<ArticleCursorPageResponse> fetchArticleCursorPageResponse(Integer size, String cursorId, Object board, List<?> keyword , String title, String content, List<String> writerIds) {
-		String uriString = UriComponentsBuilder.fromPath("/api/articles/search")
+		String uriString = UriComponentsBuilder.fromPath("/api/articles/regular/search")
 				.queryParam("size", size)
 				.queryParam("cursorId", cursorId)
 				.queryParam("board", board)
