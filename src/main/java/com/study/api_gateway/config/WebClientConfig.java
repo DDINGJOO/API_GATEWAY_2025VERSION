@@ -44,6 +44,11 @@ public class WebClientConfig {
 	private String ActivityDns;
 	@Value("${service.activity.port}")
 	private String ActivityPort;
+	
+	@Value("${service.support.url}")
+	private String SupportDns;
+	@Value("${service.support.port}")
+	private String SupportPort;
 
     private String normalizeHost(String raw) {
         if (raw == null) return "";
@@ -122,6 +127,16 @@ public class WebClientConfig {
 	public WebClient activitiesClient(WebClient.Builder builder) {
 		String host = normalizeHost(ActivityDns);
 		String url = "http://%s:%s".formatted(host, ActivityPort);
+
+		return builder
+				.baseUrl(url)
+				.build();
+	}
+	
+	@Bean
+	public WebClient supportWebClient(WebClient.Builder builder) {
+		String host = normalizeHost(SupportDns);
+		String url = "http://%s:%s".formatted(host, SupportPort);
 		
 		return builder
 				.baseUrl(url)

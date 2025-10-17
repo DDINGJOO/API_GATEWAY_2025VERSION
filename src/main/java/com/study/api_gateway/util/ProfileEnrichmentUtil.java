@@ -30,7 +30,7 @@ public class ProfileEnrichmentUtil {
 	
 	// 유저 관련 ID로 추정되는 키 목록 (확장 가능)
 	private static final Set<String> USER_ID_KEYS = Set.of(
-			"userId", "writerId", "ownerId", "creatorId", "likerId", "senderId", "receiverId"
+			"userId", "writerId", "ownerId", "creatorId", "likerId", "senderId", "receiverId", "reporterId", "reportedId"
 	);
 	
 	// 프로필 기본값: 닉네임/이미지 URL이 없을 때 응답에 채워넣는 값

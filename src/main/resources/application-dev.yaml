@@ -27,4 +27,7 @@ service:
   activity:
     url: ${ACTIVITY_URL}
     port: ${ACTIVITY_PORT}
+  support:
+    url: ${SUPPORT_URL}
+    port: ${SUPPORT_PORT}
 
