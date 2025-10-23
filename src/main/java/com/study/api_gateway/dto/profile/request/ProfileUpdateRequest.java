@@ -4,7 +4,7 @@ package com.study.api_gateway.dto.profile.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
-import java.util.Map;
+import java.util.List;
 
 @Data
 @Getter
@@ -31,7 +31,7 @@ public class ProfileUpdateRequest {
     private Character sex;
 	
 	@Schema(description = "장르 ID-이름 매핑", example = "{\n  \"1\": \"ROCK\", \"2\": \"JAZZ\"\n}")
-    private Map<Integer,String> genres;
+	private List<Integer> genres;
 	@Schema(description = "악기 ID-이름 매핑", example = "{\n  \"1\": \"GUITAR\", \"3\": \"DRUM\"\n}")
-    private Map<Integer,String> instruments;
+	private List<Integer> instruments;
 }

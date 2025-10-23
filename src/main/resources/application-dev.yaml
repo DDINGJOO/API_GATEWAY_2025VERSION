@@ -1,5 +1,10 @@
 server:
   port: ${SERVER_PORT}
+
+# CORS 설정 - 개발 환경
+cors:
+  allowed-origins: "*"  # 모든 origin 허용 (앱 개발 + 로컬 웹 테스트)
+
 service:
   auth:
     url: ${AUTH_URL}

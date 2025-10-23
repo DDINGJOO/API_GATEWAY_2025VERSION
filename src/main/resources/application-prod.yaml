@@ -1,0 +1,3 @@
+cors:
+  allowed-origins: "https://admin.bander.com,https://www.bander.com"
+

@@ -109,7 +109,7 @@ public class ProfileController {
     })
 	@PutMapping("/{userId}")
     public Mono<ResponseEntity<BaseResponse>> updateProfile2(@PathVariable String userId, @RequestBody ProfileUpdateRequest req, ServerHttpRequest request){
-        return profileClient.updateProfileVer2(userId, req)
+		return profileClient.updateProfile(userId, req)
 		        .map(success -> {
 			        if (Boolean.TRUE.equals(success)) {
 				        // 프로필 수정 성공 시, 해당 사용자 캐시를 비동기로 무효화하여 이후 조회에서 최신 정보를 받도록 처리

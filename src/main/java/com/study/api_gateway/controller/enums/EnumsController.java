@@ -1,12 +1,9 @@
 package com.study.api_gateway.controller.enums;
 
 
-import com.study.api_gateway.client.ArticleClient;
-import com.study.api_gateway.client.AuthClient;
-import com.study.api_gateway.client.ImageClient;
-import com.study.api_gateway.client.ProfileClient;
+import com.study.api_gateway.client.*;
 import com.study.api_gateway.dto.BaseResponse;
-import com.study.api_gateway.dto.auth.response.ConsentsTable;
+import com.study.api_gateway.dto.support.faq.FaqCategory;
 import com.study.api_gateway.util.ResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -32,6 +29,7 @@ public class EnumsController {
     private final ImageClient imageClient;
     private final ResponseFactory responseFactory;
 	private final ArticleClient articleClient;
+	private final FaqClient faqClient;
 
     @Operation(summary = "장르 목록")
     @ApiResponses({
@@ -135,5 +133,18 @@ public class EnumsController {
 	public Mono<ResponseEntity<BaseResponse>> articleKeywords(ServerHttpRequest request){
 		return articleClient.getKeywords()
 				.map(result -> responseFactory.ok(result, request));
+	}
+	
+	@Operation(summary = "FAQ 목록 조회", description = "카테고리별 FAQ 목록을 조회합니다. category가 없으면 전체 조회합니다.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "성공")
+	})
+	@GetMapping("/faqs")
+	public Mono<ResponseEntity<BaseResponse>> getFaqs(
+			@RequestParam(required = false) FaqCategory category,
+			ServerHttpRequest req) {
+		return faqClient.getFaqs(category)
+				.collectList()
+				.map(list -> responseFactory.ok(list, req));
 	}
 }

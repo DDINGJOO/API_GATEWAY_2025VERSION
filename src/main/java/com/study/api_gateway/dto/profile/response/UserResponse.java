@@ -32,6 +32,8 @@ public class UserResponse {
     private Boolean isChattable;
 	@Schema(description = "프로필 공개 여부", example = "true")
     private Boolean isPublic;
+	@Schema(description = "자기소개", example = "asdasd")
+	private String introduction;
 
 
 }

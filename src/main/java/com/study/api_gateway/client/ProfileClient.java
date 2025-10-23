@@ -3,6 +3,7 @@ package com.study.api_gateway.client;
 
 import com.study.api_gateway.dto.profile.request.ProfileUpdateRequest;
 import com.study.api_gateway.dto.profile.response.BatchUserSummaryResponse;
+import com.study.api_gateway.dto.profile.response.UserPageResponse;
 import com.study.api_gateway.dto.profile.response.UserResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,7 +15,10 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -26,7 +30,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class ProfileClient {
     private final WebClient webClient;
-    private final String PREFIX = "/api/profiles";
+	private final String PREFIX = "/api/v1/profiles";
 
     public ProfileClient(@Qualifier(value = "profileWebClient") WebClient webClient) {
         this.webClient = webClient;
@@ -40,8 +44,8 @@ public class ProfileClient {
 	 * @return key: 장르 ID, value: 장르명
 	 */
     public Mono<Map<Integer, String>> fetchGenres() {
-
-        String uriString = UriComponentsBuilder.fromPath(PREFIX + "/enums/genres")
+	    
+	    String uriString = UriComponentsBuilder.fromPath(PREFIX + "/genres")
                 .toUriString();
 
         return webClient.get()
@@ -56,7 +60,7 @@ public class ProfileClient {
 	 * @return key: 악기 ID, value: 악기명
 	 */
     public Mono<Map<Integer, String>> fetchInstruments() {
-        String uriString = UriComponentsBuilder.fromPath(PREFIX + "/enums/instruments")
+	    String uriString = UriComponentsBuilder.fromPath(PREFIX + "/instruments")
                 .toUriString();
         return webClient.get()
                 .uri(uriString)
@@ -70,32 +74,19 @@ public class ProfileClient {
 	 * @return key: 지역 코드, value: 지역명
 	 */
     public Mono<Map<String, String>> fetchLocations() {
-        String uriString = UriComponentsBuilder.fromPath(PREFIX + "/enums/locations")
+	    String uriString = UriComponentsBuilder.fromPath(PREFIX + "/locations")
                 .toUriString();
         return webClient.get()
                 .uri(uriString)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {});
     }
-
-//
-//    public Mono<Boolean> updateProfileVer1(String userId, ProfileUpdateRequest req)
-//    {
-//
-//        String uriString = UriComponentsBuilder.fromPath(PREFIX +"/profiles/"+userId +"/ver1")
-//                .toUriString();
-//
-//        return webClient.put()
-//                .uri(uriString)
-//                .bodyValue(req)
-//                .retrieve()
-//                .bodyToMono(Boolean.class);
-//    }
-
-    public Mono<Boolean> updateProfileVer2(String userId, ProfileUpdateRequest req)
+	
+	
+	public Mono<Boolean> updateProfile(String userId, ProfileUpdateRequest req)
     {
-
-        String uriString = UriComponentsBuilder.fromPath(PREFIX +"/profiles/"+ userId +"/ver2")
+	    
+	    String uriString = UriComponentsBuilder.fromPath(PREFIX + "/" + userId)
                 .toUriString();
 
         return webClient.put()
@@ -106,7 +97,7 @@ public class ProfileClient {
     }
 
     public Mono<UserResponse> fetchProfile(String userId){
-        String uriString = UriComponentsBuilder.fromPath(PREFIX + "/profiles/" + userId)
+	    String uriString = UriComponentsBuilder.fromPath(PREFIX + "/" + userId)
                 .toUriString();
 
         return webClient.get()
@@ -115,8 +106,8 @@ public class ProfileClient {
                 .bodyToMono(UserResponse.class);
     }
 	
-	public Flux<UserResponse> fetchProfiles(String city, String nickname, java.util.List<Integer> genres, java.util.List<Integer> instruments, Character sex, String cursor, Integer size) {
-		UriComponentsBuilder builder = UriComponentsBuilder.fromPath(PREFIX + "/profiles");
+	public Flux<UserResponse> fetchProfiles(String city, String nickname, List<Integer> genres, List<Integer> instruments, Character sex, String cursor, Integer size) {
+		UriComponentsBuilder builder = UriComponentsBuilder.fromPath(PREFIX);
 		// 프로필 서버는 제공된 필터만 전달해야 하며, null/빈 값은 쿼리에 포함하지 않습니다.
 		if (city != null && !city.isBlank()) builder.queryParam("city", city);
 		// nickname 파라미터명은 백엔드 스펙에 맞춰 nickName 사용
@@ -135,8 +126,8 @@ public class ProfileClient {
         return webClient.get()
                 .uri(uriString)
                 .retrieve()
-		        .bodyToMono(com.study.api_gateway.dto.profile.response.UserPageResponse.class)
-		        .flatMapMany(page -> reactor.core.publisher.Flux.fromIterable(page == null || page.getContent() == null ? java.util.List.of() : page.getContent()));
+		        .bodyToMono(UserPageResponse.class)
+		        .flatMapMany(page -> Flux.fromIterable(page == null || page.getContent() == null ? List.of() : page.getContent()));
     }
 
     public Mono<Boolean> validateProfile(String type, String value ){
@@ -152,23 +143,24 @@ public class ProfileClient {
                 .bodyToMono(Boolean.class);
     }
 	
-	public Mono<java.util.List<BatchUserSummaryResponse>> fetchUserSummariesBatch(java.util.List<String> userIds) {
-		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/profiles/batch")
+	public Mono<List<BatchUserSummaryResponse>> fetchUserSummariesBatch(List<String> userIds) {
+		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/simple/batch")
 				.toUriString();
 		return webClient.post()
 				.uri(uriString)
 				.bodyValue(userIds)
 				.retrieve()
-				.bodyToMono(new ParameterizedTypeReference<java.util.List<BatchUserSummaryResponse>>() {
+				.bodyToMono(new ParameterizedTypeReference<List<BatchUserSummaryResponse>>() {
 				})
 				.timeout(java.time.Duration.ofSeconds(2))
-				.retryWhen(reactor.util.retry.Retry.backoff(2, java.time.Duration.ofMillis(200))
+				.retryWhen(Retry.backoff(2, java.time.Duration.ofMillis(200))
 						.filter(this::isTransient))
 				.onErrorResume(e -> {
 					log.warn("fetchUserSummariesBatch failed for ids.size={} : {}", userIds == null ? 0 : userIds.size(), e.toString());
-					return Mono.just(java.util.Collections.emptyList());
+					return Mono.just(Collections.emptyList());
 				});
     }
+	
 	
 	private boolean isTransient(Throwable t) {
 		// 네트워크 지연, 일시적 장애로 추정되는 경우에만 재시도
