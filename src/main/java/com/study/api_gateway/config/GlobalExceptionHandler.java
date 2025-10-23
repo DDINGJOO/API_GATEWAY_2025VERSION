@@ -1,7 +1,7 @@
 package com.study.api_gateway.config;
 
-import com.study.api_gateway.dto.BaseResponse;
-import com.study.api_gateway.util.ResponseFactory;
+import com.study.api_gateway.common.dto.BaseResponse;
+import com.study.api_gateway.common.response.ResponseFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -9,8 +9,6 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {

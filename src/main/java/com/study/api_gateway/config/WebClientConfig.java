@@ -114,7 +114,7 @@ public class WebClientConfig {
 	}
 	
 	@Bean
-	public WebClient gaechuWebClient(WebClient.Builder builder) {
+	public WebClient likeWebClient(WebClient.Builder builder) {
 		String host = normalizeHost(GaechuDns);
 		String url = "http://%s:%s".formatted(host, GaechuPort);
 		
@@ -124,7 +124,7 @@ public class WebClientConfig {
 	}
 	
 	@Bean
-	public WebClient activitiesClient(WebClient.Builder builder) {
+	public WebClient feedClient(WebClient.Builder builder) {
 		String host = normalizeHost(ActivityDns);
 		String url = "http://%s:%s".formatted(host, ActivityPort);
 
