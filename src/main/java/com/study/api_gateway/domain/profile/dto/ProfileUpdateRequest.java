@@ -30,8 +30,8 @@ public class ProfileUpdateRequest {
 	@Schema(description = "성별", example = "M")
 	private Character sex;
 	
-	@Schema(description = "장르 ID-이름 매핑", example = "{\n  \"1\": \"ROCK\", \"2\": \"JAZZ\"\n}")
+	@Schema(description = "장르 ID")
 	private List<Integer> genres;
-	@Schema(description = "악기 ID-이름 매핑", example = "{\n  \"1\": \"GUITAR\", \"3\": \"DRUM\"\n}")
+	@Schema(description = "악기 ID")
 	private List<Integer> instruments;
 }

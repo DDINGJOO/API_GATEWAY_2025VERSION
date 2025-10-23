@@ -20,7 +20,8 @@ import java.util.List;
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(name = "UserPageResponse", description = "프로필 사용자 페이지 응답(상위 content 래퍼)")
-public class UserPageResponse {
+public class
+UserPageResponse {
 	@Schema(description = "페이지 콘텐츠 목록")
 	private List<UserResponse> content;
 }

@@ -23,7 +23,7 @@ public class AuthClient {
 	
 	public Mono<LoginResponse> login(String email, String password) {
 		
-		String uriString = UriComponentsBuilder.fromPath("/api/auth/login")
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/login")
 				.toUriString();
 		
 		
@@ -35,7 +35,7 @@ public class AuthClient {
 	}
 	
 	public Mono<Boolean> signup(String email, String password, String passwordConfirm, List<ConsentRequest> consentReq) {
-		String uriString = UriComponentsBuilder.fromPath("/api/auth/signup")
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/signup")
 				.toUriString();
 		
 		return webClient.post()
@@ -46,7 +46,7 @@ public class AuthClient {
 	}
 	
 	public Mono<Boolean> confirmEmail(String email, String code) {
-		String uriString = UriComponentsBuilder.fromPath("/api/auth/emails/{email}")
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/emails/{email}")
 				.queryParam("code", code)
 				.buildAndExpand(email)
 				.toUriString();
@@ -59,7 +59,7 @@ public class AuthClient {
 	}
 	
 	public Mono<Void> sendCode(String email) {
-		String uriString = UriComponentsBuilder.fromPath("/api/auth/emails/{email}")
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/emails/{email}")
 				.buildAndExpand(email)
 				.toUriString();
 		
@@ -70,7 +70,7 @@ public class AuthClient {
 	}
 	
 	public Mono<LoginResponse> refreshToken(TokenRefreshRequest req) {
-		String uriString = UriComponentsBuilder.fromPath("/api/auth/login/refreshToken")
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/login/refreshToken")
 				.toUriString();
 		
 		
@@ -82,7 +82,7 @@ public class AuthClient {
 	}
 	
 	public Mono<Boolean> changePassword(PasswordChangeRequest req) {
-		String uriString = UriComponentsBuilder.fromPath("/api/auth/passwordChange/changePassword")
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/password")
 				.toUriString();
 		
 		return webClient.put()
@@ -93,7 +93,7 @@ public class AuthClient {
 	}
 	
 	public Mono<Boolean> withdraw(String userId, String withdrawReason) {
-		String uriString = UriComponentsBuilder.fromPath("/api/auth/withdraw/{userId}")
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/withdraw/{userId}")
 				.queryParam("withdrawReason", withdrawReason)
 				.buildAndExpand(userId)
 				.toUriString();
@@ -105,7 +105,7 @@ public class AuthClient {
 	}
 	
 	public Mono<Map<String, ConsentsTable>> fetchAllConsents(Boolean all) {
-		String uriString = UriComponentsBuilder.fromPath("/api/auth/enums/consents")
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/consents")
 				.queryParam("all", all)
 				.toUriString();
 		
