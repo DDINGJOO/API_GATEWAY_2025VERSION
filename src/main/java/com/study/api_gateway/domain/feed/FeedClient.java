@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 public class FeedClient {
 	private final WebClient webClient;
 	
-	public FeedClient(@Qualifier(value = "feedClient") WebClient webClient) {
+	public FeedClient(@Qualifier(value = "feedWebClient") WebClient webClient) {
 		this.webClient = webClient;
 	}
 	

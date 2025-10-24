@@ -124,7 +124,7 @@ public class WebClientConfig {
 	}
 	
 	@Bean
-	public WebClient feedClient(WebClient.Builder builder) {
+	public WebClient feedWebClient(WebClient.Builder builder) {
 		String host = normalizeHost(ActivityDns);
 		String url = "http://%s:%s".formatted(host, ActivityPort);
 

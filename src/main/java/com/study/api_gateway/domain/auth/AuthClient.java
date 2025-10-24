@@ -83,22 +83,24 @@ public class AuthClient {
 	
 	public Mono<Boolean> changePassword(PasswordChangeRequest req) {
 		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/password")
+				.queryParam("email", req.getEmail())
+				.queryParam("newPassword", req.getNewPassword())
+				.queryParam("passConfirm", req.getNewPasswordConfirm())
 				.toUriString();
 		
-		return webClient.put()
+		return webClient.post()
 				.uri(uriString)
-				.bodyValue(req)
 				.retrieve()
 				.bodyToMono(Boolean.class);
 	}
 	
 	public Mono<Boolean> withdraw(String userId, String withdrawReason) {
-		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/withdraw/{userId}")
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/withdraw/" + userId)
 				.queryParam("withdrawReason", withdrawReason)
 				.buildAndExpand(userId)
 				.toUriString();
 		
-		return webClient.delete()
+		return webClient.post()
 				.uri(uriString)
 				.retrieve()
 				.bodyToMono(Boolean.class);
