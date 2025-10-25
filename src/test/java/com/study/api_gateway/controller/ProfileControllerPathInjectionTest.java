@@ -1,11 +1,11 @@
 package com.study.api_gateway.controller;
 
 import com.study.api_gateway.client.ProfileClient;
+import com.study.api_gateway.config.GlobalExceptionHandler;
 import com.study.api_gateway.controller.profile.ProfileController;
 import com.study.api_gateway.dto.profile.response.UserResponse;
 import com.study.api_gateway.util.RequestPathHelper;
 import com.study.api_gateway.util.ResponseFactory;
-import com.study.api_gateway.config.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -17,7 +17,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
 @WebFluxTest(controllers = ProfileController.class)
-@Import({ResponseFactory.class, RequestPathHelper.class, GlobalExceptionHandler.class})
+@Import({ResponseFactory.class, RequestPathHelper.class, GlobalExceptionHandler.class, com.study.api_gateway.config.TestConfig.class})
 class ProfileControllerPathInjectionTest {
 
     @Autowired

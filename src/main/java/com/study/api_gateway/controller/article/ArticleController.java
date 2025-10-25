@@ -141,9 +141,19 @@ public class ArticleController {
 						articleMap.put("content", ar.getContent());
 						articleMap.put("writerId", ar.getWriterId());
 						articleMap.put("board", ar.getBoard());
-						articleMap.put("imageUrls", ar.getImageUrls());
+						articleMap.put("status", ar.getStatus());
+						articleMap.put("viewCount", ar.getViewCount());
+						articleMap.put("firstImageUrl", ar.getFirstImageUrl());
+						articleMap.put("createdAt", ar.getCreatedAt());
+						articleMap.put("updatedAt", ar.getUpdatedAt());
+						articleMap.put("images", ar.getImages());
 						articleMap.put("keywords", ar.getKeywords());
-						articleMap.put("lastestUpdateId", ar.getLastestUpdateId());
+						if (ar.getEventStartDate() != null) {
+							articleMap.put("eventStartDate", ar.getEventStartDate());
+						}
+						if (ar.getEventEndDate() != null) {
+							articleMap.put("eventEndDate", ar.getEventEndDate());
+						}
 					}
 					
 					return profileEnrichmentUtil.enrichArticleAndComments(articleMap, comments)
@@ -163,16 +173,17 @@ public class ArticleController {
 							examples = @ExampleObject(name = "ArticleListSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"page\": {\n      \"items\": [\n        {\n          \"articleId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n          \"title\": \"공연 함께 하실 분\",\n          \"content\": \"같이 즐겁게 공연하실 분을 찾습니다.\",\n          \"writerId\": \"user_123\",\n          \"board\": { \"1\": \"공지사항\" },\n          \"imageUrls\": {},\n          \"keywords\": { \"10\": \"중요\" },\n          \"lastestUpdateId\": \"2025-10-11T17:52:27\",\n          \"commentCount\": 0,\n          \"likeCount\": 0\n        }\n      ],\n      \"nextCursorUpdatedAt\": \"2025-10-11T17:52:23\",\n      \"nextCursorId\": \"6ad747b9-0f34-48ad-8dba-5afa2f7b822f\",\n      \"hasNext\": false,\n      \"size\": 10\n    },\n    \"likeCounts\": [\n      {\n        \"referenceId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n        \"likeCount\": 0\n      }\n    ],\n    \"commentCounts\": {\n      \"42840044-0f3e-482c-b5d5-0883af43e63e\": 0\n    }\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/regular?size=10\"\n  }\n}")))
 	})
 	@GetMapping
-	public Mono<ResponseEntity<BaseResponse>> getArticles(      @RequestParam(required = false) Integer size,
-	                                                                         @RequestParam(required = false) String cursorId,
-	                                                            @RequestParam(required = false) String board,
-	                                                                         @RequestParam(required = false) List<?> keyword,
-	                                                                         @RequestParam(required = false) String title,
-	                                                                         @RequestParam(required = false) String content,
-	                                                                         @RequestParam(required = false, name = "writerIds") List<String> writerIds,
-	                                                                         ServerHttpRequest req)
+	public Mono<ResponseEntity<BaseResponse>> getArticles(
+			@RequestParam(required = false) Integer size,
+			@RequestParam(required = false) String cursorId,
+			@RequestParam(required = false) Long boardIds,
+			@RequestParam(required = false) List<Long> keyword,
+			@RequestParam(required = false) String title,
+			@RequestParam(required = false) String content,
+			@RequestParam(required = false) String writerId,
+			ServerHttpRequest req)
 	{
-		return articleClient.fetchArticleCursorPageResponse(size, cursorId, board, keyword, title, content, writerIds)
+		return articleClient.fetchArticleCursorPageResponse(size, cursorId, boardIds, keyword, title, content, writerId)
 				.flatMap(page -> {
 					List<String> ids = page.getItems() == null ? List.of() : page.getItems().stream()
 							.map(ArticleResponse::getArticleId)
@@ -200,9 +211,19 @@ public class ArticleController {
 											m.put("content", item.getContent());
 											m.put("writerId", item.getWriterId());
 											m.put("board", item.getBoard());
-											m.put("imageUrls", item.getImageUrls());
+											m.put("status", item.getStatus());
+											m.put("viewCount", item.getViewCount());
+											m.put("firstImageUrl", item.getFirstImageUrl());
+											m.put("createdAt", item.getCreatedAt());
+											m.put("updatedAt", item.getUpdatedAt());
+											m.put("images", item.getImages());
 											m.put("keywords", item.getKeywords());
-											m.put("lastestUpdateId", item.getLastestUpdateId());
+											if (item.getEventStartDate() != null) {
+												m.put("eventStartDate", item.getEventStartDate());
+											}
+											if (item.getEventEndDate() != null) {
+												m.put("eventEndDate", item.getEventEndDate());
+											}
 											m.put("commentCount", commentCountMap.getOrDefault(item.getArticleId(), 0));
 											m.put("likeCount", likeCountMap.getOrDefault(item.getArticleId(), 0));
 											return m;

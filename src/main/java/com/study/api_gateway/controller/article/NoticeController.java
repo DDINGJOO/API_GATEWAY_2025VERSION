@@ -105,9 +105,13 @@ public class NoticeController {
 						articleMap.put("content", article.getContent());
 						articleMap.put("writerId", article.getWriterId());
 						articleMap.put("board", article.getBoard());
-						articleMap.put("imageUrls", article.getImageUrls());
+						articleMap.put("status", article.getStatus());
+						articleMap.put("viewCount", article.getViewCount());
+						articleMap.put("firstImageUrl", article.getFirstImageUrl());
+						articleMap.put("createdAt", article.getCreatedAt());
+						articleMap.put("updatedAt", article.getUpdatedAt());
+						articleMap.put("images", article.getImages());
 						articleMap.put("keywords", article.getKeywords());
-						articleMap.put("lastestUpdateId", article.getLastestUpdateId());
 					}
 					
 					return profileEnrichmentUtil.enrichArticle(articleMap)

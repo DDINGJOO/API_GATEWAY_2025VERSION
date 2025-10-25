@@ -3,10 +3,10 @@ package com.study.api_gateway.controller;
 import com.study.api_gateway.client.AuthClient;
 import com.study.api_gateway.client.ImageClient;
 import com.study.api_gateway.client.ProfileClient;
+import com.study.api_gateway.config.GlobalExceptionHandler;
 import com.study.api_gateway.controller.enums.EnumsController;
 import com.study.api_gateway.util.RequestPathHelper;
 import com.study.api_gateway.util.ResponseFactory;
-import com.study.api_gateway.config.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -20,7 +20,7 @@ import reactor.core.publisher.Mono;
 import java.util.Map;
 
 @WebFluxTest(controllers = EnumsController.class)
-@Import({ResponseFactory.class, RequestPathHelper.class, GlobalExceptionHandler.class})
+@Import({ResponseFactory.class, RequestPathHelper.class, GlobalExceptionHandler.class, com.study.api_gateway.config.TestConfig.class})
 class EnumsControllerPathInjectionTest {
 
     @Autowired

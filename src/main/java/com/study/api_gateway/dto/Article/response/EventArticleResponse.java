@@ -1,32 +1,44 @@
 package com.study.api_gateway.dto.Article.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.Map;
+import java.util.List;
 
+/**
+ * 이벤트 게시글 응답
+ * NOTE: ArticleResponse에 이미 eventStartDate/eventEndDate가 포함되어 있어 별도 클래스가 필요 없지만,
+ * 기존 코드 호환성을 위해 유지합니다.
+ */
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Schema(name = "EventArticleResponse", description = "이벤트 게시글 응답",
-		example = "{\n  \"articleId\": \"evt_001\",\n  \"title\": \"밴드 페스티벌\",\n  \"content\": \"연말 밴드 페스티벌이 열립니다.\",\n  \"writerId\": \"user_123\",\n  \"board\": { \"3\": \"EVENT\" },\n  \"LastestUpdateId\": \"2025-01-10T12:34:56\",\n  \"imageUrls\": { \"img_1\": \"https://cdn.example.com/images/img_1.png\" },\n  \"keywords\": { \"10\": \"MUSIC\" },\n  \"eventStartDate\": \"2025-12-24T18:00:00\",\n  \"eventEndDate\": \"2025-12-26T23:00:00\"\n}")
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Schema(name = "EventArticleResponse", description = "이벤트 게시글 응답 (ArticleResponse와 동일, 하위 호환용)",
+		example = "{\n  \"articleId\": \"ART_20251225_001\",\n  \"title\": \"크리스마스 이벤트\",\n  \"content\": \"크리스마스 특별 이벤트입니다.\",\n  \"writerId\": \"admin\",\n  \"board\": { \"boardId\": 3, \"boardName\": \"이벤트\", \"description\": \"이벤트 게시판\" },\n  \"status\": \"ACTIVE\",\n  \"viewCount\": 100,\n  \"firstImageUrl\": null,\n  \"createdAt\": \"2025-12-01T00:00:00\",\n  \"updatedAt\": \"2025-12-01T00:00:00\",\n  \"images\": [],\n  \"keywords\": [],\n  \"eventStartDate\": \"2025-12-24T00:00:00\",\n  \"eventEndDate\": \"2025-12-25T23:59:59\"\n}")
 public class EventArticleResponse extends ArticleResponse {
-	@Schema(description = "이벤트 시작 날짜", example = "2025-12-24T18:00:00")
-	private LocalDateTime eventStartDate;
-	
-	@Schema(description = "이벤트 종료 날짜", example = "2025-12-26T23:00:00")
-	private LocalDateTime eventEndDate;
-	
+
 	@Builder(builderMethodName = "eventArticleBuilder")
-	public EventArticleResponse(String articleId, String title, String content, String writerId, Map<Long, String> board,
-	                            LocalDateTime LastestUpdateId, Map<String, String> imageUrls, Map<Long, String> keywords,
-	                            LocalDateTime eventStartDate, LocalDateTime eventEndDate) {
-		super(articleId, title, content, writerId, board, LastestUpdateId, imageUrls, keywords);
-		this.eventStartDate = eventStartDate;
-		this.eventEndDate = eventEndDate;
+	public EventArticleResponse(
+			String articleId,
+			String title,
+			String content,
+			String writerId,
+			BoardInfo board,
+			String status,
+			Integer viewCount,
+			String firstImageUrl,
+			LocalDateTime createdAt,
+			LocalDateTime updatedAt,
+			List<ImageInfo> images,
+			List<KeywordInfo> keywords,
+			LocalDateTime eventStartDate,
+			LocalDateTime eventEndDate) {
+		super(articleId, title, content, writerId, board, status, viewCount,
+				firstImageUrl, createdAt, updatedAt, images, keywords, eventStartDate, eventEndDate);
 	}
 }

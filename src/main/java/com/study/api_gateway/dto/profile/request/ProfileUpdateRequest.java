@@ -23,6 +23,9 @@ public class ProfileUpdateRequest {
 	@Schema(description = "활동 도시(코드)", example = "SEOUL")
     private String city;
 	
+	@Schema(description = "자기소개", example = "안녕하세요! 음악을 사랑하는 사람입니다.")
+	private String introduction;
+
 	@Schema(description = "채팅 가능 여부", example = "true")
     private boolean chattable;
 	@Schema(description = "프로필 공개 여부", example = "true")

@@ -11,3 +11,29 @@ spring:
 profile:
   cache:
     ttl-seconds: ${PROFILE_CACHE_TTL_SECONDS:3600}
+
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-expire-time: ${JWT_ACCESS_TOKEN_EXPIRE_TIME:30}
+    refresh-token-expire-time: ${JWT_REFRESH_TOKEN_EXPIRE_TIME:10080}
+
+# SpringDoc OpenAPI (Swagger) 설정
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operationsSorter: method
+    tagsSorter: alpha
+    display-request-duration: true
+    disable-swagger-default-url: true
+    # WebFlux용 설정
+    use-root-path: true
+  show-actuator: false
+  # WebFlux 환경 명시
+  use-management-port: false
+  cache:
+    disabled: true

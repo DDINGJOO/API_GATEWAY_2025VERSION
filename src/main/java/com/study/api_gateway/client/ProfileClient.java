@@ -120,7 +120,7 @@ public class ProfileClient {
 		if (cursor != null && !cursor.isBlank()) builder.queryParam("cursor", cursor);
 		if (size != null) builder.queryParam("size", size);
 		String uriString = builder.toUriString();
-		
+
 		log.info("fetchProfiles uriString : {}", uriString);
 
         return webClient.get()
@@ -129,6 +129,33 @@ public class ProfileClient {
 		        .bodyToMono(UserPageResponse.class)
 		        .flatMapMany(page -> Flux.fromIterable(page == null || page.getContent() == null ? List.of() : page.getContent()));
     }
+	
+	/**
+	 * 프로필 목록 조회 (페이지네이션 메타데이터 포함)
+	 * 스펙에 맞춰 Slice 전체 정보를 반환합니다.
+	 */
+	public Mono<UserPageResponse> fetchProfilesWithPage(String city, String nickname, List<Integer> genres, List<Integer> instruments, Character sex, String cursor, Integer size) {
+		UriComponentsBuilder builder = UriComponentsBuilder.fromPath(PREFIX);
+		// 프로필 서버는 제공된 필터만 전달해야 하며, null/빈 값은 쿼리에 포함하지 않습니다.
+		if (city != null && !city.isBlank()) builder.queryParam("city", city);
+		// nickname 파라미터명은 백엔드 스펙에 맞춰 nickName 사용
+		if (nickname != null && !nickname.isBlank()) builder.queryParam("nickName", nickname);
+		if (genres != null && !genres.isEmpty())
+			builder.queryParam("genres", String.join(",", genres.stream().map(String::valueOf).toList()));
+		if (instruments != null && !instruments.isEmpty())
+			builder.queryParam("instruments", String.join(",", instruments.stream().map(String::valueOf).toList()));
+		if (sex != null) builder.queryParam("sex", sex);
+		if (cursor != null && !cursor.isBlank()) builder.queryParam("cursor", cursor);
+		if (size != null) builder.queryParam("size", size);
+		String uriString = builder.toUriString();
+		
+		log.info("fetchProfilesWithPage uriString : {}", uriString);
+		
+		return webClient.get()
+				.uri(uriString)
+				.retrieve()
+				.bodyToMono(UserPageResponse.class);
+	}
 
     public Mono<Boolean> validateProfile(String type, String value ){
         String uriString = UriComponentsBuilder.fromPath(PREFIX + "/validate")
@@ -144,7 +171,8 @@ public class ProfileClient {
     }
 	
 	public Mono<List<BatchUserSummaryResponse>> fetchUserSummariesBatch(List<String> userIds) {
-		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/simple/batch")
+		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/batch")
+				.queryParam("detail", false)
 				.toUriString();
 		return webClient.post()
 				.uri(uriString)

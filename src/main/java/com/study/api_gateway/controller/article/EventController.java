@@ -43,7 +43,7 @@ public class EventController {
 	})
 	@PostMapping()
 	public Mono<ResponseEntity<BaseResponse>> postEvent(@RequestBody EventArticleCreateRequest request, ServerHttpRequest req) {
-	
+
 		return eventClient.postEvent(request)
 				.flatMap(result -> {
 					List<String> imageIds = request.getImageUrls();
@@ -106,9 +106,13 @@ public class EventController {
 						eventMap.put("content", event.getContent());
 						eventMap.put("writerId", event.getWriterId());
 						eventMap.put("board", event.getBoard());
-						eventMap.put("imageUrls", event.getImageUrls());
+						eventMap.put("status", event.getStatus());
+						eventMap.put("viewCount", event.getViewCount());
+						eventMap.put("firstImageUrl", event.getFirstImageUrl());
+						eventMap.put("createdAt", event.getCreatedAt());
+						eventMap.put("updatedAt", event.getUpdatedAt());
+						eventMap.put("images", event.getImages());
 						eventMap.put("keywords", event.getKeywords());
-						eventMap.put("lastestUpdateId", event.getLastestUpdateId());
 						eventMap.put("eventStartDate", event.getEventStartDate());
 						eventMap.put("eventEndDate", event.getEventEndDate());
 					}

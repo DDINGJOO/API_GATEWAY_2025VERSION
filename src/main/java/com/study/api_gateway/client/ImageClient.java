@@ -1,7 +1,9 @@
 package com.study.api_gateway.client;
 
 
-import com.study.api_gateway.dto.auth.response.ConsentsTable;
+import com.study.api_gateway.dto.image.request.ImageConfirmRequest;
+import com.study.api_gateway.dto.image.response.ExtensionDto;
+import com.study.api_gateway.dto.image.response.ReferenceTypeDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
@@ -38,32 +40,61 @@ public class ImageClient {
 //    }
 //
 	
-	public Mono<Void> confirmImage(String referenceId, List<String> imageIds){
-		String uriString = UriComponentsBuilder.fromPath("/api/images/"+referenceId+"/confirm")
-				.queryParam("imageIds",imageIds)
+	/**
+	 * 이미지 확정 처리 (배치)
+	 * POST /api/v1/images/confirm
+	 *
+	 * @param referenceId 참조 ID (사용자 ID 등)
+	 * @param imageIds    확정할 이미지 ID 목록
+	 * @return Mono<Void>
+	 */
+	public Mono<Void> confirmImage(String referenceId, List<String> imageIds) {
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/images/confirm")
 				.toUriString();
-		return webClient.patch()
+		
+		ImageConfirmRequest request = ImageConfirmRequest.builder()
+				.referenceId(referenceId)
+				.imageIds(imageIds)
+				.build();
+		
+		log.debug("Confirming images - referenceId: {}, imageIds: {}", referenceId, imageIds);
+		
+		return webClient.post()
 				.uri(uriString)
+				.bodyValue(request)
 				.retrieve()
 				.bodyToMono(Void.class);
 	}
-
-    public Mono<Map<String,String >> getExtensions(){
-        String uriString = UriComponentsBuilder.fromPath("/api/enums/extensions")
-                .toUriString();
-        return webClient.get()
-                .uri(uriString)
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {});
-    }
-
-    public Mono<Map<String,String >> getReferenceType(){
-        String uriString = UriComponentsBuilder.fromPath("/api/enums/referenceType")
-                .toUriString();
-        return webClient.get()
-                .uri(uriString)
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {});
-    }
+	
+	/**
+	 * 이미지 확장자 Enum 조회
+	 * GET /api/extensions
+	 *
+	 * @return key: 확장자 코드, value: 확장자 정보 (code, name)
+	 */
+	public Mono<Map<String, ExtensionDto>> getExtensions() {
+		String uriString = UriComponentsBuilder.fromPath("/api/extensions")
+				.toUriString();
+		return webClient.get()
+				.uri(uriString)
+				.retrieve()
+				.bodyToMono(new ParameterizedTypeReference<Map<String, ExtensionDto>>() {
+				});
+	}
+	
+	/**
+	 * 이미지 참조 타입 Enum 조회
+	 * GET /api/referenceType
+	 *
+	 * @return key: 참조 타입 코드, value: 참조 타입 정보 (code, name, allowsMultiple, maxImages, description)
+	 */
+	public Mono<Map<String, ReferenceTypeDto>> getReferenceType() {
+		String uriString = UriComponentsBuilder.fromPath("/api/referenceType")
+				.toUriString();
+		return webClient.get()
+				.uri(uriString)
+				.retrieve()
+				.bodyToMono(new ParameterizedTypeReference<Map<String, ReferenceTypeDto>>() {});
+	}
 
 }
