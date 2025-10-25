@@ -23,22 +23,21 @@ public class ImageClient {
     public ImageClient(@Qualifier(value = "imageWebClient") WebClient webClient) {
         this.webClient = webClient;
     }
+	
+	
+	public Mono<Void> confirmImage(String referenceId, String imageId) {
+		
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/images/confirm/" + referenceId)
+				.queryParam("imageId", imageId)
+				.toUriString();
+		
+		log.info("confirmImage uriString : {}", uriString);
+		return webClient.post()
+				.uri(uriString)
+				.retrieve()
+				.bodyToMono(Void.class);
+	}
 
-
-
-//    public Mono<Void> confirmImage(String referenceId,String imageId){
-//
-//        String uriString = UriComponentsBuilder.fromPath("/api/images/"+referenceId+"/confirm")
-//                .queryParam("imageId",imageId)
-//                .toUriString();
-//
-//        log.info("confirmImage uriString : {}",uriString);
-//        return webClient.patch()
-//                .uri(uriString)
-//                .retrieve()
-//                .bodyToMono(Void.class);
-//    }
-//
 	
 	/**
 	 * 이미지 확정 처리 (배치)
