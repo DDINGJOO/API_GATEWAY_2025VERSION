@@ -1,6 +1,9 @@
 package com.study.api_gateway.util;
 
 import com.study.api_gateway.client.ProfileClient;
+import com.study.api_gateway.dto.Article.response.ArticleResponse;
+import com.study.api_gateway.dto.Article.response.ArticleSimpleResponse;
+import com.study.api_gateway.dto.Article.response.EnrichedArticleResponse;
 import com.study.api_gateway.dto.profile.response.BatchUserSummaryResponse;
 import com.study.api_gateway.util.cache.ProfileCache;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +42,7 @@ public class ProfileEnrichmentUtil {
 	
 	private static final int BATCH_SIZE = 200; // 대량 방어용 내부 분할 크기
 	private static final int SOFT_CAP = 5000; // 너무 큰 요청에 대한 소프트 상한
-	
+
 	private final ProfileClient profileClient;
 	private final ProfileCache profileCache; // placeholder for future Redis integration
 	
@@ -110,6 +113,104 @@ public class ProfileEnrichmentUtil {
 					if (article != null) applyProfile(article, profileMap);
 					if (comments != null) for (Map<String, Object> c : comments) applyProfileRecursive(c, profileMap);
 					return buildArticleWithComments(article, comments);
+				});
+	}
+
+	/**
+	 * 게시글 리스트 보강 (Article 도메인 응답 전용)
+	 * - ArticleSimpleResponse 리스트에서 writerId를 추출하여 프로필 정보를 배치 조회/캐시 조회 후 주입합니다.
+	 * - 중복된 사용자 ID는 한 번만 조회합니다.
+	 * - EnrichedArticleResponse로 변환하여 writerName, writerProfileImage 필드에 프로필 정보를 설정합니다.
+	 *
+	 * @param articles ArticleSimpleResponse 리스트
+	 * @return 프로필 정보가 주입된 EnrichedArticleResponse 리스트를 포함하는 Mono
+	 */
+	public Mono<List<EnrichedArticleResponse>> enrichArticleList(List<ArticleSimpleResponse> articles) {
+		if (articles == null || articles.isEmpty()) {
+			return Mono.just(articles == null ? List.of() : List.of());
+		}
+
+		// Extract all unique writerIds
+		Set<String> writerIds = articles.stream()
+				.map(ArticleSimpleResponse::getWriterId)
+				.filter(Objects::nonNull)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
+
+		if (writerIds.isEmpty()) {
+			// No writerIds to enrich, just convert to EnrichedArticleResponse
+			return Mono.just(articles.stream()
+					.map(EnrichedArticleResponse::from)
+					.collect(Collectors.toList()));
+		}
+
+		// Load profiles (uses cache first, then batch API for missing profiles)
+		return loadProfiles(writerIds)
+				.map(profileMap -> articles.stream()
+						.map(article -> {
+							EnrichedArticleResponse enriched = EnrichedArticleResponse.from(article);
+
+							// Apply profile information if available
+							String writerId = article.getWriterId();
+							if (writerId != null) {
+								BatchUserSummaryResponse profile = profileMap.get(writerId);
+								String writerName = (profile == null || isBlank(profile.getNickname()))
+										? DEFAULT_NICKNAME
+										: profile.getNickname();
+								String writerProfileImage = (profile == null || isBlank(profile.getProfileImageUrl()))
+										? DEFAULT_PROFILE_IMAGE_URL
+										: profile.getProfileImageUrl();
+								enriched.withProfile(writerName, writerProfileImage);
+							}
+
+							return enriched;
+						})
+						.collect(Collectors.toList()));
+	}
+
+	/**
+	 * 게시글 상세 리스트 보강 (Article 검색/목록 응답 전용)
+	 * - ArticleResponse 리스트에서 writerId를 추출하여 프로필 정보를 배치 조회/캐시 조회 후 주입합니다.
+	 * - 중복된 사용자 ID는 한 번만 조회합니다.
+	 * - ArticleResponse에 writerName, writerProfileImage 필드를 직접 설정합니다.
+	 *
+	 * @param articles ArticleResponse 리스트
+	 * @return 프로필 정보가 주입된 ArticleResponse 리스트를 포함하는 Mono
+	 */
+	public Mono<List<ArticleResponse>> enrichArticleResponseList(List<ArticleResponse> articles) {
+		if (articles == null || articles.isEmpty()) {
+			return Mono.just(articles == null ? List.of() : articles);
+		}
+
+		// Extract all unique writerIds
+		Set<String> writerIds = articles.stream()
+				.map(ArticleResponse::getWriterId)
+				.filter(Objects::nonNull)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
+
+		if (writerIds.isEmpty()) {
+			// No writerIds to enrich, return as is
+			return Mono.just(articles);
+		}
+
+		// Load profiles (uses cache first, then batch API for missing profiles)
+		return loadProfiles(writerIds)
+				.map(profileMap -> {
+					// Apply profile information to each article in-place
+					for (ArticleResponse article : articles) {
+						String writerId = article.getWriterId();
+						if (writerId != null) {
+							BatchUserSummaryResponse profile = profileMap.get(writerId);
+							String writerName = (profile == null || isBlank(profile.getNickname()))
+									? DEFAULT_NICKNAME
+									: profile.getNickname();
+							String writerProfileImage = (profile == null || isBlank(profile.getProfileImageUrl()))
+									? DEFAULT_PROFILE_IMAGE_URL
+									: profile.getProfileImageUrl();
+							article.setWriterName(writerName);
+							article.setWriterProfileImage(writerProfileImage);
+						}
+					}
+					return articles;
 				});
 	}
 	
@@ -356,5 +457,5 @@ public class ProfileEnrichmentUtil {
 	private boolean isBlank(String s) {
 		return s == null || s.trim().isEmpty();
 	}
-	
+
 }

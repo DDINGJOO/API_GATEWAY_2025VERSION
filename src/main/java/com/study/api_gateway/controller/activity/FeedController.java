@@ -1,8 +1,12 @@
 package com.study.api_gateway.controller.activity;
 
 import com.study.api_gateway.client.ActivityClient;
+import com.study.api_gateway.client.ArticleClient;
 import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.dto.activity.request.FeedTotalsRequest;
+import com.study.api_gateway.dto.activity.response.EnrichedFeedPageResponse;
+import com.study.api_gateway.util.ArticleCountUtil;
+import com.study.api_gateway.util.ProfileEnrichmentUtil;
 import com.study.api_gateway.util.ResponseFactory;
 import com.study.api_gateway.util.UserIdValidator;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,8 +31,13 @@ import java.util.List;
 @Validated
 public class FeedController {
 	private final ActivityClient activityClient;
+	private final ArticleClient articleClient;
+	private final ProfileEnrichmentUtil profileEnrichmentUtil;
+	private final ArticleCountUtil articleCountUtil;
 	private final ResponseFactory responseFactory;
 	private final UserIdValidator userIdValidator;
+
+	private final String categoryId = "ARTICLE";
 	
 	@Operation(summary = "피드 활동 총합 조회",
 			description = "특정 사용자의 카테고리별 활동 총합(article, comment, like)과 조회자와 대상의 동일 여부를 반환합니다.")
@@ -112,7 +121,8 @@ public class FeedController {
 			// 토큰의 userId가 targetUserId와 일치하는지 검증
 			return userIdValidator.validateReactive(req, targetUserId)
 					.then(activityClient.getFeedByCategory(category, viewerId, targetUserId, cursor, size, sort))
-					.map(response -> responseFactory.ok(response, req))
+					.flatMap(feedResponse -> enrichFeedResponse(feedResponse))
+					.map(enrichedResponse -> responseFactory.ok(enrichedResponse, req))
 					.onErrorResume(e ->
 							Mono.just(responseFactory.error("Failed to fetch feed: " + e.getMessage(),
 									HttpStatus.INTERNAL_SERVER_ERROR, req))
@@ -121,10 +131,60 @@ public class FeedController {
 
 		// article, comment 카테고리는 공개 (검증 불필요)
 		return activityClient.getFeedByCategory(category, viewerId, targetUserId, cursor, size, sort)
-				.map(response -> responseFactory.ok(response, req))
+				.flatMap(feedResponse -> enrichFeedResponse(feedResponse))
+				.map(enrichedResponse -> responseFactory.ok(enrichedResponse, req))
 				.onErrorResume(e ->
 						Mono.just(responseFactory.error("Failed to fetch feed: " + e.getMessage(),
 								HttpStatus.INTERNAL_SERVER_ERROR, req))
 				);
+	}
+
+	/**
+	 * Feed 응답을 Article 정보, 프로필 정보, 댓글/좋아요 수로 보강합니다.
+	 * <p>
+	 * 처리 플로우:
+	 * 1. FeedPageResponse에서 articleIds 추출
+	 * 2. ArticleClient를 통해 Article 도메인에서 게시글 상세 정보를 배치 조회
+	 * 3. ProfileEnrichmentUtil을 통해 프로필 정보를 배치 조회 및 주입 (캐시 우선)
+	 * 4. ArticleCountUtil을 통해 좋아요 수와 댓글 수 조회 및 주입
+	 * 5. EnrichedFeedPageResponse로 변환하여 반환
+	 * </p>
+	 *
+	 * @param feedResponse FeedPageResponse (articleIds, nextCursor)
+	 * @return 프로필 정보 및 카운트가 주입된 EnrichedFeedPageResponse
+	 */
+	private Mono<EnrichedFeedPageResponse> enrichFeedResponse(
+			com.study.api_gateway.dto.activity.response.FeedPageResponse feedResponse) {
+
+		// articleIds가 없으면 빈 응답 반환
+		if (feedResponse == null || feedResponse.getArticleIds() == null || feedResponse.getArticleIds().isEmpty()) {
+			return Mono.just(EnrichedFeedPageResponse.builder()
+					.articles(List.of())
+					.nextCursor(feedResponse != null ? feedResponse.getNextCursor() : null)
+					.build());
+		}
+
+		// 1. Article 도메인에서 게시글 상세 정보 배치 조회
+		return articleClient.getBulkArticles(feedResponse.getArticleIds())
+				.flatMap(articles -> {
+					// articles가 null이거나 비어있으면 빈 응답 반환
+					if (articles == null || articles.isEmpty()) {
+						return Mono.just(EnrichedFeedPageResponse.builder()
+								.articles(List.of())
+								.nextCursor(feedResponse.getNextCursor())
+								.build());
+					}
+
+					// 2. ProfileEnrichmentUtil을 통해 프로필 정보 배치 조회 및 주입
+					return profileEnrichmentUtil.enrichArticleList(articles)
+							.flatMap(enrichedArticles ->
+								// 3. ArticleCountUtil을 통해 좋아요 수 및 댓글 수 조회 및 주입
+								articleCountUtil.enrichWithCounts(enrichedArticles, categoryId)
+							)
+							.map(enrichedArticles -> EnrichedFeedPageResponse.builder()
+									.articles(enrichedArticles)
+									.nextCursor(feedResponse.getNextCursor())
+									.build());
+				});
 	}
 }
