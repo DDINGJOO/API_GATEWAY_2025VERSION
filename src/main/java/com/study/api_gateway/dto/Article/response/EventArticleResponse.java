@@ -28,6 +28,8 @@ public class EventArticleResponse extends ArticleResponse {
 			String title,
 			String content,
 			String writerId,
+			String writerName,
+			String writerProfileImage,
 			BoardInfo board,
 			String status,
 			Integer viewCount,
@@ -38,7 +40,7 @@ public class EventArticleResponse extends ArticleResponse {
 			List<KeywordInfo> keywords,
 			LocalDateTime eventStartDate,
 			LocalDateTime eventEndDate) {
-		super(articleId, title, content, writerId, board, status, viewCount,
+		super(articleId, title, content, writerId, writerName, writerProfileImage, board, status, viewCount,
 				firstImageUrl, createdAt, updatedAt, images, keywords, eventStartDate, eventEndDate);
 	}
 }

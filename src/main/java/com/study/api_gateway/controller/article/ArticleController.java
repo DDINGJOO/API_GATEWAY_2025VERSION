@@ -2,6 +2,7 @@ package com.study.api_gateway.controller.article;
 
 import com.study.api_gateway.client.ArticleClient;
 import com.study.api_gateway.client.CommentClient;
+import com.study.api_gateway.client.LikeClient;
 import com.study.api_gateway.dto.Article.request.ArticleCreateRequest;
 import com.study.api_gateway.dto.Article.response.ArticleResponse;
 import com.study.api_gateway.dto.BaseResponse;
@@ -35,12 +36,12 @@ import java.util.stream.Collectors;
 @RequestMapping("/bff/v1/communities/articles/regular")
 @RequiredArgsConstructor
 @Validated
-public class ArticleController {
+public class  ArticleController {
 	private final ArticleClient articleClient;
 	private final CommentClient commentClient;
+	private final LikeClient likeClient;
 	private final ImageConfirmService imageConfirmService;
 	private final ResponseFactory responseFactory;
-	private final com.study.api_gateway.client.LikeClient likeClient;
 	private final ProfileEnrichmentUtil profileEnrichmentUtil;
 	private final UserIdValidator userIdValidator;
 
@@ -131,24 +132,24 @@ public class ArticleController {
 					
 					// Build likeDetail without referenceId and likerIds; add isOwn if current user liked
 					LikeDetailResponse ld = tuple3.getT3();
-					java.util.Map<String, Object> likeDetail = new java.util.LinkedHashMap<>();
+					Map<String, Object> likeDetail = new LinkedHashMap<>();
 					int likeCount = ld == null || ld.getLikeCount() == null ? 0 : ld.getLikeCount();
 					likeDetail.put("likeCount", likeCount);
 					boolean isOwnLike = false;
 					if (currentUserId != null && ld != null && ld.getLikerIds() != null) {
-						isOwnLike = ld.getLikerIds().stream().filter(java.util.Objects::nonNull).anyMatch(currentUserId::equals);
+						isOwnLike = ld.getLikerIds().stream().filter(Objects::nonNull).anyMatch(currentUserId::equals);
 					}
 					likeDetail.put("isOwn", isOwnLike);
 					
 					// Sanitize comments: remove keys referenceId and articleId; add isOwn if writerId == currentUserId; handle nested replies
-					java.util.List<java.util.Map<String, Object>> rawComments = tuple3.getT2();
-					java.util.List<java.util.Map<String, Object>> comments = rawComments == null ? java.util.List.of() : rawComments.stream()
+					List<Map<String, Object>> rawComments = tuple3.getT2();
+					List<Map<String, Object>> comments = rawComments == null ? List.of() : rawComments.stream()
 							.map(c -> sanitizeCommentMap(c, currentUserId))
 							.toList();
 					
 					// Build article map to allow adding profile info
-					com.study.api_gateway.dto.Article.response.ArticleResponse ar = tuple3.getT1();
-					java.util.Map<String, Object> articleMap = new java.util.LinkedHashMap<>();
+					ArticleResponse ar = tuple3.getT1();
+					Map<String, Object> articleMap = new LinkedHashMap<>();
 					if (ar != null) {
 						articleMap.put("articleId", ar.getArticleId());
 						articleMap.put("title", ar.getTitle());
@@ -172,7 +173,7 @@ public class ArticleController {
 					
 					return profileEnrichmentUtil.enrichArticleAndComments(articleMap, comments)
 							.map(ac -> {
-								java.util.Map<String, Object> data = new java.util.LinkedHashMap<>(ac);
+								Map<String, Object> data = new LinkedHashMap<>(ac);
 								data.put("likeDetail", likeDetail);
 								return responseFactory.ok(data, req);
 							});
@@ -199,64 +200,70 @@ public class ArticleController {
 	{
 		return articleClient.fetchArticleCursorPageResponse(size, cursorId, boardIds, keyword, title, content, writerId)
 				.flatMap(page -> {
-					List<String> ids = page.getItems() == null ? List.of() : page.getItems().stream()
-							.map(ArticleResponse::getArticleId)
-							.filter(Objects::nonNull)
-							.toList();
-					Mono<List<LikeCountResponse>> likeCountsMono = likeClient.getLikeCounts(categoryId, ids);
-					Mono<Map<String, Integer>> commentCountsMono = commentClient.getCountsForArticles(ids);
-					return Mono.zip(likeCountsMono, commentCountsMono)
-							.map(tuple2 -> {
-								// Build quick lookup maps for counts
-								Map<String, Integer> likeCountMap = tuple2.getT1() == null ? Map.of() : tuple2.getT1().stream()
+					// Enrich ArticleResponse items with profile information first
+					List<ArticleResponse> items = page.getItems() == null ? List.of() : page.getItems();
+					return profileEnrichmentUtil.enrichArticleResponseList(items)
+							.flatMap(enrichedArticles -> {
+								// Extract article IDs for fetching counts
+								List<String> ids = enrichedArticles.stream()
+										.map(ArticleResponse::getArticleId)
 										.filter(Objects::nonNull)
-										.collect(Collectors.toMap(
-												LikeCountResponse::getReferenceId,
-												lc -> lc.getLikeCount() == null ? 0 : lc.getLikeCount()
-										));
-								Map<String, Integer> commentCountMap = tuple2.getT2() == null ? Map.of() : tuple2.getT2();
-								
-								// Enrich items by embedding counts first
-								List<Map<String, Object>> items = page.getItems() == null ? List.of() : page.getItems().stream()
-										.map(item -> {
-											Map<String, Object> m = new LinkedHashMap<>();
-											m.put("articleId", item.getArticleId());
-											m.put("title", item.getTitle());
-											m.put("content", item.getContent());
-											m.put("writerId", item.getWriterId());
-											m.put("board", item.getBoard());
-											m.put("status", item.getStatus());
-											m.put("viewCount", item.getViewCount());
-											m.put("firstImageUrl", item.getFirstImageUrl());
-											m.put("createdAt", item.getCreatedAt());
-											m.put("updatedAt", item.getUpdatedAt());
-											m.put("images", item.getImages());
-											m.put("keywords", item.getKeywords());
-											if (item.getEventStartDate() != null) {
-												m.put("eventStartDate", item.getEventStartDate());
-											}
-											if (item.getEventEndDate() != null) {
-												m.put("eventEndDate", item.getEventEndDate());
-											}
-											m.put("commentCount", commentCountMap.getOrDefault(item.getArticleId(), 0));
-											m.put("likeCount", likeCountMap.getOrDefault(item.getArticleId(), 0));
-											return m;
-										})
 										.toList();
-								// Now enrich with profile nickname and image (deduped)
-								return items;
-							})
-							.flatMap(items -> profileEnrichmentUtil.enrichItemList(items)
-									.map(enrichedItems -> {
-										java.util.Map<String, Object> pageMap = new java.util.LinkedHashMap<>();
-										pageMap.put("items", enrichedItems);
-										pageMap.put("nextCursorUpdatedAt", page.getNextCursorUpdatedAt());
-										pageMap.put("nextCursorId", page.getNextCursorId());
-										pageMap.put("hasNext", page.isHasNext());
-										pageMap.put("size", page.getSize());
-										return responseFactory.ok(java.util.Map.of("page", pageMap), req);
-									})
-							);
+
+								Mono<List<LikeCountResponse>> likeCountsMono = likeClient.getLikeCounts(categoryId, ids);
+								Mono<Map<String, Integer>> commentCountsMono = commentClient.getCountsForArticles(ids);
+
+								return Mono.zip(likeCountsMono, commentCountsMono)
+										.map(tuple2 -> {
+											// Build quick lookup maps for counts
+											Map<String, Integer> likeCountMap = tuple2.getT1() == null ? Map.of() : tuple2.getT1().stream()
+													.filter(Objects::nonNull)
+													.collect(Collectors.toMap(
+															LikeCountResponse::getReferenceId,
+															lc -> lc.getLikeCount() == null ? 0 : lc.getLikeCount()
+													));
+											Map<String, Integer> commentCountMap = tuple2.getT2() == null ? Map.of() : tuple2.getT2();
+
+											// Convert enriched ArticleResponse to Map with counts
+											List<Map<String, Object>> itemMaps = enrichedArticles.stream()
+													.map(item -> {
+														Map<String, Object> m = new LinkedHashMap<>();
+														m.put("articleId", item.getArticleId());
+														m.put("title", item.getTitle());
+														m.put("content", item.getContent());
+														m.put("writerId", item.getWriterId());
+														m.put("writerName", item.getWriterName());
+														m.put("writerProfileImage", item.getWriterProfileImage());
+														m.put("board", item.getBoard());
+														m.put("status", item.getStatus());
+														m.put("viewCount", item.getViewCount());
+														m.put("firstImageUrl", item.getFirstImageUrl());
+														m.put("createdAt", item.getCreatedAt());
+														m.put("updatedAt", item.getUpdatedAt());
+														m.put("images", item.getImages());
+														m.put("keywords", item.getKeywords());
+														if (item.getEventStartDate() != null) {
+															m.put("eventStartDate", item.getEventStartDate());
+														}
+														if (item.getEventEndDate() != null) {
+															m.put("eventEndDate", item.getEventEndDate());
+														}
+														m.put("commentCount", commentCountMap.getOrDefault(item.getArticleId(), 0));
+														m.put("likeCount", likeCountMap.getOrDefault(item.getArticleId(), 0));
+														return m;
+													})
+													.toList();
+
+											// Build page response
+											java.util.Map<String, Object> pageMap = new java.util.LinkedHashMap<>();
+											pageMap.put("items", itemMaps);
+											pageMap.put("nextCursorUpdatedAt", page.getNextCursorUpdatedAt());
+											pageMap.put("nextCursorId", page.getNextCursorId());
+											pageMap.put("hasNext", page.isHasNext());
+											pageMap.put("size", page.getSize());
+											return responseFactory.ok(java.util.Map.of("page", pageMap), req);
+										});
+							});
 				});
 	}
 	
