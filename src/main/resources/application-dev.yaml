@@ -36,3 +36,23 @@ service:
     url: ${SUPPORT_URL}
     port: ${SUPPORT_PORT}
 
+
+  place_info:
+    url: ${PLACE_INFO_URL}
+    port: ${PLACE_INFO_PORT}
+
+  room_info:
+    url: ${ROOM_INFO_URL}
+    port: ${ROOM_INFO_PORT}
+
+  lee_yong_gwan_lee:
+    url: ${LEE_YONG_GWAN_LEE_URL}
+    port: ${LEE_YONG_GWAN_LEE_PORT}
+
+  ye_yak_hae_yo:
+    url: ${YE_YAK_HAE_YO_URL}
+    port: ${YE_YAK_HAE_YO_PORT}
+
+  ye_yak_manage:
+    url: ${YE_YAK_MANAGE_URL}
+    port: ${YE_YAK_MANAGE_PORT}
