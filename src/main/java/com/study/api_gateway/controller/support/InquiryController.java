@@ -35,9 +35,11 @@ public class InquiryController {
 	public Mono<ResponseEntity<BaseResponse>> createInquiry(
 			@RequestBody InquiryCreateRequest request,
 			ServerHttpRequest req) {
-		// 토큰의 userId와 request의 writerId 검증
-		return userIdValidator.validateReactive(req, request.getWriterId())
-				.then(inquiryClient.createInquiry(request))
+		// 토큰에서 userId 추출하여 설정
+		String userId = userIdValidator.extractTokenUserId(req);
+		request.setWriterId(userId);
+
+		return inquiryClient.createInquiry(request)
 				.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
 						.map(enriched -> responseFactory.ok(enriched, req, HttpStatus.CREATED))
 				);
@@ -82,17 +84,14 @@ public class InquiryController {
 			@RequestParam(required = false) InquiryCategory category,
 			@RequestParam(required = false) InquiryStatus status,
 			ServerHttpRequest req) {
-		// writerId로 필터링하는 경우 토큰의 userId와 일치하는지 검증
-		Mono<Void> validation = (writerId != null && !writerId.isBlank())
-				? userIdValidator.validateReactive(req, writerId)
-				: Mono.empty();
+		// writerId 파라미터는 유지하되, 실제로는 토큰에서 추출한 userId 사용
+		String userId = userIdValidator.extractTokenUserId(req);
 
-		return validation
-				.then(inquiryClient.getInquiries(writerId, category, status)
-						.collectList()
-						.flatMap(list -> profileEnrichmentUtil.enrichAny(list)
-								.map(enriched -> responseFactory.ok(enriched, req))
-						));
+		return inquiryClient.getInquiries(userId, category, status)
+				.collectList()
+				.flatMap(list -> profileEnrichmentUtil.enrichAny(list)
+						.map(enriched -> responseFactory.ok(enriched, req))
+				);
 	}
 	
 	@Operation(summary = "문의 삭제", description = "문의를 삭제합니다. 작성자만 삭제할 수 있습니다.")
@@ -104,11 +103,11 @@ public class InquiryController {
 	@DeleteMapping("/{inquiryId}")
 	public Mono<ResponseEntity<BaseResponse>> deleteInquiry(
 			@PathVariable String inquiryId,
-			@RequestParam String writerId,
 			ServerHttpRequest req) {
-		// 토큰의 userId와 요청의 writerId 검증
-		return userIdValidator.validateReactive(req, writerId)
-				.then(inquiryClient.deleteInquiry(inquiryId, writerId))
+		// 토큰에서 userId 추출
+		String userId = userIdValidator.extractTokenUserId(req);
+
+		return inquiryClient.deleteInquiry(inquiryId, userId)
 				.thenReturn(responseFactory.ok(null, req, HttpStatus.NO_CONTENT));
 	}
 	
@@ -121,11 +120,11 @@ public class InquiryController {
 	@PatchMapping("/{inquiryId}/confirm")
 	public Mono<ResponseEntity<BaseResponse>> confirmInquiry(
 			@PathVariable String inquiryId,
-			@RequestParam String writerId,
 			ServerHttpRequest req) {
-		// 토큰의 userId와 요청의 writerId 검증
-		return userIdValidator.validateReactive(req, writerId)
-				.then(inquiryClient.confirmInquiry(inquiryId, writerId))
+		// 토큰에서 userId 추출
+		String userId = userIdValidator.extractTokenUserId(req);
+
+		return inquiryClient.confirmInquiry(inquiryId, userId)
 				.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
 						.map(enriched -> responseFactory.ok(enriched, req))
 				);

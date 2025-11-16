@@ -85,31 +85,31 @@ public class CommentController {
 	public Mono<ResponseEntity<BaseResponse>> createCombined(@RequestParam(required = false) String parentId,
 	                                                         @RequestBody CombinedCommentCreateRequest request,
 	                                                         ServerHttpRequest req) {
-		// 토큰의 userId와 request의 writerId 검증
-		return userIdValidator.validateReactive(req, request.getWriterId())
-				.then(Mono.defer(() -> {
-					if (parentId == null || parentId.isBlank()) {
-						RootCommentCreateRequest root = new RootCommentCreateRequest();
-						root.setArticleId(request.getArticleId());
-						root.setWriterId(request.getWriterId());
-						root.setContents(request.getContents());
-						if (root.getArticleId() == null || root.getArticleId().isBlank()) {
-							return Mono.just(responseFactory.ok("articleId는 필수입니다.", req, HttpStatus.BAD_REQUEST));
-						}
-						return commentClient.createRootComment(root)
-								.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
-										.map(enriched -> responseFactory.ok(enriched, req, HttpStatus.CREATED))
-								);
-					} else {
-						ReplyCreateRequest reply = new ReplyCreateRequest();
-						reply.setWriterId(request.getWriterId());
-						reply.setContents(request.getContents());
-						return commentClient.createReply(parentId, reply)
-								.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
-										.map(enriched -> responseFactory.ok(enriched, req, HttpStatus.CREATED))
-								);
-					}
-				}));
+		// 토큰에서 userId 추출하여 설정
+		String userId = userIdValidator.extractTokenUserId(req);
+		request.setWriterId(userId);
+
+		if (parentId == null || parentId.isBlank()) {
+			RootCommentCreateRequest root = new RootCommentCreateRequest();
+			root.setArticleId(request.getArticleId());
+			root.setWriterId(userId);
+			root.setContents(request.getContents());
+			if (root.getArticleId() == null || root.getArticleId().isBlank()) {
+				return Mono.just(responseFactory.ok("articleId는 필수입니다.", req, HttpStatus.BAD_REQUEST));
+			}
+			return commentClient.createRootComment(root)
+					.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
+							.map(enriched -> responseFactory.ok(enriched, req, HttpStatus.CREATED))
+					);
+		} else {
+			ReplyCreateRequest reply = new ReplyCreateRequest();
+			reply.setWriterId(userId);
+			reply.setContents(request.getContents());
+			return commentClient.createReply(parentId, reply)
+					.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
+							.map(enriched -> responseFactory.ok(enriched, req, HttpStatus.CREATED))
+					);
+		}
     }
 	
 	
@@ -204,9 +204,11 @@ public class CommentController {
     public Mono<ResponseEntity<BaseResponse>> update(@PathVariable String id,
                                                      @RequestBody CommentUpdateRequest request,
                                                      ServerHttpRequest req) {
-		// 토큰의 userId와 request의 writerId 검증
-        return userIdValidator.validateReactive(req, request.getWriterId())
-				.then(commentClient.update(id, request))
+		// 토큰에서 userId 추출하여 설정
+		String userId = userIdValidator.extractTokenUserId(req);
+		request.setWriterId(userId);
+
+		return commentClient.update(id, request)
                 .map(result -> responseFactory.ok(result, req));
     }
 
@@ -229,11 +231,11 @@ public class CommentController {
     })
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<BaseResponse>> softDelete(@PathVariable String id,
-                                                         @RequestParam String writerId,
                                                          ServerHttpRequest req) {
-		// 토큰의 userId와 요청의 writerId 검증
-        return userIdValidator.validateReactive(req, writerId)
-				.then(commentClient.softDelete(id, writerId))
+		// 토큰에서 userId 추출
+		String userId = userIdValidator.extractTokenUserId(req);
+
+		return commentClient.softDelete(id, userId)
 		        .thenReturn(responseFactory.ok(null, req, HttpStatus.NO_CONTENT));
     }
 

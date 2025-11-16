@@ -56,9 +56,11 @@ public class  ArticleController {
 	})
 	@PostMapping()
 	public Mono<ResponseEntity<BaseResponse>> postArticle(@RequestBody ArticleCreateRequest request, ServerHttpRequest req) {
-		// 토큰의 userId와 request의 writerId 검증
-		return userIdValidator.validateReactive(req, request.getWriterId())
-				.then(articleClient.postArticle(request))
+		// 토큰에서 userId 추출하여 설정
+		String userId = userIdValidator.extractTokenUserId(req);
+		request.setWriterId(userId);
+
+		return articleClient.postArticle(request)
 				.flatMap(result -> {
 					List<String> imageIds = request.getImageIds();
 					if (imageIds != null && !imageIds.isEmpty() && result.getArticleId() != null) {
@@ -78,10 +80,12 @@ public class  ArticleController {
 	})
 	@PutMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> updateArticle(@PathVariable String articleId, @RequestBody ArticleCreateRequest request, ServerHttpRequest req) {
-		// 1. 토큰의 userId와 request의 writerId 검증
-		return userIdValidator.validateReactive(req, request.getWriterId())
-				// 2. Article 조회하여 실제 작성자 확인
-				.then(articleClient.getArticle(articleId))
+		// 1. 토큰에서 userId 추출
+		String userId = userIdValidator.extractTokenUserId(req);
+		request.setWriterId(userId);
+
+		// 2. Article 조회하여 실제 작성자 확인
+		return articleClient.getArticle(articleId)
 				.flatMap(article -> userIdValidator.validateOwnership(req, article.getWriterId(), "게시글"))
 				// 3. 검증 통과 후 수정 진행
 				.then(articleClient.updateArticle(articleId, request))
