@@ -7,6 +7,7 @@ import com.study.api_gateway.dto.comment.request.CommentUpdateRequest;
 import com.study.api_gateway.dto.comment.request.ReplyCreateRequest;
 import com.study.api_gateway.dto.comment.request.RootCommentCreateRequest;
 import com.study.api_gateway.util.ResponseFactory;
+import com.study.api_gateway.util.UserIdValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -29,6 +30,7 @@ public class CommentController {
     private final CommentClient commentClient;
     private final ResponseFactory responseFactory;
 	private final com.study.api_gateway.util.ProfileEnrichmentUtil profileEnrichmentUtil;
+	private final UserIdValidator userIdValidator;
 
 //    // 1) 루트 댓글 생성
 //    @Operation(summary = "루트 댓글 생성",
@@ -83,27 +85,31 @@ public class CommentController {
 	public Mono<ResponseEntity<BaseResponse>> createCombined(@RequestParam(required = false) String parentId,
 	                                                         @RequestBody CombinedCommentCreateRequest request,
 	                                                         ServerHttpRequest req) {
-		if (parentId == null || parentId.isBlank()) {
-			RootCommentCreateRequest root = new RootCommentCreateRequest();
-			root.setArticleId(request.getArticleId());
-			root.setWriterId(request.getWriterId());
-			root.setContents(request.getContents());
-			if (root.getArticleId() == null || root.getArticleId().isBlank()) {
-				return Mono.just(responseFactory.ok("articleId는 필수입니다.", req, HttpStatus.BAD_REQUEST));
-			}
-			return commentClient.createRootComment(root)
-					.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
-							.map(enriched -> responseFactory.ok(enriched, req, HttpStatus.CREATED))
-					);
-		} else {
-			ReplyCreateRequest reply = new ReplyCreateRequest();
-			reply.setWriterId(request.getWriterId());
-			reply.setContents(request.getContents());
-			return commentClient.createReply(parentId, reply)
-					.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
-							.map(enriched -> responseFactory.ok(enriched, req, HttpStatus.CREATED))
-					);
-		}
+		// 토큰의 userId와 request의 writerId 검증
+		return userIdValidator.validateReactive(req, request.getWriterId())
+				.then(Mono.defer(() -> {
+					if (parentId == null || parentId.isBlank()) {
+						RootCommentCreateRequest root = new RootCommentCreateRequest();
+						root.setArticleId(request.getArticleId());
+						root.setWriterId(request.getWriterId());
+						root.setContents(request.getContents());
+						if (root.getArticleId() == null || root.getArticleId().isBlank()) {
+							return Mono.just(responseFactory.ok("articleId는 필수입니다.", req, HttpStatus.BAD_REQUEST));
+						}
+						return commentClient.createRootComment(root)
+								.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
+										.map(enriched -> responseFactory.ok(enriched, req, HttpStatus.CREATED))
+								);
+					} else {
+						ReplyCreateRequest reply = new ReplyCreateRequest();
+						reply.setWriterId(request.getWriterId());
+						reply.setContents(request.getContents());
+						return commentClient.createReply(parentId, reply)
+								.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
+										.map(enriched -> responseFactory.ok(enriched, req, HttpStatus.CREATED))
+								);
+					}
+				}));
     }
 	
 	
@@ -198,7 +204,9 @@ public class CommentController {
     public Mono<ResponseEntity<BaseResponse>> update(@PathVariable String id,
                                                      @RequestBody CommentUpdateRequest request,
                                                      ServerHttpRequest req) {
-        return commentClient.update(id, request)
+		// 토큰의 userId와 request의 writerId 검증
+        return userIdValidator.validateReactive(req, request.getWriterId())
+				.then(commentClient.update(id, request))
                 .map(result -> responseFactory.ok(result, req));
     }
 
@@ -223,7 +231,9 @@ public class CommentController {
     public Mono<ResponseEntity<BaseResponse>> softDelete(@PathVariable String id,
                                                          @RequestParam String writerId,
                                                          ServerHttpRequest req) {
-        return commentClient.softDelete(id, writerId)
+		// 토큰의 userId와 요청의 writerId 검증
+        return userIdValidator.validateReactive(req, writerId)
+				.then(commentClient.softDelete(id, writerId))
 		        .thenReturn(responseFactory.ok(null, req, HttpStatus.NO_CONTENT));
     }
 

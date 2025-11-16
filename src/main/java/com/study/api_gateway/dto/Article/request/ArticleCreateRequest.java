@@ -31,7 +31,7 @@ public class ArticleCreateRequest {
 	private List<Long> keywordIds;
 	
 	@Schema(description = "이미지 ID 목록 (Gateway에서 이미지 확정 처리용)", example = "[\"img_1\", \"img_2\"]")
-	private List<String> imageUrls;
+	private List<String> imageIds;
 	
 	@Schema(description = "이벤트 시작일 (이벤트 게시글만)", example = "2025-01-01T00:00:00")
 	private LocalDateTime eventStartDate;

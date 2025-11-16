@@ -4,6 +4,7 @@ import com.study.api_gateway.client.ActivityClient;
 import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.dto.activity.request.FeedTotalsRequest;
 import com.study.api_gateway.util.ResponseFactory;
+import com.study.api_gateway.util.UserIdValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -27,6 +28,7 @@ import java.util.List;
 public class FeedController {
 	private final ActivityClient activityClient;
 	private final ResponseFactory responseFactory;
+	private final UserIdValidator userIdValidator;
 	
 	@Operation(summary = "피드 활동 총합 조회",
 			description = "특정 사용자의 카테고리별 활동 총합(article, comment, like)과 조회자와 대상의 동일 여부를 반환합니다.")
@@ -105,14 +107,19 @@ public class FeedController {
 					HttpStatus.BAD_REQUEST, req));
 		}
 		
-		// Check permission for 'like' category
+		// Check permission for 'like' category (본인만 조회 가능)
 		if ("like".equals(category)) {
-			if (viewerId == null || viewerId.isBlank() || !viewerId.equals(targetUserId)) {
-				return Mono.just(responseFactory.error("Access denied: like category can only be accessed by the owner",
-						HttpStatus.FORBIDDEN, req));
-			}
+			// 토큰의 userId가 targetUserId와 일치하는지 검증
+			return userIdValidator.validateReactive(req, targetUserId)
+					.then(activityClient.getFeedByCategory(category, viewerId, targetUserId, cursor, size, sort))
+					.map(response -> responseFactory.ok(response, req))
+					.onErrorResume(e ->
+							Mono.just(responseFactory.error("Failed to fetch feed: " + e.getMessage(),
+									HttpStatus.INTERNAL_SERVER_ERROR, req))
+					);
 		}
-		
+
+		// article, comment 카테고리는 공개 (검증 불필요)
 		return activityClient.getFeedByCategory(category, viewerId, targetUserId, cursor, size, sort)
 				.map(response -> responseFactory.ok(response, req))
 				.onErrorResume(e ->
