@@ -50,6 +50,11 @@ public class WebClientConfig {
 	@Value("${service.support.port}")
 	private String SupportPort;
 
+	@Value("${service.place_info.url}")
+	private String PlaceInfoDns;
+	@Value("${service.place_info.port}")
+	private String PlaceInfoPort;
+
     private String normalizeHost(String raw) {
         if (raw == null) return "";
         // 공백 제거
@@ -137,7 +142,17 @@ public class WebClientConfig {
 	public WebClient supportWebClient(WebClient.Builder builder) {
 		String host = normalizeHost(SupportDns);
 		String url = "http://%s:%s".formatted(host, SupportPort);
-		
+
+		return builder
+				.baseUrl(url)
+				.build();
+	}
+
+	@Bean
+	public WebClient placeInfoWebClient(WebClient.Builder builder) {
+		String host = normalizeHost(PlaceInfoDns);
+		String url = "http://%s:%s".formatted(host, PlaceInfoPort);
+
 		return builder
 				.baseUrl(url)
 				.build();
