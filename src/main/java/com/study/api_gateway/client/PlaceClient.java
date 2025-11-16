@@ -1,6 +1,6 @@
 package com.study.api_gateway.client;
 
-import com.study.api_gateway.dto.place.response.CountResponse;
+import com.study.api_gateway.dto.place.response.PlaceInfoResponse;
 import com.study.api_gateway.dto.place.response.PlaceSearchResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -133,5 +133,18 @@ public class PlaceClient {
 				.uri(uriString)
 				.retrieve()
 				.bodyToMono(PlaceSearchResponse.class);
+	}
+	
+	/**
+	 * 장소 상세 조회 API
+	 * GET /api/v1/places/{placeId}
+	 */
+	public Mono<PlaceInfoResponse> getPlaceById(String placeId) {
+		String uriString = PREFIX + "/" + placeId;
+		
+		return webClient.get()
+				.uri(uriString)
+				.retrieve()
+				.bodyToMono(PlaceInfoResponse.class);
 	}
 }

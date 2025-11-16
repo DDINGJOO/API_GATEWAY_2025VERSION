@@ -56,3 +56,5 @@ service:
   ye_yak_manage:
     url: ${YE_YAK_MANAGE_URL}
     port: ${YE_YAK_MANAGE_PORT}
+
+
