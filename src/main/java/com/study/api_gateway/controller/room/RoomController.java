@@ -2,6 +2,7 @@ package com.study.api_gateway.controller.room;
 
 import com.study.api_gateway.client.PlaceClient;
 import com.study.api_gateway.client.RoomClient;
+import com.study.api_gateway.client.YeYakHaeYoClient;
 import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.dto.room.response.RoomDetailWithPlaceResponse;
 import com.study.api_gateway.util.ResponseFactory;
@@ -24,7 +25,7 @@ import java.util.List;
 /**
  * 클라이언트 앱용 룸 조회 API
  * RESTful 방식의 조회 전용 엔드포인트 제공
- * Room Server와 PlaceInfo Server의 데이터를 결합하여 제공 (BFF 패턴)
+ * Room Server, PlaceInfo Server, YeYakHaeYo Server의 데이터를 결합하여 제공 (BFF 패턴)
  */
 @Slf4j
 @RestController
@@ -32,17 +33,18 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Room", description = "룸 조회 API")
 public class RoomController {
-	
+
 	private final RoomClient roomClient;
 	private final PlaceClient placeClient;
+	private final YeYakHaeYoClient yeYakHaeYoClient;
 	private final ResponseFactory responseFactory;
 	
 	/**
-	 * 룸 상세 조회 (장소 정보 포함)
+	 * 룸 상세 조회 (장소 정보 + 가격 정책 + 이용 가능 상품 포함)
 	 * GET /bff/v1/rooms/{roomId}
 	 */
 	@GetMapping("/{roomId}")
-	@Operation(summary = "룸 상세 조회", description = "룸 상세 정보와 해당 장소 정보를 함께 조회합니다")
+	@Operation(summary = "룸 상세 조회", description = "룸 상세 정보, 장소 정보, 가격 정책, 이용 가능한 상품을 함께 조회합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
 					content = @Content(mediaType = "application/json",
@@ -53,17 +55,26 @@ public class RoomController {
 			ServerHttpRequest req
 	) {
 		log.info("룸 상세 조회: roomId={}", roomId);
-		
+
 		return roomClient.getRoomById(roomId)
 				.flatMap(roomDetail -> {
-					// Room 정보에서 PlaceId 추출
 					Long placeId = roomDetail.getPlaceId();
 					
-					// PlaceId로 장소 정보 조회
-					return placeClient.getPlaceById(String.valueOf(placeId))
-							.map(placeInfo -> RoomDetailWithPlaceResponse.builder()
+					// PlaceInfo, PricingPolicy, AvailableProducts를 병렬로 조회
+					Mono<com.study.api_gateway.dto.place.response.PlaceInfoResponse> placeMono =
+							placeClient.getPlaceById(String.valueOf(placeId));
+					Mono<com.study.api_gateway.dto.pricing.response.PricingPolicyResponse> pricingMono =
+							yeYakHaeYoClient.getPricingPolicy(roomId);
+					Mono<List<com.study.api_gateway.dto.product.response.ProductResponse>> productsMono =
+							yeYakHaeYoClient.getAvailableProductsForRoom(roomId, placeId);
+					
+					// 세 결과를 합쳐서 반환
+					return Mono.zip(placeMono, pricingMono, productsMono)
+							.map(tuple -> RoomDetailWithPlaceResponse.builder()
 									.room(roomDetail)
-									.place(placeInfo)
+									.place(tuple.getT1())
+									.pricingPolicy(tuple.getT2())
+									.availableProducts(tuple.getT3())
 									.build());
 				})
 				.map(response -> responseFactory.ok(response, req));
@@ -114,11 +125,11 @@ public class RoomController {
 	}
 	
 	/**
-	 * 여러 룸 일괄 조회
+	 * 여러 룸 일괄 조회 (가격 정책 포함)
 	 * GET /bff/v1/rooms/batch?ids=1,2,3
 	 */
 	@GetMapping("/batch")
-	@Operation(summary = "여러 룸 일괄 조회", description = "여러 룸을 한 번에 조회합니다")
+	@Operation(summary = "여러 룸 일괄 조회", description = "여러 룸의 상세 정보와 가격 정책을 한 번에 조회합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
 					content = @Content(mediaType = "application/json",
@@ -131,6 +142,23 @@ public class RoomController {
 		log.info("여러 룸 일괄 조회: ids={}", ids);
 		
 		return roomClient.getRoomsByIds(ids)
+				.flatMap(rooms -> {
+					// 각 룸의 가격 정책을 병렬로 조회
+					List<Mono<com.study.api_gateway.dto.room.response.RoomDetailWithPricingResponse>> enrichedRooms = rooms.stream()
+							.map(room -> yeYakHaeYoClient.getPricingPolicy(room.getRoomId())
+									.map(pricing -> com.study.api_gateway.dto.room.response.RoomDetailWithPricingResponse.builder()
+											.room(room)
+											.pricingPolicy(pricing)
+											.build()))
+							.toList();
+					
+					// 모든 조회 완료 후 리스트로 변환
+					return Mono.zip(enrichedRooms, arrays ->
+							java.util.Arrays.stream(arrays)
+									.map(obj -> (com.study.api_gateway.dto.room.response.RoomDetailWithPricingResponse) obj)
+									.toList()
+					);
+				})
 				.map(response -> responseFactory.ok(response, req));
 	}
 }

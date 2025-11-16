@@ -59,6 +59,11 @@ public class WebClientConfig {
 	private String RoomDns;
 	@Value("${service.room_info.port}")
 	private String RoomPort;
+	
+	@Value("${service.ye_yak_hae_yo.url}")
+	private String YeYakHaeYoDns;
+	@Value("${service.ye_yak_hae_yo.port}")
+	private String YeYakHaeYoPort;
 
     private String normalizeHost(String raw) {
         if (raw == null) return "";
@@ -168,6 +173,16 @@ public class WebClientConfig {
 		String host = normalizeHost(RoomDns);
 		String url = "http://%s:%s".formatted(host, RoomPort);
 		
+		return builder
+				.baseUrl(url)
+				.build();
+	}
+	
+	@Bean
+	public WebClient yeYakHaeYoWebClient(WebClient.Builder builder) {
+		String host = normalizeHost(YeYakHaeYoDns);
+		String url = "http://%s:%s".formatted(host, YeYakHaeYoPort);
+
 		return builder
 				.baseUrl(url)
 				.build();
