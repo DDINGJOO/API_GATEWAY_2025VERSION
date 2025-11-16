@@ -6,6 +6,7 @@ import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.service.ImageConfirmService;
 import com.study.api_gateway.util.ProfileEnrichmentUtil;
 import com.study.api_gateway.util.ResponseFactory;
+import com.study.api_gateway.util.UserIdValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -33,6 +34,7 @@ public class NoticeController {
 	private final ImageConfirmService imageConfirmService;
 	private final ResponseFactory responseFactory;
 	private final ProfileEnrichmentUtil profileEnrichmentUtil;
+	private final UserIdValidator userIdValidator;
 	
 	@Operation(summary = "공지사항 생성")
 	@ApiResponses({
@@ -43,9 +45,11 @@ public class NoticeController {
 	})
 	@PostMapping()
 	public Mono<ResponseEntity<BaseResponse>> postNotice(@RequestBody ArticleCreateRequest request, ServerHttpRequest req) {
-		return noticeClient.postNotice(request)
+		// 토큰의 userId와 request의 writerId 검증 (관리자 권한 확인은 서비스 레이어에서)
+		return userIdValidator.validateReactive(req, request.getWriterId())
+				.then(noticeClient.postNotice(request))
 				.flatMap(result -> {
-					List<String> imageIds = request.getImageUrls();
+					List<String> imageIds = request.getImageIds();
 					if (imageIds != null && !imageIds.isEmpty() && result.getArticleId() != null) {
 						return imageConfirmService.confirmImage(result.getArticleId(), imageIds)
 								.thenReturn(responseFactory.ok(result, req));
@@ -63,9 +67,15 @@ public class NoticeController {
 	})
 	@PutMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> updateNotice(@PathVariable String articleId, @RequestBody ArticleCreateRequest request, ServerHttpRequest req) {
-		return noticeClient.updateNotice(articleId, request)
+		// 1. 토큰의 userId와 request의 writerId 검증
+		return userIdValidator.validateReactive(req, request.getWriterId())
+				// 2. Notice 조회하여 실제 작성자 확인
+				.then(noticeClient.getNotice(articleId))
+				.flatMap(notice -> userIdValidator.validateOwnership(req, notice.getWriterId(), "공지사항"))
+				// 3. 검증 통과 후 수정 진행
+				.then(noticeClient.updateNotice(articleId, request))
 				.flatMap(result -> {
-					List<String> imageIds = request.getImageUrls();
+					List<String> imageIds = request.getImageIds();
 					if (imageIds != null && !imageIds.isEmpty()) {
 						return imageConfirmService.confirmImage(articleId, imageIds)
 								.thenReturn(responseFactory.ok(result, req));
@@ -83,7 +93,11 @@ public class NoticeController {
 	})
 	@DeleteMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> deleteNotice(@PathVariable String articleId, ServerHttpRequest req) {
-		return noticeClient.deleteNotice(articleId)
+		// 1. Notice 조회하여 실제 작성자 확인
+		return noticeClient.getNotice(articleId)
+				.flatMap(notice -> userIdValidator.validateOwnership(req, notice.getWriterId(), "공지사항"))
+				// 2. 검증 통과 후 삭제 진행
+				.then(noticeClient.deleteNotice(articleId))
 				.thenReturn(responseFactory.ok("deleted", req, HttpStatus.OK));
 	}
 	

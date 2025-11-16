@@ -7,6 +7,7 @@ import com.study.api_gateway.dto.support.inquiry.InquiryStatus;
 import com.study.api_gateway.dto.support.inquiry.request.InquiryCreateRequest;
 import com.study.api_gateway.util.ProfileEnrichmentUtil;
 import com.study.api_gateway.util.ResponseFactory;
+import com.study.api_gateway.util.UserIdValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -24,6 +25,7 @@ public class InquiryController {
 	private final InquiryClient inquiryClient;
 	private final ResponseFactory responseFactory;
 	private final ProfileEnrichmentUtil profileEnrichmentUtil;
+	private final UserIdValidator userIdValidator;
 	
 	@Operation(summary = "문의 생성", description = "새로운 문의를 생성합니다.")
 	@ApiResponses({
@@ -33,7 +35,9 @@ public class InquiryController {
 	public Mono<ResponseEntity<BaseResponse>> createInquiry(
 			@RequestBody InquiryCreateRequest request,
 			ServerHttpRequest req) {
-		return inquiryClient.createInquiry(request)
+		// 토큰의 userId와 request의 writerId 검증
+		return userIdValidator.validateReactive(req, request.getWriterId())
+				.then(inquiryClient.createInquiry(request))
 				.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
 						.map(enriched -> responseFactory.ok(enriched, req, HttpStatus.CREATED))
 				);
@@ -49,9 +53,23 @@ public class InquiryController {
 			@PathVariable String inquiryId,
 			ServerHttpRequest req) {
 		return inquiryClient.getInquiry(inquiryId)
-				.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
-						.map(enriched -> responseFactory.ok(enriched, req))
-				);
+				.flatMap(result -> {
+					// 문의 조회 후 작성자 확인 (개인정보 보호)
+					String inquiryWriterId = null;
+					if (result instanceof java.util.Map) {
+						inquiryWriterId = (String) ((java.util.Map<?, ?>) result).get("writerId");
+					}
+
+					if (inquiryWriterId == null) {
+						return Mono.error(new org.springframework.web.server.ResponseStatusException(
+								HttpStatus.INTERNAL_SERVER_ERROR, "문의 작성자 정보를 찾을 수 없습니다"));
+					}
+
+					// 토큰의 userId와 문의 작성자 ID가 일치하는지 검증
+					return userIdValidator.validateOwnership(req, inquiryWriterId, "문의")
+							.then(profileEnrichmentUtil.enrichAny(result))
+							.map(enriched -> responseFactory.ok(enriched, req));
+				});
 	}
 	
 	@Operation(summary = "문의 목록 조회", description = "필터 조건에 따라 문의 목록을 조회합니다.")
@@ -64,11 +82,17 @@ public class InquiryController {
 			@RequestParam(required = false) InquiryCategory category,
 			@RequestParam(required = false) InquiryStatus status,
 			ServerHttpRequest req) {
-		return inquiryClient.getInquiries(writerId, category, status)
-				.collectList()
-				.flatMap(list -> profileEnrichmentUtil.enrichAny(list)
-						.map(enriched -> responseFactory.ok(enriched, req))
-				);
+		// writerId로 필터링하는 경우 토큰의 userId와 일치하는지 검증
+		Mono<Void> validation = (writerId != null && !writerId.isBlank())
+				? userIdValidator.validateReactive(req, writerId)
+				: Mono.empty();
+
+		return validation
+				.then(inquiryClient.getInquiries(writerId, category, status)
+						.collectList()
+						.flatMap(list -> profileEnrichmentUtil.enrichAny(list)
+								.map(enriched -> responseFactory.ok(enriched, req))
+						));
 	}
 	
 	@Operation(summary = "문의 삭제", description = "문의를 삭제합니다. 작성자만 삭제할 수 있습니다.")
@@ -82,7 +106,9 @@ public class InquiryController {
 			@PathVariable String inquiryId,
 			@RequestParam String writerId,
 			ServerHttpRequest req) {
-		return inquiryClient.deleteInquiry(inquiryId, writerId)
+		// 토큰의 userId와 요청의 writerId 검증
+		return userIdValidator.validateReactive(req, writerId)
+				.then(inquiryClient.deleteInquiry(inquiryId, writerId))
 				.thenReturn(responseFactory.ok(null, req, HttpStatus.NO_CONTENT));
 	}
 	
@@ -97,7 +123,9 @@ public class InquiryController {
 			@PathVariable String inquiryId,
 			@RequestParam String writerId,
 			ServerHttpRequest req) {
-		return inquiryClient.confirmInquiry(inquiryId, writerId)
+		// 토큰의 userId와 요청의 writerId 검증
+		return userIdValidator.validateReactive(req, writerId)
+				.then(inquiryClient.confirmInquiry(inquiryId, writerId))
 				.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
 						.map(enriched -> responseFactory.ok(enriched, req))
 				);

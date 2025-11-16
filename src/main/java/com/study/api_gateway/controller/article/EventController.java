@@ -6,6 +6,7 @@ import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.service.ImageConfirmService;
 import com.study.api_gateway.util.ProfileEnrichmentUtil;
 import com.study.api_gateway.util.ResponseFactory;
+import com.study.api_gateway.util.UserIdValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -33,6 +34,7 @@ public class EventController {
 	private final ImageConfirmService imageConfirmService;
 	private final ResponseFactory responseFactory;
 	private final ProfileEnrichmentUtil profileEnrichmentUtil;
+	private final UserIdValidator userIdValidator;
 	
 	@Operation(summary = "이벤트 생성")
 	@ApiResponses({
@@ -43,10 +45,11 @@ public class EventController {
 	})
 	@PostMapping()
 	public Mono<ResponseEntity<BaseResponse>> postEvent(@RequestBody EventArticleCreateRequest request, ServerHttpRequest req) {
-
-		return eventClient.postEvent(request)
+		// 토큰의 userId와 request의 writerId 검증
+		return userIdValidator.validateReactive(req, request.getWriterId())
+				.then(eventClient.postEvent(request))
 				.flatMap(result -> {
-					List<String> imageIds = request.getImageUrls();
+					List<String> imageIds = request.getImageIds();
 					if (imageIds != null && !imageIds.isEmpty() && result.getArticleId() != null) {
 						return imageConfirmService.confirmImage(result.getArticleId(), imageIds)
 								.thenReturn(responseFactory.ok(result, req));
@@ -64,9 +67,15 @@ public class EventController {
 	})
 	@PutMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> updateEvent(@PathVariable String articleId, @RequestBody EventArticleCreateRequest request, ServerHttpRequest req) {
-		return eventClient.updateEvent(articleId, request)
+		// 1. 토큰의 userId와 request의 writerId 검증
+		return userIdValidator.validateReactive(req, request.getWriterId())
+				// 2. Event 조회하여 실제 작성자 확인
+				.then(eventClient.getEvent(articleId))
+				.flatMap(event -> userIdValidator.validateOwnership(req, event.getWriterId(), "이벤트"))
+				// 3. 검증 통과 후 수정 진행
+				.then(eventClient.updateEvent(articleId, request))
 				.flatMap(result -> {
-					List<String> imageIds = request.getImageUrls();
+					List<String> imageIds = request.getImageIds();
 					if (imageIds != null && !imageIds.isEmpty()) {
 						return imageConfirmService.confirmImage(articleId, imageIds)
 								.thenReturn(responseFactory.ok(result, req));
@@ -84,7 +93,11 @@ public class EventController {
 	})
 	@DeleteMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> deleteEvent(@PathVariable String articleId, ServerHttpRequest req) {
-		return eventClient.deleteEvent(articleId)
+		// 1. Event 조회하여 실제 작성자 확인
+		return eventClient.getEvent(articleId)
+				.flatMap(event -> userIdValidator.validateOwnership(req, event.getWriterId(), "이벤트"))
+				// 2. 검증 통과 후 삭제 진행
+				.then(eventClient.deleteEvent(articleId))
 				.thenReturn(responseFactory.ok("deleted", req, HttpStatus.OK));
 	}
 	

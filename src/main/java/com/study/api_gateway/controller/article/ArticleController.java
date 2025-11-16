@@ -10,6 +10,7 @@ import com.study.api_gateway.dto.gaechu.LikeDetailResponse;
 import com.study.api_gateway.service.ImageConfirmService;
 import com.study.api_gateway.util.ProfileEnrichmentUtil;
 import com.study.api_gateway.util.ResponseFactory;
+import com.study.api_gateway.util.UserIdValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -41,7 +42,8 @@ public class ArticleController {
 	private final ResponseFactory responseFactory;
 	private final com.study.api_gateway.client.LikeClient likeClient;
 	private final ProfileEnrichmentUtil profileEnrichmentUtil;
-	
+	private final UserIdValidator userIdValidator;
+
 	private final String categoryId = "ARTICLE";
 	
 	@Operation(summary = "일반 게시글 생성")
@@ -53,9 +55,11 @@ public class ArticleController {
 	})
 	@PostMapping()
 	public Mono<ResponseEntity<BaseResponse>> postArticle(@RequestBody ArticleCreateRequest request, ServerHttpRequest req) {
-		return articleClient.postArticle(request)
+		// 토큰의 userId와 request의 writerId 검증
+		return userIdValidator.validateReactive(req, request.getWriterId())
+				.then(articleClient.postArticle(request))
 				.flatMap(result -> {
-					List<String> imageIds = request.getImageUrls();
+					List<String> imageIds = request.getImageIds();
 					if (imageIds != null && !imageIds.isEmpty() && result.getArticleId() != null) {
 						return imageConfirmService.confirmImage(result.getArticleId(), imageIds)
 								.thenReturn(responseFactory.ok(result, req));
@@ -73,9 +77,15 @@ public class ArticleController {
 	})
 	@PutMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> updateArticle(@PathVariable String articleId, @RequestBody ArticleCreateRequest request, ServerHttpRequest req) {
-		return articleClient.updateArticle(articleId, request)
+		// 1. 토큰의 userId와 request의 writerId 검증
+		return userIdValidator.validateReactive(req, request.getWriterId())
+				// 2. Article 조회하여 실제 작성자 확인
+				.then(articleClient.getArticle(articleId))
+				.flatMap(article -> userIdValidator.validateOwnership(req, article.getWriterId(), "게시글"))
+				// 3. 검증 통과 후 수정 진행
+				.then(articleClient.updateArticle(articleId, request))
 				.flatMap(result -> {
-					List<String> imageIds = request.getImageUrls();
+					List<String> imageIds = request.getImageIds();
 					if (imageIds != null && !imageIds.isEmpty()) {
 						return imageConfirmService.confirmImage(articleId, imageIds)
 								.thenReturn(responseFactory.ok(result, req));
@@ -93,7 +103,11 @@ public class ArticleController {
 	})
 	@DeleteMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> deleteArticle(@PathVariable String articleId, ServerHttpRequest req) {
-		return articleClient.deleteArticle(articleId)
+		// 1. Article 조회하여 실제 작성자 확인
+		return articleClient.getArticle(articleId)
+				.flatMap(article -> userIdValidator.validateOwnership(req, article.getWriterId(), "게시글"))
+				// 2. 검증 통과 후 삭제 진행
+				.then(articleClient.deleteArticle(articleId))
 				.thenReturn(responseFactory.ok("deleted", req, HttpStatus.OK));
 	}
 	

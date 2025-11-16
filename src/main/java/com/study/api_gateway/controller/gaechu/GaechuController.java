@@ -3,6 +3,7 @@ package com.study.api_gateway.controller.gaechu;
 import com.study.api_gateway.client.LikeClient;
 import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.util.ResponseFactory;
+import com.study.api_gateway.util.UserIdValidator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -22,6 +23,7 @@ import reactor.core.publisher.Mono;
 public class GaechuController {
 	private final LikeClient likeClient;
 	private final ResponseFactory responseFactory;
+	private final UserIdValidator userIdValidator;
 	
 	@Operation(summary = "좋아요/좋아요 취소",
 			description = "지정된 카테고리(categoryId)와 대상(referenceId)에 대해 특정 사용자의 좋아요 상태를 토글합니다.\n" +
@@ -48,7 +50,9 @@ public class GaechuController {
 	                                                       @RequestParam String likerId,
 	                                                       @RequestParam boolean isLike,
 	                                                       ServerHttpRequest request) {
-		return likeClient.likeOrUnlike(categoryId, referenceId, likerId, isLike)
+		// 토큰의 userId와 요청의 likerId 검증 (다른 사람 대신 좋아요 방지)
+		return userIdValidator.validateReactive(request, likerId)
+				.then(likeClient.likeOrUnlike(categoryId, referenceId, likerId, isLike))
 				.thenReturn(responseFactory.ok(null, request, HttpStatus.NO_CONTENT));
 	}
 }
