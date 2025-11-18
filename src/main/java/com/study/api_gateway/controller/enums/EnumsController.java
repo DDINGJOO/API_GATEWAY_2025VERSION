@@ -30,6 +30,8 @@ public class EnumsController {
     private final ResponseFactory responseFactory;
 	private final ArticleClient articleClient;
 	private final FaqClient faqClient;
+	private final PlaceClient placeClient;
+	private final RoomClient roomClient;
 
     @Operation(summary = "장르 목록")
     @ApiResponses({
@@ -146,5 +148,33 @@ public class EnumsController {
 		return faqClient.getFaqs(category)
 				.collectList()
 				.map(list -> responseFactory.ok(list, req));
+	}
+	
+	@Operation(summary = "플레이스 키워드 목록 조회", description = "활성화된 플레이스 키워드 목록을 조회합니다. 타입을 지정하면 해당 타입의 키워드만 조회됩니다.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "조회 성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "PlaceKeywordsSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"연습실\",\n      \"type\": \"SPACE_TYPE\",\n      \"description\": \"음악 연습 공간\",\n      \"displayOrder\": 1\n    },\n    {\n      \"id\": 2,\n      \"name\": \"드럼\",\n      \"type\": \"INSTRUMENT_EQUIPMENT\",\n      \"description\": \"드럼 악기\",\n      \"displayOrder\": 2\n    },\n    {\n      \"id\": 3,\n      \"name\": \"에어컨\",\n      \"type\": \"AMENITY\",\n      \"description\": \"냉방 시설\",\n      \"displayOrder\": 3\n    },\n    {\n      \"id\": 4,\n      \"name\": \"24시간\",\n      \"type\": \"OTHER_FEATURE\",\n      \"description\": \"24시간 이용 가능\",\n      \"displayOrder\": 4\n    }\n  ],\n  \"request\": {\n    \"path\": \"/bff/v1/enums/place-keywords\"\n  }\n}")))
+	})
+	@GetMapping("/place-keywords")
+	public Mono<ResponseEntity<BaseResponse>> getPlaceKeywords(
+			@RequestParam(required = false) String type,
+			ServerHttpRequest req) {
+		return placeClient.getKeywords(type)
+				.map(result -> responseFactory.ok(result, req));
+	}
+	
+	@Operation(summary = "룸 키워드 맵 조회", description = "룸에서 사용 가능한 모든 키워드를 Map 형태로 조회합니다. Key는 키워드 ID입니다.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "조회 성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "RoomKeywordsSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"1\": {\n      \"keywordId\": 1,\n      \"keyword\": \"조용한\"\n    },\n    \"2\": {\n      \"keywordId\": 2,\n      \"keyword\": \"밝은\"\n    },\n    \"3\": {\n      \"keywordId\": 3,\n      \"keyword\": \"넓은\"\n    },\n    \"4\": {\n      \"keywordId\": 4,\n      \"keyword\": \"깔끔한\"\n    }\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/enums/room-keywords\"\n  }\n}")))
+	})
+	@GetMapping("/room-keywords")
+	public Mono<ResponseEntity<BaseResponse>> getRoomKeywords(ServerHttpRequest req) {
+		return roomClient.getRoomKeywordMap()
+				.map(result -> responseFactory.ok(result, req));
 	}
 }

@@ -93,15 +93,15 @@ import org.springframework.context.annotation.Configuration;
 		servers = {
 				@Server(
 						description = "Local Development Server",
-						url = "http://localhost:8080"
+						url = "http://localhost:9001"
 				),
 				@Server(
 						description = "Development Server",
-						url = "https://dev-api.bander.com"
+						url = "http://teambind.co.kr:9000"
 				),
 				@Server(
 						description = "Production Server",
-						url = "https://api.bander.com"
+						url = "http://teambind.co.kr:9000"
 				)
 		},
 		security = {
