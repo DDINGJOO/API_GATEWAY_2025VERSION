@@ -82,7 +82,7 @@ public class RoomClient {
 	 */
 	public Mono<List<RoomDetailResponse>> getRoomsByIds(List<Long> ids) {
 		UriComponentsBuilder builder = UriComponentsBuilder.fromPath(PREFIX + "/batch");
-		
+
 		if (ids != null && !ids.isEmpty()) {
 			ids.forEach(id -> builder.queryParam("ids", id));
 		}
@@ -94,5 +94,19 @@ public class RoomClient {
 				.retrieve()
 				.bodyToFlux(RoomDetailResponse.class)
 				.collectList();
+	}
+	
+	/**
+	 * 룸 키워드 맵 조회 API
+	 * GET /api/rooms/keywords
+	 */
+	public Mono<java.util.Map<Long, com.study.api_gateway.dto.room.response.RoomKeywordResponse>> getRoomKeywordMap() {
+		String uriString = PREFIX + "/keywords";
+		
+		return webClient.get()
+				.uri(uriString)
+				.retrieve()
+				.bodyToMono(new org.springframework.core.ParameterizedTypeReference<java.util.Map<Long, com.study.api_gateway.dto.room.response.RoomKeywordResponse>>() {
+				});
 	}
 }
