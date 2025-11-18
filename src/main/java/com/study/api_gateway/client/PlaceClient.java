@@ -141,10 +141,28 @@ public class PlaceClient {
 	 */
 	public Mono<PlaceInfoResponse> getPlaceById(String placeId) {
 		String uriString = PREFIX + "/" + placeId;
-		
+
 		return webClient.get()
 				.uri(uriString)
 				.retrieve()
 				.bodyToMono(PlaceInfoResponse.class);
+	}
+	
+	/**
+	 * 키워드 목록 조회 API
+	 * GET /api/v1/keywords
+	 */
+	public Mono<List<com.study.api_gateway.dto.place.response.KeywordResponse>> getKeywords(String type) {
+		UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/api/v1/keywords");
+		
+		if (type != null) builder.queryParam("type", type);
+		
+		String uriString = builder.toUriString();
+		
+		return webClient.get()
+				.uri(uriString)
+				.retrieve()
+				.bodyToFlux(com.study.api_gateway.dto.place.response.KeywordResponse.class)
+				.collectList();
 	}
 }

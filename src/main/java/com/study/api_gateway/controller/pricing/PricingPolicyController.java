@@ -6,6 +6,7 @@ import com.study.api_gateway.util.ResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -39,11 +40,12 @@ public class PricingPolicyController {
 	 * GET /bff/v1/pricing-policies/{roomId}
 	 */
 	@GetMapping("/{roomId}")
-	@Operation(summary = "가격 정책 조회", description = "특정 룸의 가격 정책을 조회합니다")
+	@Operation(summary = "가격 정책 조회", description = "특정 룸의 시간대별 가격 정책을 조회합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
 					content = @Content(mediaType = "application/json",
-							schema = @Schema(implementation = BaseResponse.class)))
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "PricingPolicySuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"roomId\": 101,\n    \"placeId\": 1,\n    \"timeSlot\": \"1시간\",\n    \"defaultPrice\": 15000,\n    \"timeRangePrices\": [\n      {\n        \"dayOfWeek\": \"MONDAY\",\n        \"startTime\": \"09:00\",\n        \"endTime\": \"18:00\",\n        \"price\": 15000\n      },\n      {\n        \"dayOfWeek\": \"FRIDAY\",\n        \"startTime\": \"18:00\",\n        \"endTime\": \"22:00\",\n        \"price\": 18000\n      },\n      {\n        \"dayOfWeek\": \"SATURDAY\",\n        \"startTime\": \"09:00\",\n        \"endTime\": \"22:00\",\n        \"price\": 20000\n      }\n    ]\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/pricing-policies/101\"\n  }\n}")))
 	})
 	public Mono<ResponseEntity<BaseResponse>> getPricingPolicy(
 			@Parameter(description = "룸 ID", required = true) @PathVariable Long roomId,

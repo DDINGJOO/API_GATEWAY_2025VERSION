@@ -7,6 +7,7 @@ import com.study.api_gateway.util.ResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -44,7 +45,8 @@ public class ProductController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
 					content = @Content(mediaType = "application/json",
-							schema = @Schema(implementation = BaseResponse.class)))
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "ProductDetailSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"productId\": 1,\n    \"scope\": \"ROOM\",\n    \"placeId\": 1,\n    \"roomId\": 101,\n    \"name\": \"1시간 이용권\",\n    \"pricingStrategy\": {\n      \"pricingType\": \"FIXED\",\n      \"initialPrice\": 15000,\n      \"additionalPrice\": 0\n    },\n    \"totalQuantity\": 10\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/products/1\"\n  }\n}")))
 	})
 	public Mono<ResponseEntity<BaseResponse>> getProduct(
 			@Parameter(description = "상품 ID", required = true) @PathVariable Long productId,
@@ -65,7 +67,8 @@ public class ProductController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
 					content = @Content(mediaType = "application/json",
-							schema = @Schema(implementation = BaseResponse.class)))
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "ProductListSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": [\n    {\n      \"productId\": 1,\n      \"scope\": \"ROOM\",\n      \"placeId\": 1,\n      \"roomId\": 101,\n      \"name\": \"1시간 이용권\",\n      \"pricingStrategy\": {\n        \"pricingType\": \"FIXED\",\n        \"initialPrice\": 15000,\n        \"additionalPrice\": 0\n      },\n      \"totalQuantity\": 10\n    },\n    {\n      \"productId\": 2,\n      \"scope\": \"ROOM\",\n      \"placeId\": 1,\n      \"roomId\": 101,\n      \"name\": \"3시간 이용권\",\n      \"pricingStrategy\": {\n        \"pricingType\": \"HOURLY\",\n        \"initialPrice\": 15000,\n        \"additionalPrice\": 12000\n      },\n      \"totalQuantity\": 5\n    }\n  ],\n  \"request\": {\n    \"path\": \"/bff/v1/products?placeId=1&roomId=101\"\n  }\n}")))
 	})
 	public Mono<ResponseEntity<BaseResponse>> getProducts(
 			@Parameter(description = "상품 적용 범위") @RequestParam(required = false) ProductScope scope,
@@ -88,7 +91,8 @@ public class ProductController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
 					content = @Content(mediaType = "application/json",
-							schema = @Schema(implementation = BaseResponse.class)))
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "ProductAvailabilitySuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"roomId\": 101,\n    \"placeId\": 1,\n    \"availableProducts\": [\n      {\n        \"productId\": 1,\n        \"productName\": \"1시간 이용권\",\n        \"unitPrice\": 15000,\n        \"availableQuantity\": 5,\n        \"totalStock\": 10\n      },\n      {\n        \"productId\": 2,\n        \"productName\": \"3시간 이용권\",\n        \"unitPrice\": 40000,\n        \"availableQuantity\": 3,\n        \"totalStock\": 5\n      }\n    ]\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/products/availability?roomId=101&placeId=1&timeSlots=2025-01-16T14:00:00,2025-01-16T15:00:00\"\n  }\n}")))
 	})
 	public Mono<ResponseEntity<BaseResponse>> getProductAvailability(
 			@Parameter(description = "룸 ID", required = true) @RequestParam Long roomId,
@@ -111,7 +115,8 @@ public class ProductController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
 					content = @Content(mediaType = "application/json",
-							schema = @Schema(implementation = BaseResponse.class)))
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "RoomProductsSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": [\n    {\n      \"productId\": 1,\n      \"scope\": \"ROOM\",\n      \"placeId\": 1,\n      \"roomId\": 101,\n      \"name\": \"1시간 이용권\",\n      \"pricingStrategy\": {\n        \"pricingType\": \"FIXED\",\n        \"initialPrice\": 15000,\n        \"additionalPrice\": 0\n      },\n      \"totalQuantity\": 10\n    },\n    {\n      \"productId\": 2,\n      \"scope\": \"ROOM\",\n      \"placeId\": 1,\n      \"roomId\": 101,\n      \"name\": \"3시간 이용권\",\n      \"pricingStrategy\": {\n        \"pricingType\": \"HOURLY\",\n        \"initialPrice\": 15000,\n        \"additionalPrice\": 12000\n      },\n      \"totalQuantity\": 5\n    }\n  ],\n  \"request\": {\n    \"path\": \"/bff/v1/products/rooms/101/available?placeId=1\"\n  }\n}")))
 	})
 	public Mono<ResponseEntity<BaseResponse>> getAvailableProductsForRoom(
 			@Parameter(description = "룸 ID", required = true) @PathVariable Long roomId,
