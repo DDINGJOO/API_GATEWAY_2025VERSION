@@ -163,8 +163,7 @@ public class ProfileClient {
                 .queryParam("value", value)
                 .toUriString();
 
-
-        return webClient.post()
+        return webClient.get()
                 .uri(uriString)
                 .retrieve()
                 .bodyToMono(Boolean.class);

@@ -120,12 +120,12 @@ public class ProfileController {
 	public Mono<ResponseEntity<BaseResponse>> updateMyProfile(@RequestBody ProfileUpdateRequest req, ServerHttpRequest request) {
 		// JWT 필터에서 추가한 X-User-Id 헤더에서 userId 추출
 		String userId = request.getHeaders().getFirst("X-User-Id");
-		
+
 		if (userId == null || userId.isEmpty()) {
 			log.warn("X-User-Id header is missing or empty in /profiles/me PUT request");
 			return Mono.just(responseFactory.error("사용자 인증 정보를 찾을 수 없습니다", HttpStatus.UNAUTHORIZED, request));
 		}
-		
+
 		log.debug("Updating profile for authenticated user: {}", userId);
 
 		return profileClient.updateProfile(userId, req)
@@ -135,19 +135,35 @@ public class ProfileController {
 						Mono<Void> cacheEviction = profileCache.evict(userId)
 								.doOnError(e -> log.warn("Failed to evict profile cache after update userId={}: {}", userId, e.toString()))
 								.onErrorResume(e -> Mono.empty()); // 캐시 무효화 실패해도 계속 진행
-						
+
 						// 이미지 ID가 있으면 이미지 확정 처리
 						Mono<Void> imageConfirmation = (req.getProfileImageId() != null && !req.getProfileImageId().isEmpty())
 								? imageConfirmService.confirmImage(userId, List.of(req.getProfileImageId()))
 								.doOnSuccess(v -> log.info("Profile image confirmed: imageId={}, userId={}", req.getProfileImageId(), userId))
 								.doOnError(e -> log.error("Failed to confirm profile image: imageId={}, userId={}, error={}", req.getProfileImageId(), userId, e.getMessage()))
 								: Mono.empty();
-						
+
 						// 캐시 무효화와 이미지 확정을 병렬로 실행하고 모두 완료될 때까지 대기
 						return Mono.when(cacheEviction, imageConfirmation)
 								.thenReturn(responseFactory.ok(true, request, HttpStatus.OK));
 					}
 					return Mono.just(responseFactory.error("update failed", HttpStatus.BAD_REQUEST, request));
 				});
+	}
+
+	@Operation(summary = "프로필 필드 검증", description = "닉네임 등 프로필 필드의 중복 여부를 검증합니다.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "ValidationResult", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": false,\n  \"request\": { \"path\": \"/bff/v1/profiles/validate\" }\n}")))
+	})
+	@GetMapping("/validate")
+	public Mono<ResponseEntity<BaseResponse>> validateProfile(
+			@RequestParam("type") String type,
+			@RequestParam("value") String value,
+			ServerHttpRequest request) {
+		return profileClient.validateProfile(type, value)
+				.map(result -> responseFactory.ok(result, request));
 	}
 }
