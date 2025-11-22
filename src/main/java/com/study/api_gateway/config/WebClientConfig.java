@@ -69,6 +69,11 @@ public class WebClientConfig {
 	private String RoomReservationDns;
 	@Value("${service.lee_yong_gwan_lee.port}")
 	private String RoomReservationPort;
+	
+	@Value("${service.ye_yak_manage.url}")
+	private String YeYakManageDns;
+	@Value("${service.ye_yak_manage.port}")
+	private String YeYakManagePort;
 
     private String normalizeHost(String raw) {
         if (raw == null) return "";
@@ -197,6 +202,16 @@ public class WebClientConfig {
 	public WebClient roomReservationWebClient(WebClient.Builder builder) {
 		String host = normalizeHost(RoomReservationDns);
 		String url = "http://%s:%s".formatted(host, RoomReservationPort);
+
+		return builder
+				.baseUrl(url)
+				.build();
+	}
+	
+	@Bean
+	public WebClient yeYakManageWebClient(WebClient.Builder builder) {
+		String host = normalizeHost(YeYakManageDns);
+		String url = "http://%s:%s".formatted(host, YeYakManagePort);
 		
 		return builder
 				.baseUrl(url)

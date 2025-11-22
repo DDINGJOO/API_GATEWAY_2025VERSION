@@ -3,6 +3,8 @@ package com.study.api_gateway.controller.product;
 import com.study.api_gateway.client.YeYakHaeYoClient;
 import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.dto.product.enums.ProductScope;
+import com.study.api_gateway.dto.product.request.ProductCreateRequest;
+import com.study.api_gateway.dto.product.request.ProductUpdateRequest;
 import com.study.api_gateway.util.ResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,19 +25,39 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 클라이언트 앱용 상품 조회 API
- * RESTful 방식의 조회 전용 엔드포인트 제공
+ * 클라이언트 앱용 상품 관리 API
+ * RESTful 방식의 상품 CRUD 엔드포인트 제공
  */
 @Slf4j
 @RestController
 @RequestMapping("/bff/v1/products")
 @RequiredArgsConstructor
-@Tag(name = "Product", description = "상품 조회 API")
+@Tag(name = "Product", description = "상품 관리 API")
 public class ProductController {
-	
+
 	private final YeYakHaeYoClient yeYakHaeYoClient;
 	private final ResponseFactory responseFactory;
 	
+	/**
+	 * 상품 등록
+	 * POST /bff/v1/products
+	 */
+	@PostMapping
+	@Operation(summary = "상품 등록", description = "새로운 추가상품을 등록합니다")
+	@ApiResponses({
+			@ApiResponse(responseCode = "201", description = "등록 성공"),
+			@ApiResponse(responseCode = "400", description = "잘못된 요청")
+	})
+	public Mono<ResponseEntity<BaseResponse>> createProduct(
+			@RequestBody ProductCreateRequest request,
+			ServerHttpRequest req
+	) {
+		log.info("상품 등록: name={}, scope={}", request.getName(), request.getScope());
+		
+		return yeYakHaeYoClient.createProduct(request)
+				.map(response -> responseFactory.ok(response, req, org.springframework.http.HttpStatus.CREATED));
+	}
+
 	/**
 	 * 상품 ID로 조회
 	 * GET /bff/v1/products/{productId}
@@ -127,5 +149,45 @@ public class ProductController {
 		
 		return yeYakHaeYoClient.getAvailableProductsForRoom(roomId, placeId)
 				.map(response -> responseFactory.ok(response, req));
+	}
+	
+	/**
+	 * 상품 수정
+	 * PUT /bff/v1/products/{productId}
+	 */
+	@PutMapping("/{productId}")
+	@Operation(summary = "상품 수정", description = "상품 정보를 수정합니다")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "수정 성공"),
+			@ApiResponse(responseCode = "404", description = "상품을 찾을 수 없음")
+	})
+	public Mono<ResponseEntity<BaseResponse>> updateProduct(
+			@Parameter(description = "상품 ID", required = true) @PathVariable Long productId,
+			@RequestBody ProductUpdateRequest request,
+			ServerHttpRequest req
+	) {
+		log.info("상품 수정: productId={}", productId);
+		
+		return yeYakHaeYoClient.updateProduct(productId, request)
+				.map(response -> responseFactory.ok(response, req));
+	}
+	
+	/**
+	 * 상품 삭제
+	 * DELETE /bff/v1/products/{productId}
+	 */
+	@DeleteMapping("/{productId}")
+	@Operation(summary = "상품 삭제", description = "상품을 삭제합니다")
+	@ApiResponses({
+			@ApiResponse(responseCode = "204", description = "삭제 성공"),
+			@ApiResponse(responseCode = "404", description = "상품을 찾을 수 없음")
+	})
+	public Mono<ResponseEntity<Void>> deleteProduct(
+			@Parameter(description = "상품 ID", required = true) @PathVariable Long productId
+	) {
+		log.info("상품 삭제: productId={}", productId);
+		
+		return yeYakHaeYoClient.deleteProduct(productId)
+				.map(response -> ResponseEntity.noContent().build());
 	}
 }

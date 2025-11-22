@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Schema(name = "ProfileUpdateRequest", description = "프로필 수정 요청 바디",
-		example = "{\n  \"profileImageId\": \"img_100\",\n  \"nickname\": \"딩주\",\n  \"city\": \"SEOUL\",\n  \"chattable\": true,\n  \"publicProfile\": true,\n  \"sex\": \"M\",\n  \"genres\": { \"1\": \"ROCK\", \"2\": \"JAZZ\" },\n  \"instruments\": { \"1\": \"GUITAR\", \"3\": \"DRUM\" }\n}")
+		example = "{\n  \"profileImageId\": \"img_100\",\n  \"nickname\": \"딩주\",\n  \"city\": \"SEOUL\",\n  \"chattable\": true,\n  \"publicProfile\": true,\n  \"sex\": \"M\",\n  \"genres\": { 1, 2 },\n  \"instruments\": { 1, 3 }\n}")
 public class ProfileUpdateRequest {
 	
 	@Schema(description = "프로필 이미지 ID", example = "img_100")
@@ -33,8 +33,8 @@ public class ProfileUpdateRequest {
 	@Schema(description = "성별", example = "M")
     private Character sex;
 	
-	@Schema(description = "장르 ID-이름 매핑", example = "{\n  \"1\": \"ROCK\", \"2\": \"JAZZ\"\n}")
+	@Schema(description = "장르 ID-이름 매핑", example = "[1, 2]")
 	private List<Integer> genres;
-	@Schema(description = "악기 ID-이름 매핑", example = "{\n  \"1\": \"GUITAR\", \"3\": \"DRUM\"\n}")
+	@Schema(description = "악기 ID-이름 매핑", example = "[1, 3 ]")
 	private List<Integer> instruments;
 }

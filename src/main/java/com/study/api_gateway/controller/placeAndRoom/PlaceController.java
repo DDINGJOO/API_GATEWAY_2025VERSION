@@ -15,10 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -38,10 +35,50 @@ public class PlaceController {
 	private final ResponseFactory responseFactory;
 	
 	/**
-	 * 장소 통합 검색
-	 * GET /bff/v1/places
+	 * 장소 상세 조회
+	 * GET /bff/v1/places/{placeId}
 	 */
-	@GetMapping
+	@GetMapping("/{placeId}")
+	@Operation(summary = "장소 상세 조회", description = "특정 ID를 가진 장소의 상세 정보를 조회합니다")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "조회 성공"),
+			@ApiResponse(responseCode = "404", description = "존재하지 않는 공간")
+	})
+	public Mono<ResponseEntity<BaseResponse>> getPlaceById(
+			@Parameter(description = "공간 ID", required = true) @PathVariable String placeId,
+			ServerHttpRequest req
+	) {
+		log.info("장소 상세 조회: placeId={}", placeId);
+		
+		return placeClient.getPlaceById(placeId)
+				.map(response -> responseFactory.ok(response, req));
+	}
+	
+	/**
+	 * 키워드 목록 조회
+	 * GET /bff/v1/places/keywords
+	 */
+	@GetMapping("/keywords")
+	@Operation(summary = "키워드 목록 조회", description = "활성화된 키워드 목록을 조회합니다. 타입별 필터링을 지원합니다")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "조회 성공")
+	})
+	public Mono<ResponseEntity<BaseResponse>> getKeywords(
+			@Parameter(description = "키워드 타입 필터 (SPACE_TYPE, INSTRUMENT_EQUIPMENT, AMENITY, OTHER_FEATURE)")
+			@RequestParam(required = false) String type,
+			ServerHttpRequest req
+	) {
+		log.info("키워드 목록 조회: type={}", type);
+		
+		return placeClient.getKeywords(type)
+				.map(response -> responseFactory.ok(response, req));
+	}
+	
+	/**
+	 * 장소 통합 검색
+	 * GET /bff/v1/places/search
+	 */
+	@GetMapping("/search")
 	@Operation(summary = "장소 통합 검색", description = "다양한 조건으로 장소를 검색합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "검색 성공",

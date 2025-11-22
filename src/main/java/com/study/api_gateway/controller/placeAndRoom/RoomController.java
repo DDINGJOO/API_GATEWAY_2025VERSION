@@ -4,6 +4,7 @@ import com.study.api_gateway.client.PlaceClient;
 import com.study.api_gateway.client.RoomClient;
 import com.study.api_gateway.client.YeYakHaeYoClient;
 import com.study.api_gateway.dto.BaseResponse;
+import com.study.api_gateway.dto.room.request.RoomCreateRequest;
 import com.study.api_gateway.dto.room.response.RoomDetailWithPlaceResponse;
 import com.study.api_gateway.util.ResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +17,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
@@ -24,15 +26,15 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 /**
- * 클라이언트 앱용 룸 조회 API
- * RESTful 방식의 조회 전용 엔드포인트 제공
+ * 클라이언트 앱용 룸 관리 API
+ * RESTful 방식의 룸 CRUD 엔드포인트 제공
  * Room Server, PlaceInfo Server, YeYakHaeYo Server의 데이터를 결합하여 제공 (BFF 패턴)
  */
 @Slf4j
 @RestController
 @RequestMapping("/bff/v1/rooms")
 @RequiredArgsConstructor
-@Tag(name = "Room", description = "룸 조회 API")
+@Tag(name = "Room", description = "룸 관리 API")
 public class RoomController {
 	
 	private final RoomClient roomClient;
@@ -40,6 +42,50 @@ public class RoomController {
 	private final YeYakHaeYoClient yeYakHaeYoClient;
 	private final ResponseFactory responseFactory;
 	
+	// ========== Command APIs ==========
+	
+	/**
+	 * 방 생성
+	 * POST /bff/v1/rooms
+	 */
+	@PostMapping
+	@Operation(summary = "방 생성", description = "새로운 방을 생성합니다")
+	@ApiResponses({
+			@ApiResponse(responseCode = "201", description = "생성 성공"),
+			@ApiResponse(responseCode = "400", description = "잘못된 요청")
+	})
+	public Mono<ResponseEntity<BaseResponse>> createRoom(
+			@RequestBody RoomCreateRequest request,
+			ServerHttpRequest req
+	) {
+		log.info("방 생성: roomName={}, placeId={}", request.getRoomName(), request.getPlaceId());
+		
+		return roomClient.createRoom(request)
+				.map(response -> responseFactory.ok(response, req, HttpStatus.CREATED));
+	}
+	
+	/**
+	 * 방 삭제
+	 * DELETE /bff/v1/rooms/{roomId}
+	 */
+	@DeleteMapping("/{roomId}")
+	@Operation(summary = "방 삭제", description = "방을 삭제합니다")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "삭제 성공"),
+			@ApiResponse(responseCode = "404", description = "방을 찾을 수 없음")
+	})
+	public Mono<ResponseEntity<BaseResponse>> deleteRoom(
+			@Parameter(description = "룸 ID", required = true) @PathVariable Long roomId,
+			ServerHttpRequest req
+	) {
+		log.info("방 삭제: roomId={}", roomId);
+		
+		return roomClient.deleteRoom(roomId)
+				.map(response -> responseFactory.ok(response, req));
+	}
+	
+	// ========== Query APIs ==========
+
 	/**
 	 * 룸 상세 조회 (장소 정보 + 가격 정책 + 이용 가능 상품 포함)
 	 * GET /bff/v1/rooms/{roomId}
@@ -57,20 +103,34 @@ public class RoomController {
 			ServerHttpRequest req
 	) {
 		log.info("룸 상세 조회: roomId={}", roomId);
-		
+
 		return roomClient.getRoomById(roomId)
 				.flatMap(roomDetail -> {
 					Long placeId = roomDetail.getPlaceId();
 					
-					// PlaceInfo, PricingPolicy, AvailableProducts를 병렬로 조회
+					// PlaceInfo, PricingPolicy, AvailableProducts를 병렬로 조회 (에러 시 null 또는 빈 리스트 반환)
 					Mono<com.study.api_gateway.dto.place.response.PlaceInfoResponse> placeMono =
-							placeClient.getPlaceById(String.valueOf(placeId));
+							placeClient.getPlaceById(String.valueOf(placeId))
+									.onErrorResume(error -> {
+										log.warn("장소 정보 조회 실패: placeId={}, error={}", placeId, error.getMessage());
+										return Mono.just(null);
+									});
+
 					Mono<com.study.api_gateway.dto.pricing.response.PricingPolicyResponse> pricingMono =
-							yeYakHaeYoClient.getPricingPolicy(roomId);
+							yeYakHaeYoClient.getPricingPolicy(roomId)
+									.onErrorResume(error -> {
+										log.warn("가격 정책 조회 실패: roomId={}, error={}", roomId, error.getMessage());
+										return Mono.just(null);
+									});
+
 					Mono<List<com.study.api_gateway.dto.product.response.ProductResponse>> productsMono =
-							yeYakHaeYoClient.getAvailableProductsForRoom(roomId, placeId);
+							yeYakHaeYoClient.getAvailableProductsForRoom(roomId, placeId)
+									.onErrorResume(error -> {
+										log.warn("이용 가능 상품 조회 실패: roomId={}, placeId={}, error={}", roomId, placeId, error.getMessage());
+										return Mono.just(List.of());
+									});
 					
-					// 세 결과를 합쳐서 반환
+					// 세 결과를 합쳐서 반환 (일부 실패해도 계속 진행)
 					return Mono.zip(placeMono, pricingMono, productsMono)
 							.map(tuple -> RoomDetailWithPlaceResponse.builder()
 									.room(roomDetail)
@@ -144,26 +204,50 @@ public class RoomController {
 			@Parameter(description = "룸 ID 목록", required = true) @RequestParam List<Long> ids,
 			ServerHttpRequest req
 	) {
-		log.info("여러 룸 일괄 조회: ids={}", ids);
-		
+		log.info("여러 룸 일괄 조회: ids={}, count={}", ids, ids.size());
+
 		return roomClient.getRoomsByIds(ids)
-				.flatMap(rooms -> {
-					// 각 룸의 가격 정책을 병렬로 조회
-					List<Mono<com.study.api_gateway.dto.room.response.RoomDetailWithPricingResponse>> enrichedRooms = rooms.stream()
-							.map(room -> yeYakHaeYoClient.getPricingPolicy(room.getRoomId())
-									.map(pricing -> com.study.api_gateway.dto.room.response.RoomDetailWithPricingResponse.builder()
-											.room(room)
-											.pricingPolicy(pricing)
-											.build()))
-							.toList();
-					
-					// 모든 조회 완료 후 리스트로 변환
-					return Mono.zip(enrichedRooms, arrays ->
-							java.util.Arrays.stream(arrays)
-									.map(obj -> (com.study.api_gateway.dto.room.response.RoomDetailWithPricingResponse) obj)
-									.toList()
-					);
-				})
+				.flatMapMany(rooms -> reactor.core.publisher.Flux.fromIterable(rooms)
+						.flatMap(room ->
+										yeYakHaeYoClient.getPricingPolicy(room.getRoomId())
+												.map(pricing -> com.study.api_gateway.dto.room.response.RoomDetailWithPricingResponse.builder()
+														.room(room)
+														.pricingPolicy(pricing)
+														.build())
+												.onErrorResume(error -> {
+													log.warn("가격 정책 조회 실패: roomId={}, error={}", room.getRoomId(), error.getMessage());
+													// 가격 정책 조회 실패 시 null로 설정하고 계속 진행
+													return reactor.core.publisher.Mono.just(
+															com.study.api_gateway.dto.room.response.RoomDetailWithPricingResponse.builder()
+																	.room(room)
+																	.pricingPolicy(null)
+																	.build()
+													);
+												}),
+								// 동시 실행 수 제한 (기본 256, 필요시 조정 가능)
+								256
+						)
+				)
+				.collectList()
+				.map(response -> responseFactory.ok(response, req));
+	}
+	
+	/**
+	 * 키워드 맵 조회
+	 * GET /bff/v1/rooms/keywords
+	 */
+	@GetMapping("/keywords")
+	@Operation(summary = "키워드 맵 조회", description = "전체 키워드 ID-이름 매핑 정보를 조회합니다")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "조회 성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "KeywordMapSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"1\": {\n      \"keywordId\": 1,\n      \"keyword\": \"조용한\"\n    },\n    \"2\": {\n      \"keywordId\": 2,\n      \"keyword\": \"넓은\"\n    },\n    \"3\": {\n      \"keywordId\": 3,\n      \"keyword\": \"방음\"\n    }\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/rooms/keywords\"\n  }\n}")))
+	})
+	public Mono<ResponseEntity<BaseResponse>> getRoomKeywordMap(ServerHttpRequest req) {
+		log.info("키워드 맵 조회");
+		
+		return roomClient.getRoomKeywordMap()
 				.map(response -> responseFactory.ok(response, req));
 	}
 }

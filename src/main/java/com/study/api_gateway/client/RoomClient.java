@@ -1,5 +1,6 @@
 package com.study.api_gateway.client;
 
+import com.study.api_gateway.dto.room.request.RoomCreateRequest;
 import com.study.api_gateway.dto.room.response.RoomDetailResponse;
 import com.study.api_gateway.dto.room.response.RoomSimpleResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -12,7 +13,7 @@ import java.util.List;
 
 /**
  * Room Server와 통신하는 WebClient 기반 클라이언트
- * 조회 전용 API 제공
+ * 룸 생성, 조회, 삭제 API 제공
  */
 @Component
 public class RoomClient {
@@ -23,6 +24,35 @@ public class RoomClient {
 		this.webClient = webClient;
 	}
 	
+	// ========== Command APIs ==========
+	
+	/**
+	 * 방 생성
+	 * POST /api/rooms
+	 */
+	public Mono<Long> createRoom(RoomCreateRequest request) {
+		return webClient.post()
+				.uri(PREFIX)
+				.bodyValue(request)
+				.retrieve()
+				.bodyToMono(Long.class);
+	}
+	
+	/**
+	 * 방 삭제
+	 * DELETE /api/rooms/{roomId}
+	 */
+	public Mono<Long> deleteRoom(Long roomId) {
+		String uriString = PREFIX + "/" + roomId;
+		
+		return webClient.delete()
+				.uri(uriString)
+				.retrieve()
+				.bodyToMono(Long.class);
+	}
+	
+	// ========== Query APIs ==========
+
 	/**
 	 * 룸 상세 조회 API
 	 * GET /api/rooms/{roomId}

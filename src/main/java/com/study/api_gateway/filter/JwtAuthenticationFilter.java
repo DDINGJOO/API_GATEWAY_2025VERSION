@@ -31,6 +31,7 @@ public class JwtAuthenticationFilter implements WebFilter {
 	// 인증이 필요없는 경로 목록 (로그인, 회원가입 등)
 	private static final List<String> PUBLIC_PATHS = List.of(
 			"/bff/v1/auth",
+			"/bff/v1/refreshToken",
 			"/actuator/health",
 			"/swagger-ui.html",
 			"/swagger-ui",
@@ -41,7 +42,16 @@ public class JwtAuthenticationFilter implements WebFilter {
 	// GET 요청만 Public으로 허용하는 경로 (조회는 누구나 가능)
 	private static final List<String> PUBLIC_READ_PATHS = List.of(
 			"/bff/v1/profiles",
-			"/bff/v1/enums"
+			"/bff/v1/enums",
+			"/bff/v1/places",
+			"/bff/v1/products",
+			"/bff/v1/reviews",
+			"/bff/v1/places",
+			"/bff/v1/pricing-policies",
+			"/bff/v1/reservations",
+			"/bff/v1/room-reservations",
+			"/bff/v1/communities/comments",
+			"/bff"
 	);
 	private final JwtTokenValidator jwtTokenValidator;
 	private final ObjectMapper objectMapper;
@@ -52,16 +62,22 @@ public class JwtAuthenticationFilter implements WebFilter {
 		ServerHttpRequest request = exchange.getRequest();
 		String path = request.getPath().value();
 		String method = request.getMethod().name();
-		
+
 		// Public 경로는 인증 스킵
 		if (isPublicPath(path)) {
 			log.debug("Public path accessed: {}", path);
 			return chain.filter(exchange);
 		}
 		
-		// GET 요청에 대한 Public Read 경로는 인증 스킵
+		// OPTIONS 요청(CORS preflight)은 인증 없이 허용
+		if ("OPTIONS".equals(method)) {
+			log.debug("CORS preflight request: {} {}", method, path);
+			return chain.filter(exchange);
+		}
+		
+		// GET 요청 중 Public Read Path만 인증 없이 허용 (단, /me 경로는 제외)
 		if ("GET".equals(method) && isPublicReadPath(path)) {
-			log.debug("Public read path accessed: {} {}", method, path);
+			log.debug("Public GET request: {} {}", method, path);
 			return chain.filter(exchange);
 		}
 		
