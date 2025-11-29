@@ -21,6 +21,7 @@ public class RoomSimpleResponse {
 	private String roomName;
 	private Long placeId;
 	private TimeSlot timeSlot;
+	private Integer maxOccupancy;
 	private List<String> imageUrls;
 	private List<Long> keywordIds;
 }
