@@ -55,7 +55,7 @@
 ### 개선된 작업 흐름:
 
 ```
-📁 domain/auth/  ← 이 폴더 하나만 열면 됨!
+domain/auth/  ← 이 폴더 하나만 열면 됨!
    ├── AuthController.java      (3. 컨트롤러)
    ├── AuthService.java          (4. 서비스 로직)
    ├── AuthClient.java           (5. 외부 API 호출)
@@ -82,11 +82,11 @@
 
 **장점:**
 
-- ✅ **단일 폴더에서 모든 작업 완료**
-- ✅ IntelliJ 탭 최소화 (관련 파일만)
-- ✅ 코드 리뷰 시 한 폴더만 보면 됨
-- ✅ Git diff가 한 곳에 집중
-- ✅ 새 팀원 온보딩 쉬움
+- **단일 폴더에서 모든 작업 완료**
+- IntelliJ 탭 최소화 (관련 파일만)
+- 코드 리뷰 시 한 폴더만 보면 됨
+- Git diff가 한 곳에 집중
+- 새 팀원 온보딩 쉬움
 
 ---
 
@@ -99,9 +99,9 @@ src/main/java/com/study/api_gateway/
 
 ├── ApiGatewayApplication.java
 │
-├── domain/                          ⭐ 비즈니스 로직의 핵심
+├── domain/                           비즈니스 로직의 핵심
 │   │
-│   ├── auth/                        📁 인증 도메인 (모든 인증 관련 코드)
+│   ├── auth/                         인증 도메인 (모든 인증 관련 코드)
 │   │   ├── AuthController.java
 │   │   ├── AuthService.java
 │   │   ├── AuthClient.java
@@ -119,7 +119,7 @@ src/main/java/com/study/api_gateway/
 │   │   └── exception/
 │   │       └── AuthenticationException.java
 │   │
-│   ├── profile/                     📁 프로필 도메인
+│   ├── profile/                      프로필 도메인
 │   │   ├── ProfileController.java
 │   │   ├── ProfileService.java
 │   │   ├── ProfileEnrichmentService.java  # util에서 이동
@@ -138,7 +138,7 @@ src/main/java/com/study/api_gateway/
 │   │       ├── RedisProfileCache.java
 │   │       └── NoopProfileCache.java
 │   │
-│   ├── article/                     📁 게시글 도메인
+│   ├── article/                      게시글 도메인
 │   │   ├── controller/              # 여러 컨트롤러가 있는 경우
 │   │   │   ├── ArticleController.java
 │   │   │   ├── NoticeController.java
@@ -159,7 +159,7 @@ src/main/java/com/study/api_gateway/
 │   │       ├── EventArticleResponse.java
 │   │       └── ArticleCursorPageResponse.java
 │   │
-│   ├── comment/                     📁 댓글 도메인
+│   ├── comment/                      댓글 도메인
 │   │   ├── CommentController.java
 │   │   ├── CommentService.java
 │   │   ├── CommentClient.java
@@ -169,7 +169,7 @@ src/main/java/com/study/api_gateway/
 │   │       ├── CombinedCommentCreateRequest.java
 │   │       └── CommentUpdateRequest.java
 │   │
-│   ├── like/                        📁 좋아요 도메인 (gaechu → like)
+│   ├── like/                         좋아요 도메인 (gaechu → like)
 │   │   ├── LikeController.java
 │   │   ├── LikeService.java
 │   │   ├── LikeClient.java
@@ -177,7 +177,7 @@ src/main/java/com/study/api_gateway/
 │   │       ├── LikeCountResponse.java
 │   │       └── LikeDetailResponse.java
 │   │
-│   ├── feed/                        📁 피드 도메인
+│   ├── feed/                         피드 도메인
 │   │   ├── FeedController.java
 │   │   ├── FeedService.java
 │   │   ├── FeedClient.java
@@ -186,11 +186,11 @@ src/main/java/com/study/api_gateway/
 │   │       ├── FeedPageResponse.java
 │   │       └── FeedTotalsResponse.java
 │   │
-│   ├── image/                       📁 이미지 도메인
+│   ├── image/                        이미지 도메인
 │   │   ├── ImageClient.java
 │   │   └── ImageConfirmService.java
 │   │
-│   └── support/                     📁 고객지원 도메인
+│   └── support/                      고객지원 도메인
 │       ├── controller/
 │       │   ├── InquiryController.java
 │       │   ├── ReportController.java
@@ -224,7 +224,7 @@ src/main/java/com/study/api_gateway/
 │           ├── SortDirection.java
 │           └── FaqCategory.java
 │
-├── common/                          ⭐ 공통 인프라 코드
+├── common/                           공통 인프라 코드
 │   ├── dto/
 │   │   └── BaseResponse.java
 │   ├── response/
@@ -240,14 +240,14 @@ src/main/java/com/study/api_gateway/
 │   └── util/
 │       └── RequestPathHelper.java
 │
-├── config/                          ⭐ 설정
+├── config/                           설정
 │   ├── WebClientConfig.java
 │   ├── WebFluxCorsConfig.java
 │   ├── RedisConfig.java
 │   ├── OpenApiConfig.java
 │   └── SecurityConfig.java
 │
-└── shared/                          ⭐ 도메인 간 공유 컴포넌트
+└── shared/                           도메인 간 공유 컴포넌트
     ├── controller/
     │   ├── HealthCheckController.java
     │   └── EnumsController.java
@@ -301,7 +301,7 @@ src/main/java/com/study/api_gateway/
 - 파일 찾기: 2분
 - 컨텍스트 스위칭: 5분
 - "어디 수정했더라?" 확인: 3분
-- **총 10분 낭비** 😫
+- **총 10분 낭비**
 
 ---
 
@@ -342,7 +342,7 @@ domain/article/
 
 - 파일 찾기: 10초 (같은 폴더 안)
 - 컨텍스트 스위칭: 최소화
-- **총 9분 절약** ✅
+- **총 9분 절약**
 
 ---
 
@@ -414,7 +414,7 @@ src/main/java/com/study/api_gateway/
 2. `F6` (Move) 또는 우클릭 → Refactor → Move
 3. `domain.auth` 선택
 4. Refactor 버튼
-5. IntelliJ가 모든 import 자동 수정! ✅
+5. IntelliJ가 모든 import 자동 수정!
 
 **예상 소요 시간:** 10분
 
@@ -644,9 +644,9 @@ package com.study.api_gateway.domain.auth;
 
 **IntelliJ가 자동 처리:**
 
-- ✅ 패키지 선언 변경
-- ✅ 모든 파일의 import 문 변경
-- ✅ 테스트 코드의 참조 변경
+- 패키지 선언 변경
+- 모든 파일의 import 문 변경
+- 테스트 코드의 참조 변경
 
 ---
 
