@@ -23,6 +23,7 @@ public class RoomDetailResponse {
 	private Long placeId;
 	private RoomStatus status;
 	private TimeSlot timeSlot;
+	private Integer maxOccupancy;
 	private List<String> furtherDetails;
 	private List<String> cautionDetails;
 	private List<String> imageUrls;

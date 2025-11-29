@@ -73,18 +73,20 @@ public class RoomClient {
 	public Mono<List<RoomSimpleResponse>> searchRooms(
 			String roomName,
 			List<Long> keywordIds,
-			Long placeId
+			Long placeId,
+			Integer minOccupancy
 	) {
 		UriComponentsBuilder builder = UriComponentsBuilder.fromPath(PREFIX + "/search");
-		
+
 		if (roomName != null) builder.queryParam("roomName", roomName);
 		if (keywordIds != null && !keywordIds.isEmpty()) {
 			keywordIds.forEach(id -> builder.queryParam("keywordIds", id));
 		}
 		if (placeId != null) builder.queryParam("placeId", placeId);
-		
+		if (minOccupancy != null) builder.queryParam("minOccupancy", minOccupancy);
+
 		String uriString = builder.toUriString();
-		
+
 		return webClient.get()
 				.uri(uriString)
 				.retrieve()
