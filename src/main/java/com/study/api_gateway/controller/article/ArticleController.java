@@ -26,6 +26,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,20 +57,26 @@ public class  ArticleController {
 	})
 	@PostMapping()
 	public Mono<ResponseEntity<BaseResponse>> postArticle(@RequestBody ArticleCreateRequest request, ServerHttpRequest req) {
-		// 토큰에서 userId 추출하여 설정
 		String userId = userIdValidator.extractTokenUserId(req);
 		request.setWriterId(userId);
-
+		
 		return articleClient.postArticle(request)
 				.flatMap(result -> {
 					List<String> imageIds = request.getImageIds();
 					if (imageIds != null && !imageIds.isEmpty()) {
-						return imageConfirmService.confirmImage(result.getArticleId(), imageIds)
-								.thenReturn(responseFactory.ok(result, req));
+						// 짧은 지연 후 이미지 확정 (게시글 저장 시간 확보)
+						return Mono.delay(Duration.ofMillis(50))
+								.then(imageConfirmService.confirmImage(result.getArticleId(), imageIds))
+								.thenReturn(responseFactory.ok(result, req))
+								.onErrorReturn(responseFactory.ok(result, req)); // 이미지 실패해도 게시글은 성공
 					}
 					return Mono.just(responseFactory.ok(result, req));
+				})
+				.onErrorResume(error -> {
+					return Mono.just(responseFactory.error("게시글 생성 실패", HttpStatus.INTERNAL_SERVER_ERROR, req));
 				});
 	}
+	
 	
 	@Operation(summary = "일반 게시글 수정")
 	@ApiResponses({
