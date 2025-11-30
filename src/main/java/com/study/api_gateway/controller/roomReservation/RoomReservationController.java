@@ -1,5 +1,6 @@
 package com.study.api_gateway.controller.roomReservation;
 
+import com.study.api_gateway.client.AuthClient;
 import com.study.api_gateway.client.RoomReservationClient;
 import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.dto.roomReservation.request.ClosedDatesRequest;
@@ -31,8 +32,9 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @Tag(name = "Room Reservation", description = "룸 예약 및 시간 슬롯 관리 API")
 public class RoomReservationController {
-	
+
 	private final RoomReservationClient roomReservationClient;
+	private final AuthClient authClient;
 	private final ResponseFactory responseFactory;
 	
 	/**
@@ -137,6 +139,7 @@ public class RoomReservationController {
 			@ApiResponse(responseCode = "200", description = "예약 성공",
 					content = @Content(mediaType = "application/json",
 							schema = @Schema(implementation = BaseResponse.class))),
+			@ApiResponse(responseCode = "401", description = "전화번호 등록이 필요합니다"),
 			@ApiResponse(responseCode = "404", description = "슬롯을 찾을 수 없음"),
 			@ApiResponse(responseCode = "409", description = "슬롯이 이미 예약됨 또는 예약 불가능")
 	})
@@ -144,10 +147,35 @@ public class RoomReservationController {
 			@RequestBody MultiReservationRequest request,
 			ServerHttpRequest req
 	) {
-		log.info("다중 슬롯 예약 요청: roomId={}, date={}, slotCount={}",
-				request.roomId(), request.slotDate(), request.slotTimes().size());
+		// JWT 필터에서 추가한 X-User-Id 헤더에서 userId 추출
+		String userId = req.getHeaders().getFirst("X-User-Id");
 		
-		return roomReservationClient.reserveMultipleSlots(request)
-				.map(response -> responseFactory.ok(response, req));
+		log.info("다중 슬롯 예약 요청: userId={}, roomId={}, date={}, slotCount={}",
+				userId, request.roomId(), request.slotDate(), request.slotTimes().size());
+		
+		// 사용자의 전화번호 등록 여부 확인
+		return authClient.hasPhoneNumber(userId)
+				.flatMap(hasPhoneNumber -> {
+					if (!hasPhoneNumber) {
+						log.warn("User {} attempted to make reservation without phone number", userId);
+						// 전화번호가 없으면 401 에러 반환
+						return Mono.just(responseFactory.error(
+								"전화번호 등록이 필요합니다",
+								HttpStatus.UNAUTHORIZED,
+								req
+						));
+					}
+					// 전화번호가 있으면 예약 진행
+					return roomReservationClient.reserveMultipleSlots(request)
+							.map(response -> responseFactory.ok(response, req));
+				})
+				.onErrorResume(error -> {
+					log.error("Error during reservation process: ", error);
+					return Mono.just(responseFactory.error(
+							"예약 처리 중 오류가 발생했습니다: " + error.getMessage(),
+							HttpStatus.INTERNAL_SERVER_ERROR,
+							req
+					));
+				});
 	}
 }

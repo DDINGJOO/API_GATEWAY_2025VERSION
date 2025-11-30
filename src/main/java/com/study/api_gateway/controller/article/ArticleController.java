@@ -63,7 +63,7 @@ public class  ArticleController {
 		return articleClient.postArticle(request)
 				.flatMap(result -> {
 					List<String> imageIds = request.getImageIds();
-					if (imageIds != null && !imageIds.isEmpty() && result.getArticleId() != null) {
+					if (imageIds != null && !imageIds.isEmpty()) {
 						return imageConfirmService.confirmImage(result.getArticleId(), imageIds)
 								.thenReturn(responseFactory.ok(result, req));
 					}

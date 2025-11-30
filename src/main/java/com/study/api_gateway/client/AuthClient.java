@@ -116,4 +116,15 @@ public class AuthClient {
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, ConsentsTable>>() {});
     }
+	
+	public Mono<Boolean> hasPhoneNumber(String userId) {
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/phone-number/{userId}")
+				.buildAndExpand(userId)
+				.toUriString();
+		
+		return webClient.get()
+				.uri(uriString)
+				.retrieve()
+				.bodyToMono(Boolean.class);
+	}
 }
