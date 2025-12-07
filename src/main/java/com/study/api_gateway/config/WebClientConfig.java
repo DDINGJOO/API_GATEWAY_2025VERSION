@@ -75,6 +75,11 @@ public class WebClientConfig {
 	@Value("${service.ye_yak_manage.port}")
 	private String YeYakManagePort;
 
+	@Value("${service.coupon.url}")
+	private String CouponDns;
+	@Value("${service.coupon.port}")
+	private String CouponPort;
+
     private String normalizeHost(String raw) {
         if (raw == null) return "";
         // 공백 제거
@@ -212,7 +217,17 @@ public class WebClientConfig {
 	public WebClient yeYakManageWebClient(WebClient.Builder builder) {
 		String host = normalizeHost(YeYakManageDns);
 		String url = "http://%s:%s".formatted(host, YeYakManagePort);
-		
+
+		return builder
+				.baseUrl(url)
+				.build();
+	}
+
+	@Bean
+	public WebClient couponWebClient(WebClient.Builder builder) {
+		String host = normalizeHost(CouponDns);
+		String url = "http://%s:%s".formatted(host, CouponPort);
+
 		return builder
 				.baseUrl(url)
 				.build();
