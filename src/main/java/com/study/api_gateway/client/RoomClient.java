@@ -6,7 +6,6 @@ import com.study.api_gateway.dto.room.response.RoomSimpleResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -19,38 +18,40 @@ import java.util.List;
 public class RoomClient {
 	private final WebClient webClient;
 	private final String PREFIX = "/api/rooms";
-	
+
 	public RoomClient(@Qualifier("roomWebClient") WebClient webClient) {
 		this.webClient = webClient;
 	}
-	
+
 	// ========== Command APIs ==========
-	
+
 	/**
 	 * 방 생성
 	 * POST /api/rooms
 	 */
 	public Mono<Long> createRoom(RoomCreateRequest request) {
 		return webClient.post()
-				.uri(PREFIX)
+				.uri(uriBuilder -> uriBuilder
+						.path(PREFIX)
+						.build())
 				.bodyValue(request)
 				.retrieve()
 				.bodyToMono(Long.class);
 	}
-	
+
 	/**
 	 * 방 삭제
 	 * DELETE /api/rooms/{roomId}
 	 */
 	public Mono<Long> deleteRoom(Long roomId) {
-		String uriString = PREFIX + "/" + roomId;
-		
 		return webClient.delete()
-				.uri(uriString)
+				.uri(uriBuilder -> uriBuilder
+						.path(PREFIX + "/{roomId}")
+						.build(roomId))
 				.retrieve()
 				.bodyToMono(Long.class);
 	}
-	
+
 	// ========== Query APIs ==========
 
 	/**
@@ -58,14 +59,14 @@ public class RoomClient {
 	 * GET /api/rooms/{roomId}
 	 */
 	public Mono<RoomDetailResponse> getRoomById(Long roomId) {
-		String uriString = PREFIX + "/" + roomId;
-		
 		return webClient.get()
-				.uri(uriString)
+				.uri(uriBuilder -> uriBuilder
+						.path(PREFIX + "/{roomId}")
+						.build(roomId))
 				.retrieve()
 				.bodyToMono(RoomDetailResponse.class);
 	}
-	
+
 	/**
 	 * 룸 검색 API
 	 * GET /api/rooms/search
@@ -76,67 +77,67 @@ public class RoomClient {
 			Long placeId,
 			Integer minOccupancy
 	) {
-		UriComponentsBuilder builder = UriComponentsBuilder.fromPath(PREFIX + "/search");
-
-		if (roomName != null) builder.queryParam("roomName", roomName);
-		if (keywordIds != null && !keywordIds.isEmpty()) {
-			keywordIds.forEach(id -> builder.queryParam("keywordIds", id));
-		}
-		if (placeId != null) builder.queryParam("placeId", placeId);
-		if (minOccupancy != null) builder.queryParam("minOccupancy", minOccupancy);
-
-		String uriString = builder.toUriString();
-
 		return webClient.get()
-				.uri(uriString)
+				.uri(uriBuilder -> {
+					uriBuilder.path(PREFIX + "/search");
+
+					if (roomName != null) uriBuilder.queryParam("roomName", roomName);
+					if (keywordIds != null && !keywordIds.isEmpty()) {
+						keywordIds.forEach(id -> uriBuilder.queryParam("keywordIds", id));
+					}
+					if (placeId != null) uriBuilder.queryParam("placeId", placeId);
+					if (minOccupancy != null) uriBuilder.queryParam("minOccupancy", minOccupancy);
+
+					return uriBuilder.build();
+				})
 				.retrieve()
 				.bodyToFlux(RoomSimpleResponse.class)
 				.collectList();
 	}
-	
+
 	/**
 	 * 특정 장소의 룸 목록 조회 API
 	 * GET /api/rooms/place/{placeId}
 	 */
 	public Mono<List<RoomSimpleResponse>> getRoomsByPlaceId(Long placeId) {
-		String uriString = PREFIX + "/place/" + placeId;
-		
 		return webClient.get()
-				.uri(uriString)
+				.uri(uriBuilder -> uriBuilder
+						.path(PREFIX + "/place/{placeId}")
+						.build(placeId))
 				.retrieve()
 				.bodyToFlux(RoomSimpleResponse.class)
 				.collectList();
 	}
-	
+
 	/**
 	 * 여러 룸 일괄 조회 API
 	 * GET /api/rooms/batch?ids=1,2,3
 	 */
 	public Mono<List<RoomDetailResponse>> getRoomsByIds(List<Long> ids) {
-		UriComponentsBuilder builder = UriComponentsBuilder.fromPath(PREFIX + "/batch");
-
-		if (ids != null && !ids.isEmpty()) {
-			ids.forEach(id -> builder.queryParam("ids", id));
-		}
-		
-		String uriString = builder.toUriString();
-		
 		return webClient.get()
-				.uri(uriString)
+				.uri(uriBuilder -> {
+					uriBuilder.path(PREFIX + "/batch");
+
+					if (ids != null && !ids.isEmpty()) {
+						ids.forEach(id -> uriBuilder.queryParam("ids", id));
+					}
+
+					return uriBuilder.build();
+				})
 				.retrieve()
 				.bodyToFlux(RoomDetailResponse.class)
 				.collectList();
 	}
-	
+
 	/**
 	 * 룸 키워드 맵 조회 API
 	 * GET /api/rooms/keywords
 	 */
 	public Mono<java.util.Map<Long, com.study.api_gateway.dto.room.response.RoomKeywordResponse>> getRoomKeywordMap() {
-		String uriString = PREFIX + "/keywords";
-		
 		return webClient.get()
-				.uri(uriString)
+				.uri(uriBuilder -> uriBuilder
+						.path(PREFIX + "/keywords")
+						.build())
 				.retrieve()
 				.bodyToMono(new org.springframework.core.ParameterizedTypeReference<java.util.Map<Long, com.study.api_gateway.dto.room.response.RoomKeywordResponse>>() {
 				});
