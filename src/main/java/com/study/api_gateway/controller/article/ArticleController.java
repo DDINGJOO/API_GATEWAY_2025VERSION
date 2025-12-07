@@ -178,8 +178,10 @@ public class  ArticleController {
 	public Mono<ResponseEntity<BaseResponse>> getArticle(@PathVariable String articleId, ServerHttpRequest req) {
 		return Mono.zip(
 						articleClient.getArticle(articleId),
-						commentClient.getCommentsByArticle(articleId, 0, 10, "visibleCount"),
+						commentClient.getCommentsByArticle(articleId, 0, 10, "visibleCount")
+								.onErrorReturn(List.of()),
 						likeClient.getLikeDetail(categoryId, articleId)
+								.onErrorReturn(null)
 				)
 				.flatMap(tuple3 -> {
 					// Try to resolve current userId from headers (placeholder until token parsing is added)
@@ -297,8 +299,10 @@ public class  ArticleController {
 										.filter(Objects::nonNull)
 										.toList();
 
-								Mono<List<LikeCountResponse>> likeCountsMono = likeClient.getLikeCounts(categoryId, ids);
-								Mono<Map<String, Integer>> commentCountsMono = commentClient.getCountsForArticles(ids);
+								Mono<List<LikeCountResponse>> likeCountsMono = likeClient.getLikeCounts(categoryId, ids)
+										.onErrorReturn(List.of());
+								Mono<Map<String, Integer>> commentCountsMono = commentClient.getCountsForArticles(ids)
+										.onErrorReturn(Map.of());
 
 								return Mono.zip(likeCountsMono, commentCountsMono)
 										.map(tuple2 -> {
