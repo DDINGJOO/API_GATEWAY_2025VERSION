@@ -222,7 +222,13 @@ public class ProfileEnrichmentUtil {
 	 * @return userId -> BatchUserSummaryResponse 맵을 포함하는 Mono
 	 */
 	private Mono<Map<String, BatchUserSummaryResponse>> loadProfiles(Set<String> userIds) {
-		if (userIds == null || userIds.isEmpty()) return Mono.just(Map.of());
+		if (userIds == null || userIds.isEmpty()) {
+			log.debug("[ProfileEnrichmentUtil] No userIds to load");
+			return Mono.just(Map.of());
+		}
+
+		log.info("[ProfileEnrichmentUtil] Loading profiles for {} userIds: {}", userIds.size(), userIds);
+
 		// 너무 큰 요청에 대해서는 소프트 상한을 적용하고 경고 로그만 남김
 		final Set<String> idsToUse;
 		if (userIds.size() > SOFT_CAP) {
@@ -244,7 +250,9 @@ public class ProfileEnrichmentUtil {
 					if (missing.isEmpty()) {
 						fetchedMono = Mono.just(Map.of());
 					} else {
+						log.info("[ProfileEnrichmentUtil] Cache miss for {} userIds, fetching from API: {}", missing.size(), missing);
 						fetchedMono = fetchInBatches(new ArrayList<>(missing))
+								.doOnNext(list -> log.info("[ProfileEnrichmentUtil] API returned {} profiles", list.size()))
 								.defaultIfEmpty(List.of())
 								.map(list -> list.stream()
 										.filter(Objects::nonNull)
