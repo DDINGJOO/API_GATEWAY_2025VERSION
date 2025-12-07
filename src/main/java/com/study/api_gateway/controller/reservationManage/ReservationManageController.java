@@ -1,10 +1,13 @@
 package com.study.api_gateway.controller.reservationManage;
 
+import com.study.api_gateway.client.CouponClient;
 import com.study.api_gateway.client.YeYakManageClient;
 import com.study.api_gateway.dto.BaseResponse;
+import com.study.api_gateway.dto.coupon.request.CouponApplyRequest;
 import com.study.api_gateway.dto.reservationManage.enums.PeriodType;
 import com.study.api_gateway.dto.reservationManage.enums.ReservationStatus;
 import com.study.api_gateway.dto.reservationManage.request.ReservationCreateRequest;
+import com.study.api_gateway.dto.reservationManage.request.UserInfoUpdateRequest;
 import com.study.api_gateway.util.ResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
@@ -34,8 +38,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Reservation Management", description = "예약 관리 API")
 public class ReservationManageController {
-	
+
 	private final YeYakManageClient yeYakManageClient;
+	private final CouponClient couponClient;
 	private final ResponseFactory responseFactory;
 	
 	/**
@@ -62,7 +67,82 @@ public class ReservationManageController {
 		return yeYakManageClient.createReservation(request)
 				.map(response -> responseFactory.ok(response, req));
 	}
-	
+
+	/**
+	 * 예약 사용자 정보 업데이트 (예약 생성 2단계)
+	 * POST /bff/v1/reservations/{reservationId}/user-info
+	 *
+	 * 사용자 정보와 함께 쿠폰 적용을 처리합니다.
+	 * 쿠폰이 제공된 경우, 쿠폰 적용 가능 여부를 확인한 후 예약 정보를 업데이트합니다.
+	 */
+	@PostMapping("/{reservationId}/user-info")
+	@Operation(summary = "예약 사용자 정보 업데이트 (2단계)",
+			description = "예약 ID 기반으로 사용자 정보를 업데이트하고 쿠폰을 적용합니다. AWAITING_USER_INFO 상태의 예약을 PENDING 상태로 전환합니다.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "업데이트 성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class))),
+			@ApiResponse(responseCode = "400", description = "잘못된 요청 또는 쿠폰 적용 실패"),
+			@ApiResponse(responseCode = "404", description = "예약을 찾을 수 없음")
+	})
+	public Mono<ResponseEntity<BaseResponse>> updateUserInfo(
+			@Parameter(description = "예약 ID", required = true)
+			@PathVariable("reservationId") Long reservationId,
+			@org.springframework.web.bind.annotation.RequestBody UserInfoUpdateRequest request,
+			ServerHttpRequest req
+	) {
+		log.info("예약 사용자 정보 업데이트: reservationId={}, userId={}, couponId={}",
+				reservationId, request.getUserId(), request.getCouponId());
+
+		// 쿠폰이 제공된 경우 쿠폰 적용 처리
+		if (request.getCouponId() != null && request.getRoomId() != null && request.getPlaceId() != null) {
+			// 쿠폰 적용 요청 생성
+			CouponApplyRequest couponApplyRequest = CouponApplyRequest.builder()
+					.reservationId(String.valueOf(reservationId))
+					.userId(request.getUserId())
+					.couponId(request.getCouponId())
+					.orderAmount(null) // 필요시 금액 추가
+					.build();
+
+			// 쿠폰 적용 후 사용자 정보 업데이트
+			return couponClient.applyCoupon(couponApplyRequest)
+					.flatMap(couponResponse -> {
+						log.info("쿠폰 적용 성공: reservationId={}, couponResponse={}", reservationId, couponResponse);
+
+						// 쿠폰 정보를 UserInfoUpdateRequest에 설정
+						UserInfoUpdateRequest.CouponInfo couponInfo = UserInfoUpdateRequest.CouponInfo.builder()
+								.couponId(String.valueOf(request.getCouponId()))
+								.couponName(couponResponse.getCouponName())
+								.discountType(couponResponse.getDiscountType() != null ? couponResponse.getDiscountType().toString() : null)
+								.discountValue(couponResponse.getDiscountValue())
+								.maxDiscountAmount(couponResponse.getMaxDiscountAmount())
+								.build();
+
+						request.setCouponInfo(couponInfo);
+
+						// YeYakManage 서버로 사용자 정보 업데이트 요청
+						return yeYakManageClient.updateUserInfo(reservationId, request)
+								.map(response -> responseFactory.ok(response, req));
+					})
+					.onErrorResume(error -> {
+						log.error("쿠폰 적용 실패: reservationId={}, error={}", reservationId, error.getMessage());
+						// 쿠폰 적용 실패시 400 에러 반환
+						return Mono.just(responseFactory.error(
+								"쿠폰 적용에 실패했습니다: " + error.getMessage(),
+								HttpStatus.BAD_REQUEST,
+								req));
+					});
+		} else {
+			// 쿠폰 없이 사용자 정보만 업데이트
+			return yeYakManageClient.updateUserInfo(reservationId, request)
+					.map(response -> responseFactory.ok(response, req))
+					.onErrorResume(error -> {
+						log.error("사용자 정보 업데이트 실패: reservationId={}, error={}", reservationId, error.getMessage());
+						return Mono.just(responseFactory.error(error.getMessage(), HttpStatus.BAD_REQUEST, req));
+					});
+		}
+	}
+
 	/**
 	 * 예약 상세 조회
 	 * GET /bff/v1/reservations/{id}
