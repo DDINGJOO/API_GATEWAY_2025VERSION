@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/bff/v1/communities/articles/regular")
 @RequiredArgsConstructor
+@Slf4j
 @Validated
 public class  ArticleController {
 	private final ArticleClient articleClient;
@@ -59,18 +61,60 @@ public class  ArticleController {
 	public Mono<ResponseEntity<BaseResponse>> postArticle(@RequestBody ArticleCreateRequest request, ServerHttpRequest req) {
 		String userId = userIdValidator.extractTokenUserId(req);
 		request.setWriterId(userId);
-		
+
+		// 1. 초기 요청 정보 로깅
+		log.info("[게시글 생성 시작] userId: {}, title: {}, imageIds: {}, imageCount: {}",
+			userId, request.getTitle(), request.getImageIds(),
+			request.getImageIds() != null ? request.getImageIds().size() : 0);
+
 		return articleClient.postArticle(request)
+				.doOnNext(result -> {
+					// 2. Article 서버 응답 성공 로깅
+					log.info("[Article 서버 응답 성공] articleId: {}, userId: {}, title: {}",
+						result.getArticleId(), userId, request.getTitle());
+				})
+				.doOnError(error -> {
+					// 3. Article 서버 에러 로깅
+					log.error("[Article 서버 에러] userId: {}, title: {}, error: {}",
+						userId, request.getTitle(), error.getMessage(), error);
+				})
 				.flatMap(result -> {
 					List<String> imageIds = request.getImageIds();
+
 					if (imageIds != null && !imageIds.isEmpty()) {
+						log.info("[이미지 처리 시작] articleId: {}, imageIds: {}, 50ms 지연 후 확정 요청",
+							result.getArticleId(), imageIds);
+
 						// 짧은 지연 후 이미지 확정 (게시글 저장 시간 확보)
 						return Mono.delay(Duration.ofMillis(50))
+								.doOnNext(tick -> {
+									log.info("[이미지 확정 요청 전송] articleId: {}, imageIds: {} - Image 서버로 요청 전송 중",
+										result.getArticleId(), imageIds);
+								})
 								.then(imageConfirmService.confirmImage(result.getArticleId(), imageIds))
+								.doOnSuccess(v -> {
+									log.info("[이미지 확정 성공] articleId: {}, imageIds: {} - Image 서버 처리 완료",
+										result.getArticleId(), imageIds);
+								})
+								.doOnError(error -> {
+									log.error("[이미지 확정 실패] articleId: {}, imageIds: {}, error: {} - Image 서버 오류",
+										result.getArticleId(), imageIds, error.getMessage(), error);
+								})
 								.thenReturn(responseFactory.ok(result, req))
-								.onErrorReturn(responseFactory.ok(result, req)); // 이미지 실패해도 게시글은 성공
+								.onErrorReturn(responseFactory.ok(result, req)) // 이미지 실패해도 게시글은 성공
+								.doOnNext(response -> {
+									log.info("[게시글 생성 완료 WITH 이미지] articleId: {}, status: {}, imageCount: {}",
+										result.getArticleId(), response.getStatusCode(), imageIds.size());
+								});
+					} else {
+						log.info("[이미지 없음] articleId: {} - 이미지 확정 과정 생략", result.getArticleId());
 					}
-					return Mono.just(responseFactory.ok(result, req));
+
+					return Mono.just(responseFactory.ok(result, req))
+							.doOnNext(response -> {
+								log.info("[게시글 생성 완료 NO 이미지] articleId: {}, status: {}",
+									result.getArticleId(), response.getStatusCode());
+							});
 				})
 				.onErrorResume(error -> {
 					return Mono.just(responseFactory.error("게시글 생성 실패", HttpStatus.INTERNAL_SERVER_ERROR, req));
@@ -184,6 +228,20 @@ public class  ArticleController {
 					
 					return profileEnrichmentUtil.enrichArticleAndComments(articleMap, comments)
 							.map(ac -> {
+								// 단건 조회에서 nickname -> writerName으로 필드명 변환
+								Map<String, Object> article = (Map<String, Object>) ac.get("article");
+								if (article != null) {
+									// nickname을 writerName으로, profileImageUrl을 writerProfileImage으로 변환
+									Object nickname = article.remove("nickname");
+									Object profileImageUrl = article.remove("profileImageUrl");
+									if (nickname != null) {
+										article.put("writerName", nickname);
+									}
+									if (profileImageUrl != null) {
+										article.put("writerProfileImage", profileImageUrl);
+									}
+								}
+
 								Map<String, Object> data = new LinkedHashMap<>(ac);
 								data.put("likeDetail", likeDetail);
 								return responseFactory.ok(data, req);
@@ -198,7 +256,7 @@ public class  ArticleController {
 						schema = @Schema(implementation = BaseResponse.class),
 							examples = @ExampleObject(name = "ArticleListSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"page\": {\n      \"items\": [\n        {\n          \"articleId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n          \"title\": \"공연 함께 하실 분\",\n          \"content\": \"같이 즐겁게 공연하실 분을 찾습니다.\",\n          \"writerId\": \"user_123\",\n          \"board\": { \"1\": \"공지사항\" },\n          \"imageUrls\": {},\n          \"keywords\": { \"10\": \"중요\" },\n          \"lastestUpdateId\": \"2025-10-11T17:52:27\",\n          \"commentCount\": 0,\n          \"likeCount\": 0\n        }\n      ],\n      \"nextCursorUpdatedAt\": \"2025-10-11T17:52:23\",\n      \"nextCursorId\": \"6ad747b9-0f34-48ad-8dba-5afa2f7b822f\",\n      \"hasNext\": false,\n      \"size\": 10\n    },\n    \"likeCounts\": [\n      {\n        \"referenceId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n        \"likeCount\": 0\n      }\n    ],\n    \"commentCounts\": {\n      \"42840044-0f3e-482c-b5d5-0883af43e63e\": 0\n    }\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/regular?size=10\"\n  }\n}")))
 	})
-	@GetMapping
+	@GetMapping("")
 	public Mono<ResponseEntity<BaseResponse>> getArticles(
 			@RequestParam(required = false) Integer size,
 			@RequestParam(required = false) String cursorId,
@@ -213,7 +271,25 @@ public class  ArticleController {
 				.flatMap(page -> {
 					// Enrich ArticleResponse items with profile information first
 					List<ArticleResponse> items = page.getItems() == null ? List.of() : page.getItems();
+
+					// 디버깅: 원본 아이템 확인
+					log.debug("[게시글 목록 조회] 원본 아이템 수: {}", items.size());
+					if (!items.isEmpty()) {
+						ArticleResponse first = items.get(0);
+						log.info("[게시글 목록 조회] 첫 번째 게시글 - articleId: {}, writerId: {}, writerName: {}, writerProfileImage: {}",
+							first.getArticleId(), first.getWriterId(), first.getWriterName(), first.getWriterProfileImage());
+					}
+
 					return profileEnrichmentUtil.enrichArticleResponseList(items)
+							.doOnNext(enriched -> {
+								// 디버깅: 프로필 보강 후 확인
+								log.debug("[게시글 목록 조회] 프로필 보강 후 아이템 수: {}", enriched.size());
+								if (!enriched.isEmpty()) {
+									ArticleResponse first = enriched.get(0);
+									log.info("[게시글 목록 조회] 프로필 보강 후 첫 번째 게시글 - articleId: {}, writerId: {}, writerName: {}, writerProfileImage: {}",
+										first.getArticleId(), first.getWriterId(), first.getWriterName(), first.getWriterProfileImage());
+								}
+							})
 							.flatMap(enrichedArticles -> {
 								// Extract article IDs for fetching counts
 								List<String> ids = enrichedArticles.stream()
