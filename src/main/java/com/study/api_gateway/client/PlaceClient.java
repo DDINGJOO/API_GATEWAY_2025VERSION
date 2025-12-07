@@ -1,19 +1,24 @@
 package com.study.api_gateway.client;
 
+import com.study.api_gateway.dto.place.request.PlaceBatchDetailRequest;
+import com.study.api_gateway.dto.place.response.PlaceBatchDetailResponse;
 import com.study.api_gateway.dto.place.response.PlaceInfoResponse;
 import com.study.api_gateway.dto.place.response.PlaceSearchResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * PlaceInfo Server와 통신하는 WebClient 기반 클라이언트
  * 조회 전용 API 제공
  */
+@Slf4j
 @Component
 public class PlaceClient {
 	private final WebClient webClient;
@@ -45,31 +50,31 @@ public class PlaceClient {
 			String cursor,
 			Integer size
 	) {
-		UriComponentsBuilder builder = UriComponentsBuilder.fromPath(PREFIX + "/search");
-
-		if (keyword != null) builder.queryParam("keyword", keyword);
-		if (placeName != null) builder.queryParam("placeName", placeName);
-		if (category != null) builder.queryParam("category", category);
-		if (placeType != null) builder.queryParam("placeType", placeType);
-		if (keywordIds != null && !keywordIds.isEmpty()) {
-			keywordIds.forEach(id -> builder.queryParam("keywordIds", id));
-		}
-		if (parkingAvailable != null) builder.queryParam("parkingAvailable", parkingAvailable);
-		if (latitude != null) builder.queryParam("latitude", latitude);
-		if (longitude != null) builder.queryParam("longitude", longitude);
-		if (radius != null) builder.queryParam("radius", radius);
-		if (province != null) builder.queryParam("province", province);
-		if (city != null) builder.queryParam("city", city);
-		if (district != null) builder.queryParam("district", district);
-		if (sortBy != null) builder.queryParam("sortBy", sortBy);
-		if (sortDirection != null) builder.queryParam("sortDirection", sortDirection);
-		if (cursor != null) builder.queryParam("cursor", cursor);
-		if (size != null) builder.queryParam("size", size);
-
-		String uriString = builder.toUriString();
-
 		return webClient.get()
-				.uri(uriString)
+				.uri(uriBuilder -> {
+					uriBuilder.path(PREFIX + "/search");
+
+					if (keyword != null) uriBuilder.queryParam("keyword", keyword);
+					if (placeName != null) uriBuilder.queryParam("placeName", placeName);
+					if (category != null) uriBuilder.queryParam("category", category);
+					if (placeType != null) uriBuilder.queryParam("placeType", placeType);
+					if (keywordIds != null && !keywordIds.isEmpty()) {
+						keywordIds.forEach(id -> uriBuilder.queryParam("keywordIds", id));
+					}
+					if (parkingAvailable != null) uriBuilder.queryParam("parkingAvailable", parkingAvailable);
+					if (latitude != null) uriBuilder.queryParam("latitude", latitude);
+					if (longitude != null) uriBuilder.queryParam("longitude", longitude);
+					if (radius != null) uriBuilder.queryParam("radius", radius);
+					if (province != null) uriBuilder.queryParam("province", province);
+					if (city != null) uriBuilder.queryParam("city", city);
+					if (district != null) uriBuilder.queryParam("district", district);
+					if (sortBy != null) uriBuilder.queryParam("sortBy", sortBy);
+					if (sortDirection != null) uriBuilder.queryParam("sortDirection", sortDirection);
+					if (cursor != null) uriBuilder.queryParam("cursor", cursor);
+					if (size != null) uriBuilder.queryParam("size", size);
+
+					return uriBuilder.build();
+				})
 				.retrieve()
 				.bodyToMono(PlaceSearchResponse.class);
 	}
@@ -85,18 +90,18 @@ public class PlaceClient {
 			String cursor,
 			Integer size
 	) {
-		UriComponentsBuilder builder = UriComponentsBuilder.fromPath(PREFIX + "/search/region");
-
-		builder.queryParam("province", province);
-		if (city != null) builder.queryParam("city", city);
-		if (district != null) builder.queryParam("district", district);
-		if (cursor != null) builder.queryParam("cursor", cursor);
-		if (size != null) builder.queryParam("size", size);
-
-		String uriString = builder.toUriString();
-
 		return webClient.get()
-				.uri(uriString)
+				.uri(uriBuilder -> {
+					uriBuilder.path(PREFIX + "/search/region");
+
+					uriBuilder.queryParam("province", province);
+					if (city != null) uriBuilder.queryParam("city", city);
+					if (district != null) uriBuilder.queryParam("district", district);
+					if (cursor != null) uriBuilder.queryParam("cursor", cursor);
+					if (size != null) uriBuilder.queryParam("size", size);
+
+					return uriBuilder.build();
+				})
 				.retrieve()
 				.bodyToMono(PlaceSearchResponse.class);
 	}
@@ -106,14 +111,14 @@ public class PlaceClient {
 	 * GET /api/v1/places/search/popular
 	 */
 	public Mono<PlaceSearchResponse> getPopularPlaces(Integer size) {
-		UriComponentsBuilder builder = UriComponentsBuilder.fromPath(PREFIX + "/search/popular");
-
-		if (size != null) builder.queryParam("size", size);
-
-		String uriString = builder.toUriString();
-
 		return webClient.get()
-				.uri(uriString)
+				.uri(uriBuilder -> {
+					uriBuilder.path(PREFIX + "/search/popular");
+
+					if (size != null) uriBuilder.queryParam("size", size);
+
+					return uriBuilder.build();
+				})
 				.retrieve()
 				.bodyToMono(PlaceSearchResponse.class);
 	}
@@ -123,14 +128,14 @@ public class PlaceClient {
 	 * GET /api/v1/places/search/recent
 	 */
 	public Mono<PlaceSearchResponse> getRecentPlaces(Integer size) {
-		UriComponentsBuilder builder = UriComponentsBuilder.fromPath(PREFIX + "/search/recent");
-
-		if (size != null) builder.queryParam("size", size);
-
-		String uriString = builder.toUriString();
-
 		return webClient.get()
-				.uri(uriString)
+				.uri(uriBuilder -> {
+					uriBuilder.path(PREFIX + "/search/recent");
+
+					if (size != null) uriBuilder.queryParam("size", size);
+
+					return uriBuilder.build();
+				})
 				.retrieve()
 				.bodyToMono(PlaceSearchResponse.class);
 	}
@@ -140,10 +145,10 @@ public class PlaceClient {
 	 * GET /api/v1/places/{placeId}
 	 */
 	public Mono<PlaceInfoResponse> getPlaceById(String placeId) {
-		String uriString = PREFIX + "/" + placeId;
-
 		return webClient.get()
-				.uri(uriString)
+				.uri(uriBuilder -> uriBuilder
+						.path(PREFIX + "/{placeId}")
+						.build(placeId))
 				.retrieve()
 				.bodyToMono(PlaceInfoResponse.class);
 	}
@@ -153,16 +158,51 @@ public class PlaceClient {
 	 * GET /api/v1/keywords
 	 */
 	public Mono<List<com.study.api_gateway.dto.place.response.KeywordResponse>> getKeywords(String type) {
-		UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/api/v1/keywords");
-		
-		if (type != null) builder.queryParam("type", type);
-		
-		String uriString = builder.toUriString();
-		
 		return webClient.get()
-				.uri(uriString)
+				.uri(uriBuilder -> {
+					uriBuilder.path("/api/v1/keywords");
+
+					if (type != null) uriBuilder.queryParam("type", type);
+
+					return uriBuilder.build();
+				})
 				.retrieve()
 				.bodyToFlux(com.study.api_gateway.dto.place.response.KeywordResponse.class)
 				.collectList();
+	}
+
+	/**
+	 * 여러 장소 배치 상세 조회 API
+	 * POST /api/v1/places/search/batch/details
+	 *
+	 * @param placeIds 조회할 장소 ID 목록 (최대 50개)
+	 * @return 조회 성공한 장소 정보 목록과 실패한 ID 목록
+	 */
+	public Mono<PlaceBatchDetailResponse> getPlacesByBatch(List<Long> placeIds) {
+		if (placeIds == null || placeIds.isEmpty()) {
+			return Mono.just(PlaceBatchDetailResponse.builder()
+					.results(List.of())
+					.build());
+		}
+
+		PlaceBatchDetailRequest request = PlaceBatchDetailRequest.builder()
+				.placeIds(placeIds)
+				.build();
+
+		return webClient.post()
+				.uri(uriBuilder -> uriBuilder
+						.path(PREFIX + "/search/batch/details")
+						.build())
+				.bodyValue(request)
+				.retrieve()
+				.bodyToMono(PlaceBatchDetailResponse.class)
+				.onErrorResume(error -> {
+					log.error("Place 배치 조회 실패: placeIds={}, error={}", placeIds, error.getMessage());
+					// 에러 발생 시 빈 결과 반환
+					return Mono.just(PlaceBatchDetailResponse.builder()
+							.results(List.of())
+							.failed(placeIds)
+							.build());
+				});
 	}
 }
