@@ -4,8 +4,12 @@ import com.study.api_gateway.client.PlaceClient;
 import com.study.api_gateway.client.RoomClient;
 import com.study.api_gateway.client.YeYakHaeYoClient;
 import com.study.api_gateway.dto.BaseResponse;
+import com.study.api_gateway.dto.place.response.PlaceInfoSummary;
 import com.study.api_gateway.dto.room.request.RoomCreateRequest;
 import com.study.api_gateway.dto.room.response.RoomDetailWithPlaceResponse;
+import com.study.api_gateway.dto.room.response.RoomSearchWithPlaceResponse;
+import com.study.api_gateway.dto.room.response.RoomSimpleResponse;
+import com.study.api_gateway.service.PlaceCacheService;
 import com.study.api_gateway.util.ResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,7 +27,9 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 클라이언트 앱용 룸 관리 API
@@ -36,10 +42,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Room", description = "룸 관리 API")
 public class RoomController {
-	
+
 	private final RoomClient roomClient;
 	private final PlaceClient placeClient;
 	private final YeYakHaeYoClient yeYakHaeYoClient;
+	private final PlaceCacheService placeCacheService;
 	private final ResponseFactory responseFactory;
 	
 	// ========== Command APIs ==========
@@ -143,16 +150,16 @@ public class RoomController {
 	}
 	
 	/**
-	 * 룸 검색
+	 * 룸 검색 (Place 정보 및 가격 정책 포함)
 	 * GET /bff/v1/rooms/search
 	 */
 	@GetMapping("/search")
-	@Operation(summary = "룸 검색", description = "다양한 조건으로 룸을 검색합니다")
+	@Operation(summary = "룸 검색", description = "다양한 조건으로 룸을 검색하고 Place 정보와 가격을 함께 제공합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "검색 성공",
 					content = @Content(mediaType = "application/json",
 							schema = @Schema(implementation = BaseResponse.class),
-							examples = @ExampleObject(name = "RoomSearchSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": [\n    {\n      \"roomId\": 101,\n      \"roomName\": \"A룸\",\n      \"placeId\": 1,\n      \"timeSlot\": \"HOUR\",\n      \"maxOccupancy\": 10,\n      \"imageUrls\": [\"https://example.com/room1.jpg\"],\n      \"keywordIds\": [1, 2, 3]\n    },\n    {\n      \"roomId\": 102,\n      \"roomName\": \"B룸\",\n      \"placeId\": 1,\n      \"timeSlot\": \"HALFHOUR\",\n      \"maxOccupancy\": 5,\n      \"imageUrls\": [\"https://example.com/room2.jpg\"],\n      \"keywordIds\": [1, 4, 5]\n    }\n  ],\n  \"request\": {\n    \"path\": \"/bff/v1/rooms/search?placeId=1&minOccupancy=5\"\n  }\n}")))
+							examples = @ExampleObject(name = "RoomSearchSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": [\n    {\n      \"roomId\": 101,\n      \"roomName\": \"A룸\",\n      \"placeId\": 1,\n      \"timeSlot\": \"HOUR\",\n      \"maxOccupancy\": 10,\n      \"ratingAverage\": 3.0,\n      \"imageUrls\": [\"https://example.com/room1.jpg\"],\n      \"keywordIds\": [1, 2, 3],\n      \"defaultPrice\": 15000,\n      \"placeInfo\": {\n        \"placeName\": \"밴더 홍대점\",\n        \"placeType\": \"RENTAL\",\n        \"fullAddress\": \"서울 마포구 서교동 123-45\",\n        \"parkingAvailable\": true\n      }\n    },\n    {\n      \"roomId\": 102,\n      \"roomName\": \"B룸\",\n      \"placeId\": 1,\n      \"timeSlot\": \"HALFHOUR\",\n      \"maxOccupancy\": 5,\n      \"ratingAverage\": 3.0,\n      \"imageUrls\": [\"https://example.com/room2.jpg\"],\n      \"keywordIds\": [1, 4, 5],\n      \"defaultPrice\": 12000,\n      \"placeInfo\": {\n        \"placeName\": \"밴더 홍대점\",\n        \"placeType\": \"RENTAL\",\n        \"fullAddress\": \"서울 마포구 서교동 123-45\",\n        \"parkingAvailable\": true\n      }\n    }\n  ],\n  \"request\": {\n    \"path\": \"/bff/v1/rooms/search?placeId=1&minOccupancy=5\"\n  }\n}")))
 	})
 	public Mono<ResponseEntity<BaseResponse>> searchRooms(
 			@Parameter(description = "룸 이름") @RequestParam(required = false) String roomName,
@@ -161,10 +168,105 @@ public class RoomController {
 			@Parameter(description = "최소 수용 인원") @RequestParam(required = false) Integer minOccupancy,
 			ServerHttpRequest req
 	) {
-		log.info("룸 검색: roomName={}, keywordIds={}, placeId={}, minOccupancy={}", roomName, keywordIds, placeId, minOccupancy);
+		log.info("룸 검색 시작: roomName={}, keywordIds={}, placeId={}, minOccupancy={}",
+				roomName, keywordIds, placeId, minOccupancy);
 
+		// 1. Room 검색
 		return roomClient.searchRooms(roomName, keywordIds, placeId, minOccupancy)
-				.map(response -> responseFactory.ok(response, req));
+				.flatMap(rooms -> {
+					if (rooms == null || rooms.isEmpty()) {
+						log.info("검색 결과 없음");
+						return Mono.just(List.<RoomSearchWithPlaceResponse>of());
+					}
+
+					log.info("Room 검색 결과: {} 개", rooms.size());
+
+					// RoomSimpleResponse 리스트로 캐스팅
+					List<RoomSimpleResponse> roomList = (List<RoomSimpleResponse>) rooms;
+
+					// 2. 고유한 Place ID 추출
+					List<Long> uniquePlaceIds = roomList.stream()
+							.map(RoomSimpleResponse::getPlaceId)
+							.distinct()
+							.toList();
+
+					// 3. Room ID 리스트 추출
+					List<Long> roomIds = roomList.stream()
+							.map(RoomSimpleResponse::getRoomId)
+							.toList();
+
+					log.info("고유 Place ID: {}, Room ID 개수: {}", uniquePlaceIds, roomIds.size());
+
+					// 4. Place 정보와 가격 정책을 병렬로 배치 조회
+					Mono<com.study.api_gateway.dto.place.response.PlaceBatchDetailResponse> placesMono =
+							placeCacheService.getPlacesByBatchWithCache(uniquePlaceIds)
+									.doOnNext(response -> log.info("Place 조회 완료: {} 개",
+											response.getResults() != null ? response.getResults().size() : 0));
+
+					Mono<com.study.api_gateway.dto.pricing.response.RoomsPricingBatchResponse> pricingMono =
+							yeYakHaeYoClient.getPricingPoliciesByRoomIds(roomIds)
+									.doOnNext(response -> log.info("가격 정책 조회 완료: {} 개",
+											response.getRooms() != null ? response.getRooms().size() : 0));
+
+					// 5. 모든 데이터를 조합
+					return Mono.zip(placesMono, pricingMono)
+							.map(tuple -> {
+								var places = tuple.getT1();
+								var pricingPolicies = tuple.getT2();
+
+								// Place 정보를 Map으로 변환 (빠른 조회를 위해)
+								Map<Long, com.study.api_gateway.dto.place.response.PlaceInfoResponse> placeMap = new HashMap<>();
+								if (places.getResults() != null) {
+									places.getResults().forEach(place ->
+											placeMap.put(Long.parseLong(place.getId()), place));
+								}
+
+								// 가격 정책을 Map으로 변환
+								Map<Long, java.math.BigDecimal> priceMap = new HashMap<>();
+								if (pricingPolicies.getRooms() != null) {
+									pricingPolicies.getRooms().forEach(pricing ->
+											priceMap.put(pricing.getRoomId(), pricing.getDefaultPrice()));
+								}
+
+								// Room 정보와 Place, 가격 정보를 조합
+								return roomList.stream()
+										.map(room -> {
+											// Place 정보 추출
+											com.study.api_gateway.dto.place.response.PlaceInfoResponse placeInfo =
+													placeMap.get(room.getPlaceId());
+
+											PlaceInfoSummary placeSummary = null;
+											if (placeInfo != null) {
+												placeSummary = PlaceInfoSummary.builder()
+														.placeName(placeInfo.getPlaceName())
+														.placeType(placeInfo.getPlaceType())
+														.fullAddress(placeInfo.getLocation() != null &&
+																placeInfo.getLocation().getAddress() != null ?
+																placeInfo.getLocation().getAddress().getFullAddress() : null)
+														.parkingAvailable(placeInfo.getParking() != null ?
+																placeInfo.getParking().getAvailable() : false)
+														.build();
+											}
+
+											// 기본 가격 추출
+											java.math.BigDecimal defaultPrice = priceMap.get(room.getRoomId());
+
+											// RoomSearchWithPlaceResponse 생성
+											return RoomSearchWithPlaceResponse.fromRoomSimple(
+													room,
+													placeSummary,
+													defaultPrice,
+													3.0  // 리뷰 서버 미구현으로 기본값 3.0
+											);
+										})
+										.collect(java.util.stream.Collectors.toList());
+							});
+				})
+				.map(response -> responseFactory.ok(response, req))
+				.onErrorResume(error -> {
+					log.error("룸 검색 중 오류 발생: ", error);
+					return Mono.just(responseFactory.ok(List.of(), req));
+				});
 	}
 	
 	/**
