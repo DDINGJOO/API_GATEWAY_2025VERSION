@@ -50,19 +50,24 @@ public class ImageClient {
 	public Mono<Void> confirmImage(String referenceId, List<String> imageIds) {
 		String uriString = UriComponentsBuilder.fromPath("/api/v1/images/confirm")
 				.toUriString();
-		
+
 		ImageConfirmRequest request = ImageConfirmRequest.builder()
 				.referenceId(referenceId)
 				.imageIds(imageIds)
 				.build();
-		
-		log.debug("Confirming images - referenceId: {}, imageIds: {}", referenceId, imageIds);
-		
+
+		log.info("Confirming batch images - referenceId: {}, imageIds: {}, uri: {}, request body: {}",
+			referenceId, imageIds, uriString, request);
+
 		return webClient.post()
 				.uri(uriString)
 				.bodyValue(request)
 				.retrieve()
-				.bodyToMono(Void.class);
+				.bodyToMono(Void.class)
+				.doOnSuccess(v -> log.info("Batch image confirmation success - referenceId: {}, imageIds: {}",
+					referenceId, imageIds))
+				.doOnError(error -> log.error("Batch image confirmation failed - referenceId: {}, imageIds: {}, error: {}",
+					referenceId, imageIds, error.getMessage(), error));
 	}
 	
 	/**
