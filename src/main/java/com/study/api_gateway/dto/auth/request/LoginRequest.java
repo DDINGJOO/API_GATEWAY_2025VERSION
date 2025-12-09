@@ -14,13 +14,13 @@ import lombok.*;
 @Schema(name = "LoginRequest", description = "로그인 요청 바디",
 		example = "{\n  \"email\": \"user@example.com\",\n  \"password\": \"P@ssw0rd!\"\n}")
 public class LoginRequest {
-    @Email
-    @NotBlank
-    @Schema(description = "이메일", example = "user@example.com")
-    private String email;
-
-    @NotBlank
-    @Size(min = 8)
-    @Schema(description = "비밀번호(8자 이상)", example = "P@ssw0rd!")
-    private String password;
+	@Email
+	@NotBlank
+	@Schema(description = "이메일", example = "user@example.com")
+	private String email;
+	
+	@NotBlank
+	@Size(min = 8)
+	@Schema(description = "비밀번호(8자 이상)", example = "P@ssw0rd!")
+	private String password;
 }
