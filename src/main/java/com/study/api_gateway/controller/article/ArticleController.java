@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 @Validated
-public class  ArticleController {
+public class ArticleController {
 	private final ArticleClient articleClient;
 	private final CommentClient commentClient;
 	private final LikeClient likeClient;
@@ -47,73 +47,73 @@ public class  ArticleController {
 	private final ResponseFactory responseFactory;
 	private final ProfileEnrichmentUtil profileEnrichmentUtil;
 	private final UserIdValidator userIdValidator;
-
+	
 	private final String categoryId = "ARTICLE";
 	
 	@Operation(summary = "일반 게시글 생성")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
-						schema = @Schema(implementation = BaseResponse.class),
+							schema = @Schema(implementation = BaseResponse.class),
 							examples = @ExampleObject(name = "ArticleCreateSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"articleId\": \"article-1\",\n    \"title\": \"제목\",\n    \"content\": \"내용\",\n    \"imageUrls\": [\"img-1\"]\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/regular\"\n  }\n}")))
 	})
 	@PostMapping()
 	public Mono<ResponseEntity<BaseResponse>> postArticle(@RequestBody ArticleCreateRequest request, ServerHttpRequest req) {
 		String userId = userIdValidator.extractTokenUserId(req);
 		request.setWriterId(userId);
-
+		
 		// 1. 초기 요청 정보 로깅
 		log.info("[게시글 생성 시작] userId: {}, title: {}, imageIds: {}, imageCount: {}",
-			userId, request.getTitle(), request.getImageIds(),
-			request.getImageIds() != null ? request.getImageIds().size() : 0);
-
+				userId, request.getTitle(), request.getImageIds(),
+				request.getImageIds() != null ? request.getImageIds().size() : 0);
+		
 		return articleClient.postArticle(request)
 				.doOnNext(result -> {
 					// 2. Article 서버 응답 성공 로깅
 					log.info("[Article 서버 응답 성공] articleId: {}, userId: {}, title: {}",
-						result.getArticleId(), userId, request.getTitle());
+							result.getArticleId(), userId, request.getTitle());
 				})
 				.doOnError(error -> {
 					// 3. Article 서버 에러 로깅
 					log.error("[Article 서버 에러] userId: {}, title: {}, error: {}",
-						userId, request.getTitle(), error.getMessage(), error);
+							userId, request.getTitle(), error.getMessage(), error);
 				})
 				.flatMap(result -> {
 					List<String> imageIds = request.getImageIds();
-
+					
 					if (imageIds != null && !imageIds.isEmpty()) {
 						log.info("[이미지 처리 시작] articleId: {}, imageIds: {}, 50ms 지연 후 확정 요청",
-							result.getArticleId(), imageIds);
-
+								result.getArticleId(), imageIds);
+						
 						// 짧은 지연 후 이미지 확정 (게시글 저장 시간 확보)
 						return Mono.delay(Duration.ofMillis(50))
 								.doOnNext(tick -> {
 									log.info("[이미지 확정 요청 전송] articleId: {}, imageIds: {} - Image 서버로 요청 전송 중",
-										result.getArticleId(), imageIds);
+											result.getArticleId(), imageIds);
 								})
 								.then(imageConfirmService.confirmImage(result.getArticleId(), imageIds))
 								.doOnSuccess(v -> {
 									log.info("[이미지 확정 성공] articleId: {}, imageIds: {} - Image 서버 처리 완료",
-										result.getArticleId(), imageIds);
+											result.getArticleId(), imageIds);
 								})
 								.doOnError(error -> {
 									log.error("[이미지 확정 실패] articleId: {}, imageIds: {}, error: {} - Image 서버 오류",
-										result.getArticleId(), imageIds, error.getMessage(), error);
+											result.getArticleId(), imageIds, error.getMessage(), error);
 								})
 								.thenReturn(responseFactory.ok(result, req))
 								.onErrorReturn(responseFactory.ok(result, req)) // 이미지 실패해도 게시글은 성공
 								.doOnNext(response -> {
 									log.info("[게시글 생성 완료 WITH 이미지] articleId: {}, status: {}, imageCount: {}",
-										result.getArticleId(), response.getStatusCode(), imageIds.size());
+											result.getArticleId(), response.getStatusCode(), imageIds.size());
 								});
 					} else {
 						log.info("[이미지 없음] articleId: {} - 이미지 확정 과정 생략", result.getArticleId());
 					}
-
+					
 					return Mono.just(responseFactory.ok(result, req))
 							.doOnNext(response -> {
 								log.info("[게시글 생성 완료 NO 이미지] articleId: {}, status: {}",
-									result.getArticleId(), response.getStatusCode());
+										result.getArticleId(), response.getStatusCode());
 							});
 				})
 				.onErrorResume(error -> {
@@ -126,7 +126,7 @@ public class  ArticleController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
-						schema = @Schema(implementation = BaseResponse.class),
+							schema = @Schema(implementation = BaseResponse.class),
 							examples = @ExampleObject(name = "ArticleUpdateSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"articleId\": \"article-1\",\n    \"title\": \"수정된 제목\"\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/regular/{articleId}\"\n  }\n}")))
 	})
 	@PutMapping("/{articleId}")
@@ -134,7 +134,7 @@ public class  ArticleController {
 		// 1. 토큰에서 userId 추출
 		String userId = userIdValidator.extractTokenUserId(req);
 		request.setWriterId(userId);
-
+		
 		// 2. Article 조회하여 실제 작성자 확인
 		return articleClient.getArticle(articleId)
 				.flatMap(article -> userIdValidator.validateOwnership(req, article.getWriterId(), "게시글"))
@@ -154,7 +154,7 @@ public class  ArticleController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
-						schema = @Schema(implementation = BaseResponse.class),
+							schema = @Schema(implementation = BaseResponse.class),
 							examples = @ExampleObject(name = "ArticleDeleteSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": \"deleted\",\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/regular/{articleId}\"\n  }\n}")))
 	})
 	@DeleteMapping("/{articleId}")
@@ -171,7 +171,7 @@ public class  ArticleController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
-						schema = @Schema(implementation = BaseResponse.class),
+							schema = @Schema(implementation = BaseResponse.class),
 							examples = @ExampleObject(name = "ArticleDetailWithComments", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"article\": {\n      \"articleId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n      \"title\": \"공연 함께 하실 분\",\n      \"content\": \"같이 즐겁게 공연하실 분을 찾습니다.\",\n      \"writerId\": \"user_123\",\n      \"board\": { \"1\": \"공지사항\" },\n      \"imageUrls\": {},\n      \"keywords\": { \"10\": \"중요\" },\n      \"lastestUpdateId\": \"2025-10-11T17:52:27\"\n    },\n    \"comments\": [\n      { \"commentId\": \"c1\", \"writerId\": \"user_123\", \"contents\": \"첫 댓글\", \"isOwn\": true, \"replies\": [] }\n    ],\n    \"likeDetail\": { \"likeCount\": 0, \"isOwn\": false }\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/regular/{articleId}\"\n  }\n}")))
 	})
 	@GetMapping("/{articleId}")
@@ -243,7 +243,7 @@ public class  ArticleController {
 										article.put("writerProfileImage", profileImageUrl);
 									}
 								}
-
+								
 								Map<String, Object> data = new LinkedHashMap<>(ac);
 								data.put("likeDetail", likeDetail);
 								return responseFactory.ok(data, req);
@@ -255,7 +255,7 @@ public class  ArticleController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
-						schema = @Schema(implementation = BaseResponse.class),
+							schema = @Schema(implementation = BaseResponse.class),
 							examples = @ExampleObject(name = "ArticleListSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"page\": {\n      \"items\": [\n        {\n          \"articleId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n          \"title\": \"공연 함께 하실 분\",\n          \"content\": \"같이 즐겁게 공연하실 분을 찾습니다.\",\n          \"writerId\": \"user_123\",\n          \"board\": { \"1\": \"공지사항\" },\n          \"imageUrls\": {},\n          \"keywords\": { \"10\": \"중요\" },\n          \"lastestUpdateId\": \"2025-10-11T17:52:27\",\n          \"commentCount\": 0,\n          \"likeCount\": 0\n        }\n      ],\n      \"nextCursorUpdatedAt\": \"2025-10-11T17:52:23\",\n      \"nextCursorId\": \"6ad747b9-0f34-48ad-8dba-5afa2f7b822f\",\n      \"hasNext\": false,\n      \"size\": 10\n    },\n    \"likeCounts\": [\n      {\n        \"referenceId\": \"42840044-0f3e-482c-b5d5-0883af43e63e\",\n        \"likeCount\": 0\n      }\n    ],\n    \"commentCounts\": {\n      \"42840044-0f3e-482c-b5d5-0883af43e63e\": 0\n    }\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/articles/regular?size=10\"\n  }\n}")))
 	})
 	@GetMapping("")
@@ -267,21 +267,20 @@ public class  ArticleController {
 			@RequestParam(required = false) String title,
 			@RequestParam(required = false) String content,
 			@RequestParam(required = false) String writerId,
-			ServerHttpRequest req)
-	{
+			ServerHttpRequest req) {
 		return articleClient.fetchArticleCursorPageResponse(size, cursorId, boardIds, keyword, title, content, writerId)
 				.flatMap(page -> {
 					// Enrich ArticleResponse items with profile information first
 					List<ArticleResponse> items = page.getItems() == null ? List.of() : page.getItems();
-
+					
 					// 디버깅: 원본 아이템 확인
 					log.debug("[게시글 목록 조회] 원본 아이템 수: {}", items.size());
 					if (!items.isEmpty()) {
 						ArticleResponse first = items.get(0);
 						log.info("[게시글 목록 조회] 첫 번째 게시글 - articleId: {}, writerId: {}, writerName: {}, writerProfileImage: {}",
-							first.getArticleId(), first.getWriterId(), first.getWriterName(), first.getWriterProfileImage());
+								first.getArticleId(), first.getWriterId(), first.getWriterName(), first.getWriterProfileImage());
 					}
-
+					
 					return profileEnrichmentUtil.enrichArticleResponseList(items)
 							.doOnNext(enriched -> {
 								// 디버깅: 프로필 보강 후 확인
@@ -289,7 +288,7 @@ public class  ArticleController {
 								if (!enriched.isEmpty()) {
 									ArticleResponse first = enriched.get(0);
 									log.info("[게시글 목록 조회] 프로필 보강 후 첫 번째 게시글 - articleId: {}, writerId: {}, writerName: {}, writerProfileImage: {}",
-										first.getArticleId(), first.getWriterId(), first.getWriterName(), first.getWriterProfileImage());
+											first.getArticleId(), first.getWriterId(), first.getWriterName(), first.getWriterProfileImage());
 								}
 							})
 							.flatMap(enrichedArticles -> {
@@ -298,12 +297,12 @@ public class  ArticleController {
 										.map(ArticleResponse::getArticleId)
 										.filter(Objects::nonNull)
 										.toList();
-
+								
 								Mono<List<LikeCountResponse>> likeCountsMono = likeClient.getLikeCounts(categoryId, ids)
 										.onErrorReturn(List.of());
 								Mono<Map<String, Integer>> commentCountsMono = commentClient.getCountsForArticles(ids)
 										.onErrorReturn(Map.of());
-
+								
 								return Mono.zip(likeCountsMono, commentCountsMono)
 										.map(tuple2 -> {
 											// Build quick lookup maps for counts
@@ -314,7 +313,7 @@ public class  ArticleController {
 															lc -> lc.getLikeCount() == null ? 0 : lc.getLikeCount()
 													));
 											Map<String, Integer> commentCountMap = tuple2.getT2() == null ? Map.of() : tuple2.getT2();
-
+											
 											// Convert enriched ArticleResponse to Map with counts
 											List<Map<String, Object>> itemMaps = enrichedArticles.stream()
 													.map(item -> {
@@ -344,7 +343,7 @@ public class  ArticleController {
 														return m;
 													})
 													.toList();
-
+											
 											// Build page response
 											java.util.Map<String, Object> pageMap = new java.util.LinkedHashMap<>();
 											pageMap.put("items", itemMaps);
