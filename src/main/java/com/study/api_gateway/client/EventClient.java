@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 public class EventClient {
 	private final WebClient webClient;
 	private final String PREFIX = "/api/v1";
-
+	
 	public EventClient(@Qualifier(value = "articleWebClient") WebClient webClient) {
 		this.webClient = webClient;
 	}
@@ -20,7 +20,7 @@ public class EventClient {
 	public Mono<EventArticleResponse> postEvent(ArticleCreateRequest request) {
 		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/events")
 				.toUriString();
-
+		
 		return webClient.post()
 				.uri(uriString)
 				.bodyValue(request)
@@ -32,7 +32,7 @@ public class EventClient {
 		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/events/{articleId}")
 				.buildAndExpand(articleId)
 				.toUriString();
-
+		
 		return webClient.get()
 				.uri(uriString)
 				.retrieve()
