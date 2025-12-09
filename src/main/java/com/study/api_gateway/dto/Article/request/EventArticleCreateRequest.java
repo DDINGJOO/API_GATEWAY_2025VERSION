@@ -19,7 +19,7 @@ import java.util.List;
 @Schema(name = "EventArticleCreateRequest", description = "이벤트 게시글 생성 요청 바디 (ArticleCreateRequest와 동일, 하위 호환용)",
 		example = "{\n  \"title\": \"공연 함께 하실 분\",\n  \"content\": \"같이 즐겁게 공연하실 분을 찾습니다.\",\n  \"writerId\": \"user_123\",\n  \"boardIds\": 1,\n  \"keywordIds\": [10, 12],\n  \"imageUrls\": [\"img_1\", \"img_2\"],\n  \"eventStartDate\": \"2025-10-15T09:00:00\",\n  \"eventEndDate\": \"2025-10-20T18:00:00\"\n}")
 public class EventArticleCreateRequest extends ArticleCreateRequest {
-
+	
 	@Builder(builderMethodName = "eventBuilder")
 	public EventArticleCreateRequest(String title, String content, String writerId,
 	                                 Long boardIds, List<Long> keywordIds, List<String> imageUrls,
