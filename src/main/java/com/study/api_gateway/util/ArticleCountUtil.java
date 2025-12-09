@@ -23,10 +23,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class ArticleCountUtil {
-
+	
 	private final LikeClient likeClient;
 	private final CommentClient commentClient;
-
+	
 	/**
 	 * 게시글 리스트에 댓글 수 및 좋아요 수 추가
 	 * - EnrichedArticleResponse 리스트에 commentCount와 likeCount를 배치 조회 후 주입합니다.
@@ -39,25 +39,25 @@ public class ArticleCountUtil {
 	public Mono<List<EnrichedArticleResponse>> enrichWithCounts(
 			List<EnrichedArticleResponse> articles,
 			String categoryId) {
-
+		
 		if (articles == null || articles.isEmpty()) {
 			return Mono.just(articles == null ? List.of() : articles);
 		}
-
+		
 		// Extract article IDs
 		List<String> articleIds = articles.stream()
 				.map(EnrichedArticleResponse::getArticleId)
 				.filter(Objects::nonNull)
 				.toList();
-
+		
 		if (articleIds.isEmpty()) {
 			return Mono.just(articles);
 		}
-
+		
 		// Fetch like counts and comment counts in parallel
 		Mono<List<LikeCountResponse>> likeCountsMono = likeClient.getLikeCounts(categoryId, articleIds);
 		Mono<Map<String, Integer>> commentCountsMono = commentClient.getCountsForArticles(articleIds);
-
+		
 		return Mono.zip(likeCountsMono, commentCountsMono)
 				.map(tuple2 -> {
 					// Build quick lookup maps for counts
@@ -69,7 +69,7 @@ public class ArticleCountUtil {
 									(a, b) -> a // merge function for duplicate keys
 							));
 					Map<String, Integer> commentCountMap = tuple2.getT2();
-
+					
 					// Apply counts to each article
 					articles.forEach(article -> {
 						String articleId = article.getArticleId();
@@ -80,7 +80,7 @@ public class ArticleCountUtil {
 							);
 						}
 					});
-
+					
 					return articles;
 				});
 	}
