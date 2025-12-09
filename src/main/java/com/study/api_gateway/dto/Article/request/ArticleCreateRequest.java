@@ -17,16 +17,16 @@ import java.util.List;
 public class ArticleCreateRequest {
 	@Schema(description = "제목 (최대 100자)", example = "공연 함께 하실 분", required = true)
 	private String title;
-
+	
 	@Schema(description = "내용", example = "같이 즐겁게 공연하실 분을 찾습니다.", required = true)
 	private String content;
-
+	
 	@Schema(description = "작성자 ID (서버에서 토큰으로부터 자동 설정, 클라이언트는 전송 불필요)", example = "user_123", accessMode = Schema.AccessMode.READ_ONLY)
 	private String writerId;
-
+	
 	@Schema(description = "게시판 ID", example = "1", required = true)
 	private Long boardIds;
-
+	
 	@Schema(description = "키워드 ID 목록", example = "[10, 12]")
 	private List<Long> keywordIds;
 	
