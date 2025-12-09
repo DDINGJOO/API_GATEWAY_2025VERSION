@@ -42,7 +42,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Tag(name = "Room", description = "룸 관리 API")
 public class RoomController {
-
+	
 	private final RoomClient roomClient;
 	private final PlaceClient placeClient;
 	private final YeYakHaeYoClient yeYakHaeYoClient;
@@ -92,7 +92,7 @@ public class RoomController {
 	}
 	
 	// ========== Query APIs ==========
-
+	
 	/**
 	 * 룸 상세 조회 (장소 정보 + 가격 정책 + 이용 가능 상품 포함)
 	 * GET /bff/v1/rooms/{roomId}
@@ -110,7 +110,7 @@ public class RoomController {
 			ServerHttpRequest req
 	) {
 		log.info("룸 상세 조회: roomId={}", roomId);
-
+		
 		return roomClient.getRoomById(roomId)
 				.flatMap(roomDetail -> {
 					Long placeId = roomDetail.getPlaceId();
@@ -122,14 +122,14 @@ public class RoomController {
 										log.warn("장소 정보 조회 실패: placeId={}, error={}", placeId, error.getMessage());
 										return Mono.just(null);
 									});
-
+					
 					Mono<com.study.api_gateway.dto.pricing.response.PricingPolicyResponse> pricingMono =
 							yeYakHaeYoClient.getPricingPolicy(roomId)
 									.onErrorResume(error -> {
 										log.warn("가격 정책 조회 실패: roomId={}, error={}", roomId, error.getMessage());
 										return Mono.just(null);
 									});
-
+					
 					Mono<List<com.study.api_gateway.dto.product.response.ProductResponse>> productsMono =
 							yeYakHaeYoClient.getAvailableProductsForRoom(roomId, placeId)
 									.onErrorResume(error -> {
@@ -170,7 +170,7 @@ public class RoomController {
 	) {
 		log.info("룸 검색 시작: roomName={}, keywordIds={}, placeId={}, minOccupancy={}",
 				roomName, keywordIds, placeId, minOccupancy);
-
+		
 		// 1. Room 검색
 		return roomClient.searchRooms(roomName, keywordIds, placeId, minOccupancy)
 				.flatMap(rooms -> {
@@ -178,63 +178,63 @@ public class RoomController {
 						log.info("검색 결과 없음");
 						return Mono.just(List.<RoomSearchWithPlaceResponse>of());
 					}
-
+					
 					log.info("Room 검색 결과: {} 개", rooms.size());
-
+					
 					// RoomSimpleResponse 리스트로 캐스팅
 					List<RoomSimpleResponse> roomList = (List<RoomSimpleResponse>) rooms;
-
+					
 					// 2. 고유한 Place ID 추출
 					List<Long> uniquePlaceIds = roomList.stream()
 							.map(RoomSimpleResponse::getPlaceId)
 							.distinct()
 							.toList();
-
+					
 					// 3. Room ID 리스트 추출
 					List<Long> roomIds = roomList.stream()
 							.map(RoomSimpleResponse::getRoomId)
 							.toList();
-
+					
 					log.info("고유 Place ID: {}, Room ID 개수: {}", uniquePlaceIds, roomIds.size());
-
+					
 					// 4. Place 정보와 가격 정책을 병렬로 배치 조회
 					Mono<com.study.api_gateway.dto.place.response.PlaceBatchDetailResponse> placesMono =
 							placeCacheService.getPlacesByBatchWithCache(uniquePlaceIds)
 									.doOnNext(response -> log.info("Place 조회 완료: {} 개",
 											response.getResults() != null ? response.getResults().size() : 0));
-
+					
 					Mono<com.study.api_gateway.dto.pricing.response.RoomsPricingBatchResponse> pricingMono =
 							yeYakHaeYoClient.getPricingPoliciesByRoomIds(roomIds)
 									.doOnNext(response -> log.info("가격 정책 조회 완료: {} 개",
 											response.getRooms() != null ? response.getRooms().size() : 0));
-
+					
 					// 5. 모든 데이터를 조합
 					return Mono.zip(placesMono, pricingMono)
 							.map(tuple -> {
 								var places = tuple.getT1();
 								var pricingPolicies = tuple.getT2();
-
+								
 								// Place 정보를 Map으로 변환 (빠른 조회를 위해)
 								Map<Long, com.study.api_gateway.dto.place.response.PlaceInfoResponse> placeMap = new HashMap<>();
 								if (places.getResults() != null) {
 									places.getResults().forEach(place ->
 											placeMap.put(Long.parseLong(place.getId()), place));
 								}
-
+								
 								// 가격 정책을 Map으로 변환
 								Map<Long, java.math.BigDecimal> priceMap = new HashMap<>();
 								if (pricingPolicies.getRooms() != null) {
 									pricingPolicies.getRooms().forEach(pricing ->
 											priceMap.put(pricing.getRoomId(), pricing.getDefaultPrice()));
 								}
-
+								
 								// Room 정보와 Place, 가격 정보를 조합
 								return roomList.stream()
 										.map(room -> {
 											// Place 정보 추출
 											com.study.api_gateway.dto.place.response.PlaceInfoResponse placeInfo =
 													placeMap.get(room.getPlaceId());
-
+											
 											PlaceInfoSummary placeSummary = null;
 											if (placeInfo != null) {
 												placeSummary = PlaceInfoSummary.builder()
@@ -247,10 +247,10 @@ public class RoomController {
 																placeInfo.getParking().getAvailable() : false)
 														.build();
 											}
-
+											
 											// 기본 가격 추출
 											java.math.BigDecimal defaultPrice = priceMap.get(room.getRoomId());
-
+											
 											// RoomSearchWithPlaceResponse 생성
 											return RoomSearchWithPlaceResponse.fromRoomSimple(
 													room,
@@ -308,7 +308,7 @@ public class RoomController {
 			ServerHttpRequest req
 	) {
 		log.info("여러 룸 일괄 조회: ids={}, count={}", ids, ids.size());
-
+		
 		return roomClient.getRoomsByIds(ids)
 				.flatMapMany(rooms -> reactor.core.publisher.Flux.fromIterable(rooms)
 						.flatMap(room ->
