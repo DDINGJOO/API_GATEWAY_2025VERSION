@@ -29,12 +29,12 @@ import java.util.concurrent.TimeoutException;
  * - 프로필 검색/수정, Enums 조회, 배치 프로필 요약 조회 등을 제공합니다.
  */
 public class ProfileClient {
-    private final WebClient webClient;
+	private final WebClient webClient;
 	private final String PREFIX = "/api/v1/profiles";
-
-    public ProfileClient(@Qualifier(value = "profileWebClient") WebClient webClient) {
-        this.webClient = webClient;
-    }
+	
+	public ProfileClient(@Qualifier(value = "profileWebClient") WebClient webClient) {
+		this.webClient = webClient;
+	}
 	
 	
 	/**
@@ -43,68 +43,72 @@ public class ProfileClient {
 	 *
 	 * @return key: 장르 ID, value: 장르명
 	 */
-    public Mono<Map<Integer, String>> fetchGenres() {
-	    
-	    String uriString = UriComponentsBuilder.fromPath(PREFIX + "/genres")
-                .toUriString();
-
-        return webClient.get()
-                .uri(uriString)
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<Integer, String>>() {});
-    }
+	public Mono<Map<Integer, String>> fetchGenres() {
+		
+		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/genres")
+				.toUriString();
+		
+		return webClient.get()
+				.uri(uriString)
+				.retrieve()
+				.bodyToMono(new ParameterizedTypeReference<Map<Integer, String>>() {
+				});
+	}
 	
 	/**
 	 * 악기 Enum 목록 조회
 	 * GET /api/profiles/enums/instruments
+	 *
 	 * @return key: 악기 ID, value: 악기명
 	 */
-    public Mono<Map<Integer, String>> fetchInstruments() {
-	    String uriString = UriComponentsBuilder.fromPath(PREFIX + "/instruments")
-                .toUriString();
-        return webClient.get()
-                .uri(uriString)
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<Integer, String>>() {});
-    }
+	public Mono<Map<Integer, String>> fetchInstruments() {
+		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/instruments")
+				.toUriString();
+		return webClient.get()
+				.uri(uriString)
+				.retrieve()
+				.bodyToMono(new ParameterizedTypeReference<Map<Integer, String>>() {
+				});
+	}
 	
 	/**
 	 * 지역(도시) Enum 목록 조회
 	 * GET /api/profiles/enums/locations
+	 *
 	 * @return key: 지역 코드, value: 지역명
 	 */
-    public Mono<Map<String, String>> fetchLocations() {
-	    String uriString = UriComponentsBuilder.fromPath(PREFIX + "/locations")
-                .toUriString();
-        return webClient.get()
-                .uri(uriString)
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {});
-    }
+	public Mono<Map<String, String>> fetchLocations() {
+		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/locations")
+				.toUriString();
+		return webClient.get()
+				.uri(uriString)
+				.retrieve()
+				.bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {
+				});
+	}
 	
 	
-	public Mono<Boolean> updateProfile(String userId, ProfileUpdateRequest req)
-    {
-	    
-	    String uriString = UriComponentsBuilder.fromPath(PREFIX + "/" + userId)
-                .toUriString();
-
-        return webClient.put()
-                .uri(uriString)
-                .bodyValue(req)
-                .retrieve()
-                .bodyToMono(Boolean.class);
-    }
-
-    public Mono<UserResponse> fetchProfile(String userId){
-	    String uriString = UriComponentsBuilder.fromPath(PREFIX + "/" + userId)
-                .toUriString();
-
-        return webClient.get()
-                .uri(uriString)
-                .retrieve()
-                .bodyToMono(UserResponse.class);
-    }
+	public Mono<Boolean> updateProfile(String userId, ProfileUpdateRequest req) {
+		
+		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/" + userId)
+				.toUriString();
+		
+		return webClient.put()
+				.uri(uriString)
+				.bodyValue(req)
+				.retrieve()
+				.bodyToMono(Boolean.class);
+	}
+	
+	public Mono<UserResponse> fetchProfile(String userId) {
+		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/" + userId)
+				.toUriString();
+		
+		return webClient.get()
+				.uri(uriString)
+				.retrieve()
+				.bodyToMono(UserResponse.class);
+	}
 	
 	public Flux<UserResponse> fetchProfiles(String city, String nickname, List<Integer> genres, List<Integer> instruments, Character sex, String cursor, Integer size) {
 		UriComponentsBuilder builder = UriComponentsBuilder.fromPath(PREFIX);
@@ -120,15 +124,15 @@ public class ProfileClient {
 		if (cursor != null && !cursor.isBlank()) builder.queryParam("cursor", cursor);
 		if (size != null) builder.queryParam("size", size);
 		String uriString = builder.toUriString();
-
+		
 		log.info("fetchProfiles uriString : {}", uriString);
-
-        return webClient.get()
-                .uri(uriString)
-                .retrieve()
-		        .bodyToMono(UserPageResponse.class)
-		        .flatMapMany(page -> Flux.fromIterable(page == null || page.getContent() == null ? List.of() : page.getContent()));
-    }
+		
+		return webClient.get()
+				.uri(uriString)
+				.retrieve()
+				.bodyToMono(UserPageResponse.class)
+				.flatMapMany(page -> Flux.fromIterable(page == null || page.getContent() == null ? List.of() : page.getContent()));
+	}
 	
 	/**
 	 * 프로필 목록 조회 (페이지네이션 메타데이터 포함)
@@ -156,18 +160,18 @@ public class ProfileClient {
 				.retrieve()
 				.bodyToMono(UserPageResponse.class);
 	}
-
-    public Mono<Boolean> validateProfile(String type, String value ){
-        String uriString = UriComponentsBuilder.fromPath(PREFIX + "/validate")
-                .queryParam("type", type)
-                .queryParam("value", value)
-                .toUriString();
-
-        return webClient.get()
-                .uri(uriString)
-                .retrieve()
-                .bodyToMono(Boolean.class);
-    }
+	
+	public Mono<Boolean> validateProfile(String type, String value) {
+		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/validate")
+				.queryParam("type", type)
+				.queryParam("value", value)
+				.toUriString();
+		
+		return webClient.get()
+				.uri(uriString)
+				.retrieve()
+				.bodyToMono(Boolean.class);
+	}
 	
 	public Mono<List<BatchUserSummaryResponse>> fetchUserSummariesBatch(List<String> userIds) {
 		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/batch")
@@ -186,7 +190,7 @@ public class ProfileClient {
 					log.warn("fetchUserSummariesBatch failed for ids.size={} : {}", userIds == null ? 0 : userIds.size(), e.toString());
 					return Mono.just(Collections.emptyList());
 				});
-    }
+	}
 	
 	
 	private boolean isTransient(Throwable t) {
