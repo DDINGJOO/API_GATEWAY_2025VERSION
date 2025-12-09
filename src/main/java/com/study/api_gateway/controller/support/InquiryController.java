@@ -38,7 +38,7 @@ public class InquiryController {
 		// 토큰에서 userId 추출하여 설정
 		String userId = userIdValidator.extractTokenUserId(req);
 		request.setWriterId(userId);
-
+		
 		return inquiryClient.createInquiry(request)
 				.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
 						.map(enriched -> responseFactory.ok(enriched, req, HttpStatus.CREATED))
@@ -61,12 +61,12 @@ public class InquiryController {
 					if (result instanceof java.util.Map) {
 						inquiryWriterId = (String) ((java.util.Map<?, ?>) result).get("writerId");
 					}
-
+					
 					if (inquiryWriterId == null) {
 						return Mono.error(new org.springframework.web.server.ResponseStatusException(
 								HttpStatus.INTERNAL_SERVER_ERROR, "문의 작성자 정보를 찾을 수 없습니다"));
 					}
-
+					
 					// 토큰의 userId와 문의 작성자 ID가 일치하는지 검증
 					return userIdValidator.validateOwnership(req, inquiryWriterId, "문의")
 							.then(profileEnrichmentUtil.enrichAny(result))
@@ -86,7 +86,7 @@ public class InquiryController {
 			ServerHttpRequest req) {
 		// writerId 파라미터는 유지하되, 실제로는 토큰에서 추출한 userId 사용
 		String userId = userIdValidator.extractTokenUserId(req);
-
+		
 		return inquiryClient.getInquiries(userId, category, status)
 				.collectList()
 				.flatMap(list -> profileEnrichmentUtil.enrichAny(list)
@@ -106,7 +106,7 @@ public class InquiryController {
 			ServerHttpRequest req) {
 		// 토큰에서 userId 추출
 		String userId = userIdValidator.extractTokenUserId(req);
-
+		
 		return inquiryClient.deleteInquiry(inquiryId, userId)
 				.thenReturn(responseFactory.ok(null, req, HttpStatus.NO_CONTENT));
 	}
@@ -123,7 +123,7 @@ public class InquiryController {
 			ServerHttpRequest req) {
 		// 토큰에서 userId 추출
 		String userId = userIdValidator.extractTokenUserId(req);
-
+		
 		return inquiryClient.confirmInquiry(inquiryId, userId)
 				.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
 						.map(enriched -> responseFactory.ok(enriched, req))
