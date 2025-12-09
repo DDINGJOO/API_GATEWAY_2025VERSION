@@ -27,8 +27,8 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @Validated
 public class CommentController {
-    private final CommentClient commentClient;
-    private final ResponseFactory responseFactory;
+	private final CommentClient commentClient;
+	private final ResponseFactory responseFactory;
 	private final com.study.api_gateway.util.ProfileEnrichmentUtil profileEnrichmentUtil;
 	private final UserIdValidator userIdValidator;
 
@@ -75,12 +75,12 @@ public class CommentController {
 	// 2-1) 루트/대댓글 통합 생성 (parentId 파라미터로 분기)
 	@Operation(summary = "루트/대댓글 통합 생성",
 			description = "parentId 파라미터가 없으면 루트 댓글을, 있으면 해당 부모에 대한 대댓글을 생성합니다. 성공 시 201을 반환합니다.")
-    @ApiResponses({
-		    @ApiResponse(responseCode = "201", description = "생성됨",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BaseResponse.class),
-		                    examples = @ExampleObject(name = "CreateCombined201", value = "{\n  \"isSuccess\": true,\n  \"code\": 201,\n  \"data\": { \n    \"commentId\": \"generated-id\",\n    \"contents\": \"내용\"\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/comments/create?parentId=optional\"\n  }\n}")))
-    })
+	@ApiResponses({
+			@ApiResponse(responseCode = "201", description = "생성됨",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "CreateCombined201", value = "{\n  \"isSuccess\": true,\n  \"code\": 201,\n  \"data\": { \n    \"commentId\": \"generated-id\",\n    \"contents\": \"내용\"\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/comments/create?parentId=optional\"\n  }\n}")))
+	})
 	@PostMapping("/create")
 	public Mono<ResponseEntity<BaseResponse>> createCombined(@RequestParam(required = false) String parentId,
 	                                                         @RequestBody CombinedCommentCreateRequest request,
@@ -88,7 +88,7 @@ public class CommentController {
 		// 토큰에서 userId 추출하여 설정
 		String userId = userIdValidator.extractTokenUserId(req);
 		request.setWriterId(userId);
-
+		
 		if (parentId == null || parentId.isBlank()) {
 			RootCommentCreateRequest root = new RootCommentCreateRequest();
 			root.setArticleId(request.getArticleId());
@@ -110,18 +110,18 @@ public class CommentController {
 							.map(enriched -> responseFactory.ok(enriched, req, HttpStatus.CREATED))
 					);
 		}
-    }
+	}
 	
 	
 	// 3) 특정 아티클의 전체 댓글 조회
 	@Operation(summary = "특정 아티클의 전체 댓글 조회(10개씩)",
 			description = "특정 아티클의 전체 댓글을 조회한합니다., mode = all : 전체 댓글 조회, mode=visibleCount , 페이징 처리, 1부터 시작하면 됩니다.(게시즐 조회시 0번 페이지 조회) ")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "성공",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BaseResponse.class),
-		                    examples = @ExampleObject(name = "CommentsByArticle200", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": [\n    {\n      \"commentId\": \"c1\",\n      \"articleId\": \"{articleId}\",\n      \"writerId\": \"user-1\",\n      \"parentCommentId\": null,\n      \"rootCommentId\": \"c1\",\n      \"depth\": 0,\n      \"contents\": \"내용\",\n      \"isDeleted\": false,\n      \"status\": \"ACTIVE\",\n      \"replyCount\": 0,\n      \"createdAt\": \"2025-10-03T10:23:45Z\",\n      \"updatedAt\": \"2025-10-03T10:23:45Z\",\n      \"deletedAt\": null\n    }\n  ],\n  \"request\": {\n    \"path\": \"/bff/v1/communities/comments/article/{articleId}\"\n  }\n}")))
-    })
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "CommentsByArticle200", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": [\n    {\n      \"commentId\": \"c1\",\n      \"articleId\": \"{articleId}\",\n      \"writerId\": \"user-1\",\n      \"parentCommentId\": null,\n      \"rootCommentId\": \"c1\",\n      \"depth\": 0,\n      \"contents\": \"내용\",\n      \"isDeleted\": false,\n      \"status\": \"ACTIVE\",\n      \"replyCount\": 0,\n      \"createdAt\": \"2025-10-03T10:23:45Z\",\n      \"updatedAt\": \"2025-10-03T10:23:45Z\",\n      \"deletedAt\": null\n    }\n  ],\n  \"request\": {\n    \"path\": \"/bff/v1/communities/comments/article/{articleId}\"\n  }\n}")))
+	})
 	@GetMapping("/article")
 	public Mono<ResponseEntity<BaseResponse>> getByArticle(@RequestParam String articleId,
 	                                                       @RequestParam(required = false, defaultValue = "0") Integer page,
@@ -131,7 +131,7 @@ public class CommentController {
 				.flatMap(result -> profileEnrichmentUtil.enrichAny(result)
 						.map(enriched -> responseFactory.ok(enriched, req))
 				);
-    }
+	}
 
 //    // 4) 특정 부모의 대댓글 목록 조회
 //    @Operation(summary = "특정 부모의 대댓글 목록 조회")
@@ -182,62 +182,62 @@ public class CommentController {
 	// 7) 댓글 내용 수정
 	@Operation(summary = "댓글 내용 수정",
 			description = "작성자 본인만 수정 가능. 내용이 비어있으면 400 반환.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "성공",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BaseResponse.class),
-		                    examples = @ExampleObject(name = "UpdateComment200", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": { \n    \"commentId\": \"c1\", \n    \"contents\": \"수정한 내용\" \n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/comments/{id}\"\n  }\n}"))),
-		    @ApiResponse(responseCode = "403", description = "본인 아님",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BaseResponse.class),
-		                    examples = @ExampleObject(name = "UpdateComment403", value = "{\n  \"isSuccess\": false,\n  \"code\": 403,\n  \"data\": \"작성자 본인만 댓글을 수정/삭제할 수 있습니다.\",\n  \"request\": { \n    \"path\": \"/bff/v1/communities/comments/{id}\"\n  }\n}"))),
-		    @ApiResponse(responseCode = "400", description = "내용 비어있음",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BaseResponse.class),
-		                    examples = @ExampleObject(name = "UpdateComment400", value = "{\n  \"isSuccess\": false,\n  \"code\": 400,\n  \"data\": \"댓글 내용은 비어 있을 수 없습니다.\",\n  \"request\": { \n    \"path\": \"/bff/v1/communities/comments/{id}\"\n  }\n}"))),
-		    @ApiResponse(responseCode = "404", description = "미존재",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BaseResponse.class),
-		                    examples = @ExampleObject(name = "UpdateComment404", value = "{\n  \"isSuccess\": false,\n  \"code\": 404,\n  \"data\": \"댓글을 찾을 수 없습니다.\",\n  \"request\": { \n    \"path\": \"/bff/v1/communities/comments/{id}\"\n  }\n}")))
-    })
-    @PatchMapping("/{id}")
-    public Mono<ResponseEntity<BaseResponse>> update(@PathVariable String id,
-                                                     @RequestBody CommentUpdateRequest request,
-                                                     ServerHttpRequest req) {
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "UpdateComment200", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": { \n    \"commentId\": \"c1\", \n    \"contents\": \"수정한 내용\" \n  },\n  \"request\": {\n    \"path\": \"/bff/v1/communities/comments/{id}\"\n  }\n}"))),
+			@ApiResponse(responseCode = "403", description = "본인 아님",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "UpdateComment403", value = "{\n  \"isSuccess\": false,\n  \"code\": 403,\n  \"data\": \"작성자 본인만 댓글을 수정/삭제할 수 있습니다.\",\n  \"request\": { \n    \"path\": \"/bff/v1/communities/comments/{id}\"\n  }\n}"))),
+			@ApiResponse(responseCode = "400", description = "내용 비어있음",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "UpdateComment400", value = "{\n  \"isSuccess\": false,\n  \"code\": 400,\n  \"data\": \"댓글 내용은 비어 있을 수 없습니다.\",\n  \"request\": { \n    \"path\": \"/bff/v1/communities/comments/{id}\"\n  }\n}"))),
+			@ApiResponse(responseCode = "404", description = "미존재",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "UpdateComment404", value = "{\n  \"isSuccess\": false,\n  \"code\": 404,\n  \"data\": \"댓글을 찾을 수 없습니다.\",\n  \"request\": { \n    \"path\": \"/bff/v1/communities/comments/{id}\"\n  }\n}")))
+	})
+	@PatchMapping("/{id}")
+	public Mono<ResponseEntity<BaseResponse>> update(@PathVariable String id,
+	                                                 @RequestBody CommentUpdateRequest request,
+	                                                 ServerHttpRequest req) {
 		// 토큰에서 userId 추출하여 설정
 		String userId = userIdValidator.extractTokenUserId(req);
 		request.setWriterId(userId);
-
+		
 		return commentClient.update(id, request)
-                .map(result -> responseFactory.ok(result, req));
-    }
-
-    // 8) 소프트 삭제
-    @Operation(summary = "댓글 소프트 삭제",
-		    description = "작성자 본인만 가능. 성공 시 204(No Content)와 함께 data는 null입니다.")
-    @ApiResponses({
-		    @ApiResponse(responseCode = "204", description = "삭제됨",
-				    content = @Content(mediaType = "application/json",
-						    schema = @Schema(implementation = BaseResponse.class),
-						    examples = @ExampleObject(name = "SoftDelete204", value = "{\n  \"isSuccess\": true,\n  \"code\": 204,\n  \"data\": null,\n  \"request\": {\n    \"path\": \"/bff/v1/communities/comments/{id}?writerId=user-1\"\n  }\n}"))),
-		    @ApiResponse(responseCode = "403", description = "본인 아님",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BaseResponse.class),
-		                    examples = @ExampleObject(name = "SoftDelete403", value = "{\n  \"isSuccess\": false,\n  \"code\": 403,\n  \"data\": \"작성자 본인만 댓글을 수정/삭제할 수 있습니다.\",\n  \"request\": {\n    \"path\": \"/bff/v1/communities/comments/{id}?writerId=other\"\n  }\n}"))),
-		    @ApiResponse(responseCode = "404", description = "미존재",
-				    content = @Content(mediaType = "application/json",
-						    schema = @Schema(implementation = BaseResponse.class),
-						    examples = @ExampleObject(name = "SoftDelete404", value = "{\n  \"isSuccess\": false,\n  \"code\": 404,\n  \"data\": \"댓글을 찾을 수 없습니다.\",\n  \"request\": {\n    \"path\": \"/bff/v1/communities/comments/{id}?writerId=user-1\"\n  }\n}")))
-    })
-    @DeleteMapping("/{id}")
-    public Mono<ResponseEntity<BaseResponse>> softDelete(@PathVariable String id,
-                                                         ServerHttpRequest req) {
+				.map(result -> responseFactory.ok(result, req));
+	}
+	
+	// 8) 소프트 삭제
+	@Operation(summary = "댓글 소프트 삭제",
+			description = "작성자 본인만 가능. 성공 시 204(No Content)와 함께 data는 null입니다.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "204", description = "삭제됨",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "SoftDelete204", value = "{\n  \"isSuccess\": true,\n  \"code\": 204,\n  \"data\": null,\n  \"request\": {\n    \"path\": \"/bff/v1/communities/comments/{id}?writerId=user-1\"\n  }\n}"))),
+			@ApiResponse(responseCode = "403", description = "본인 아님",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "SoftDelete403", value = "{\n  \"isSuccess\": false,\n  \"code\": 403,\n  \"data\": \"작성자 본인만 댓글을 수정/삭제할 수 있습니다.\",\n  \"request\": {\n    \"path\": \"/bff/v1/communities/comments/{id}?writerId=other\"\n  }\n}"))),
+			@ApiResponse(responseCode = "404", description = "미존재",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "SoftDelete404", value = "{\n  \"isSuccess\": false,\n  \"code\": 404,\n  \"data\": \"댓글을 찾을 수 없습니다.\",\n  \"request\": {\n    \"path\": \"/bff/v1/communities/comments/{id}?writerId=user-1\"\n  }\n}")))
+	})
+	@DeleteMapping("/{id}")
+	public Mono<ResponseEntity<BaseResponse>> softDelete(@PathVariable String id,
+	                                                     ServerHttpRequest req) {
 		// 토큰에서 userId 추출
 		String userId = userIdValidator.extractTokenUserId(req);
-
+		
 		return commentClient.softDelete(id, userId)
-		        .thenReturn(responseFactory.ok(null, req, HttpStatus.NO_CONTENT));
-    }
+				.thenReturn(responseFactory.ok(null, req, HttpStatus.NO_CONTENT));
+	}
 
 //    // 9) 여러 게시글에 대한 댓글 수 조회
 //    @Operation(summary = "여러 게시글의 댓글 수 조회",
