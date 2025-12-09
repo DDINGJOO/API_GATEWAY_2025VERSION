@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class CouponDownloadRequest {
-    private String couponCode;
-    private Long userId;
+	private String couponCode;
+	private Long userId;
 }
