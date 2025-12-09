@@ -19,28 +19,28 @@ import reactor.core.publisher.Mono;
 @WebFluxTest(controllers = ProfileController.class)
 @Import({ResponseFactory.class, RequestPathHelper.class, GlobalExceptionHandler.class, com.study.api_gateway.config.TestConfig.class})
 class ProfileControllerPathInjectionTest {
-
-    @Autowired
-    private WebTestClient webTestClient;
-
-    @MockBean
-    private ProfileClient profileClient;
-
-    @MockBean
-    private com.study.api_gateway.service.ImageConfirmService imageConfirmService;
-
-    @Test
-    @DisplayName("프로필 단건 조회: /bff 프리픽스 제거되어 응답.request.path/url 에 반영")
-    void fetchProfilePathFallback() {
-        Mockito.when(profileClient.fetchProfile("u1"))
-                .thenReturn(Mono.just(UserResponse.builder().userId("u1").build()));
-
-        webTestClient.get()
-                .uri("/bff/v1/profiles/u1")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.request.path").isEqualTo("/v1/profiles/u1")
-                .jsonPath("$.request.url").isEqualTo("http://localhost/v1/profiles/u1");
-    }
+	
+	@Autowired
+	private WebTestClient webTestClient;
+	
+	@MockBean
+	private ProfileClient profileClient;
+	
+	@MockBean
+	private com.study.api_gateway.service.ImageConfirmService imageConfirmService;
+	
+	@Test
+	@DisplayName("프로필 단건 조회: /bff 프리픽스 제거되어 응답.request.path/url 에 반영")
+	void fetchProfilePathFallback() {
+		Mockito.when(profileClient.fetchProfile("u1"))
+				.thenReturn(Mono.just(UserResponse.builder().userId("u1").build()));
+		
+		webTestClient.get()
+				.uri("/bff/v1/profiles/u1")
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody()
+				.jsonPath("$.request.path").isEqualTo("/v1/profiles/u1")
+				.jsonPath("$.request.url").isEqualTo("http://localhost/v1/profiles/u1");
+	}
 }
