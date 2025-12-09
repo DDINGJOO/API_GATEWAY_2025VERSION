@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class CouponValidateResponse {
-    private String couponCode;
-    private Boolean valid;
-    private String message;
+	private String couponCode;
+	private Boolean valid;
+	private String message;
 }
