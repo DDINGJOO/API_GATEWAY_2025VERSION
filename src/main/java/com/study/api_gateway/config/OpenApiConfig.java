@@ -42,41 +42,41 @@ import org.springframework.context.annotation.Configuration;
 				version = "2.0.0",
 				description = """
 						# Bander API Gateway
-
+						
 						Bander 서비스의 Backend for Frontend (BFF) 패턴을 구현한 API Gateway입니다.
-
+						
 						## 주요 기능
-
+						
 						### 인증 및 보안
 						- **JWT 토큰 기반 인증**: 모든 API 요청에 Bearer 토큰 필수
 						- **서버 측 사용자 식별**: X-User-Id 헤더를 통해 서버에서 사용자 ID 추출
 						- **권한 검증**: 작성자 본인만 수정/삭제 가능한 리소스에 대한 자동 검증
-
+						
 						### 데이터 Enrichment
 						- **프로필 정보 자동 추가**: 게시글, 댓글 등에 작성자 프로필 정보 자동 포함
 						- **카운트 정보 제공**: 좋아요 수, 댓글 수 등 집계 정보 자동 계산
 						- **캐시 최적화**: Redis를 활용한 프로필 정보 캐싱으로 성능 최적화
-
+						
 						### 도메인
 						- **Article**: 게시글 관리 (일반, 이벤트, 공지사항)
 						- **Comment**: 댓글 및 대댓글 관리
 						- **Feed**: 사용자 맞춤 피드
 						- **Support**: 문의 및 신고 관리
-
+						
 						## 인증 방법
-
+						
 						1. Authorization 헤더에 Bearer 토큰 포함
 						2. 서버가 토큰 검증 후 X-User-Id 헤더 생성
 						3. 모든 API 요청에서 X-User-Id를 통해 사용자 식별
-
+						
 						## 참고사항
-
+						
 						- **writerId 필드**: API 문서에 표시되나 클라이언트는 전송하지 않음 (READ_ONLY)
 						- **응답 형식**: 모든 응답은 BaseResponse 형식으로 래핑됨
 						- **에러 처리**: 표준 HTTP 상태 코드 및 상세 메시지 제공
-
+						
 						## 버전 히스토리
-
+						
 						- **v2.0.0** (2025-01-16): JWT 토큰 기반 인증 전환, 프로필/카운트 enrichment 추가
 						- **v1.0.0** (2024-12-01): 초기 BFF API Gateway 구축
 						""",
@@ -112,17 +112,17 @@ import org.springframework.context.annotation.Configuration;
 		name = "Bearer Authentication",
 		description = """
 				JWT 토큰 기반 인증
-
+				
 				### 사용 방법
 				1. 로그인 API를 통해 JWT 토큰 발급
 				2. Authorization 헤더에 'Bearer {token}' 형식으로 포함
 				3. 서버가 토큰 검증 후 X-User-Id 헤더 자동 생성
-
+				
 				### 토큰 검증
 				- 서버에서 JWT 토큰의 유효성 검증
 				- 만료된 토큰은 401 Unauthorized 응답
 				- 토큰에서 추출한 사용자 ID는 X-User-Id 헤더로 전달
-
+				
 				### 보안 정책
 				- 클라이언트는 절대 사용자 ID를 직접 전송하지 않음
 				- 모든 사용자 식별은 서버 측 토큰 검증을 통해 이루어짐
@@ -135,7 +135,7 @@ import org.springframework.context.annotation.Configuration;
 )
 @Configuration
 public class OpenApiConfig {
-
+	
 	/**
 	 * OpenAPI 커스터마이징
 	 *
@@ -229,7 +229,7 @@ public class OpenApiConfig {
 								.name("X-User-Id")
 								.description("""
 										사용자 식별 헤더 (서버에서 자동 생성)
-
+										
 										이 헤더는 서버에서 JWT 토큰을 검증한 후 자동으로 생성됩니다.
 										클라이언트는 이 헤더를 직접 전송할 필요가 없으며, 전송하더라도 무시됩니다.
 										""")
