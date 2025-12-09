@@ -9,8 +9,8 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class SuspendRequest {
-    private String suspendReason;
-    private String suspenderUserId;
-    private String suspendedUserId;
-    private long suspendDay;
+	private String suspendReason;
+	private String suspenderUserId;
+	private String suspendedUserId;
+	private long suspendDay;
 }
