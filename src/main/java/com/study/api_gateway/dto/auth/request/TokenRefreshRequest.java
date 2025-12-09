@@ -9,8 +9,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TokenRefreshRequest {
-    @NotBlank
-    private String refreshToken;
-    @NotBlank
-    private String deviceId;
+	@NotBlank
+	private String refreshToken;
+	@NotBlank
+	private String deviceId;
 }
