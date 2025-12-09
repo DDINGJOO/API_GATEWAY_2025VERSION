@@ -21,7 +21,7 @@ import java.util.List;
 @Schema(name = "EventArticleResponse", description = "이벤트 게시글 응답 (ArticleResponse와 동일, 하위 호환용)",
 		example = "{\n  \"articleId\": \"ART_20251225_001\",\n  \"title\": \"크리스마스 이벤트\",\n  \"content\": \"크리스마스 특별 이벤트입니다.\",\n  \"writerId\": \"admin\",\n  \"board\": { \"boardId\": 3, \"boardName\": \"이벤트\", \"description\": \"이벤트 게시판\" },\n  \"status\": \"ACTIVE\",\n  \"viewCount\": 100,\n  \"firstImageUrl\": null,\n  \"createdAt\": \"2025-12-01T00:00:00\",\n  \"updatedAt\": \"2025-12-01T00:00:00\",\n  \"images\": [],\n  \"keywords\": [],\n  \"eventStartDate\": \"2025-12-24T00:00:00\",\n  \"eventEndDate\": \"2025-12-25T23:59:59\"\n}")
 public class EventArticleResponse extends ArticleResponse {
-
+	
 	@Builder(builderMethodName = "eventArticleBuilder")
 	public EventArticleResponse(
 			String articleId,
