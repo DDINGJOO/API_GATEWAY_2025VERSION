@@ -14,19 +14,19 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class ExpiringCouponsResponse {
-    private List<ExpiringCoupon> coupons;
-    private Integer totalCount;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class ExpiringCoupon {
-        private Long couponId;
-        private String couponName;
-        private DiscountType discountType;
-        private Integer discountValue;
-        private LocalDateTime expiryDate;
-        private Integer daysUntilExpiry;
-    }
+	private List<ExpiringCoupon> coupons;
+	private Integer totalCount;
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	@Builder
+	public static class ExpiringCoupon {
+		private Long couponId;
+		private String couponName;
+		private DiscountType discountType;
+		private Integer discountValue;
+		private LocalDateTime expiryDate;
+		private Integer daysUntilExpiry;
+	}
 }
