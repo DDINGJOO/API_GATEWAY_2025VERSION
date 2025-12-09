@@ -13,24 +13,24 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class PlaceInfoSummary {
-
-    /**
-     * 공간명
-     */
-    private String placeName;
-
-    /**
-     * 공간 타입 (예: RENTAL, STUDIO 등)
-     */
-    private String placeType;
-
-    /**
-     * 전체 주소
-     */
-    private String fullAddress;
-
-    /**
-     * 주차 가능 여부
-     */
-    private Boolean parkingAvailable;
+	
+	/**
+	 * 공간명
+	 */
+	private String placeName;
+	
+	/**
+	 * 공간 타입 (예: RENTAL, STUDIO 등)
+	 */
+	private String placeType;
+	
+	/**
+	 * 전체 주소
+	 */
+	private String fullAddress;
+	
+	/**
+	 * 주차 가능 여부
+	 */
+	private Boolean parkingAvailable;
 }
