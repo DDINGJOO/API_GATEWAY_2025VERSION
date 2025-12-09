@@ -14,5 +14,5 @@ public class ConsentRequest {
 	@NotBlank
 	private String consentId;
 	
-    private boolean consented;
+	private boolean consented;
 }
