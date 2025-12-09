@@ -33,7 +33,7 @@ public class RoomCreateRequest {
 	
 	@Schema(description = "키워드 ID 목록", example = "[1, 2, 3]")
 	private List<Long> keywordIds;
-
+	
 	@Schema(description = "최대 수용 인원 (최소 1명 이상)", example = "10", required = true)
 	private Integer maxOccupancy;
 }
