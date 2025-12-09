@@ -12,18 +12,18 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class CouponDirectIssueResponse {
-    private Integer totalRequested;
-    private Integer successCount;
-    private Integer failureCount;
-    private List<IssueResult> results;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class IssueResult {
-        private Long userId;
-        private Long couponId;
-        private String status;
-    }
+	private Integer totalRequested;
+	private Integer successCount;
+	private Integer failureCount;
+	private List<IssueResult> results;
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	@Builder
+	public static class IssueResult {
+		private Long userId;
+		private Long couponId;
+		private String status;
+	}
 }
