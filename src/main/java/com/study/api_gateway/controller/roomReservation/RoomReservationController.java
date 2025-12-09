@@ -32,7 +32,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @Tag(name = "Room Reservation", description = "룸 예약 및 시간 슬롯 관리 API")
 public class RoomReservationController {
-
+	
 	private final RoomReservationClient roomReservationClient;
 	private final AuthClient authClient;
 	private final ResponseFactory responseFactory;
