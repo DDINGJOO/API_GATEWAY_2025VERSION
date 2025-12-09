@@ -12,22 +12,22 @@ import reactor.core.publisher.Mono;
 public class NoticeClient {
 	private final WebClient webClient;
 	private final String PREFIX = "/api/v1";
-
+	
 	public NoticeClient(@Qualifier(value = "articleWebClient") WebClient webClient) {
 		this.webClient = webClient;
 	}
-
+	
 	public Mono<ArticleResponse> postNotice(ArticleCreateRequest request) {
 		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/notices")
 				.toUriString();
-
+		
 		return webClient.post()
 				.uri(uriString)
 				.bodyValue(request)
 				.retrieve()
 				.bodyToMono(ArticleResponse.class);
 	}
-
+	
 	public Mono<ArticleResponse> getNotice(String articleId) {
 		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/notices/{articleId}")
 				.buildAndExpand(articleId)
