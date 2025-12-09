@@ -9,15 +9,15 @@ import lombok.*;
 @Setter
 @Builder
 public class ConsentsTable {
-
-    private String id;
-
-    private String consentName;
-
-    private String version;
-
-    private String consentUrl;
-
-    private boolean required;
-
+	
+	private String id;
+	
+	private String consentName;
+	
+	private String version;
+	
+	private String consentUrl;
+	
+	private boolean required;
+	
 }
