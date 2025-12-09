@@ -16,12 +16,12 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class PlaceBatchDetailRequest {
-
-    /**
-     * 조회할 Place ID 목록
-     * - 최소 1개, 최대 50개
-     * - null 값은 자동 필터링
-     * - 중복 값은 자동 제거
-     */
-    private List<Long> placeIds;
+	
+	/**
+	 * 조회할 Place ID 목록
+	 * - 최소 1개, 최대 50개
+	 * - null 값은 자동 필터링
+	 * - 중복 값은 자동 제거
+	 */
+	private List<Long> placeIds;
 }
