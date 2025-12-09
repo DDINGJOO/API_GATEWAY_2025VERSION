@@ -21,20 +21,21 @@ public class PlaceInfoSummaryResponse {
 	private String placeName;
 	private String category;
 	private String placeType;
-
+	
 	/**
 	 * 첫 번째 이미지 정보 (대표 이미지)
 	 */
 	private ImageInfo firstImage;
-
+	
 	/**
 	 * 기존 썸네일 URL (하위 호환성을 위해 유지)
+	 *
 	 * @deprecated 향후 제거 예정. firstImage 필드 사용 권장
 	 */
 	@Deprecated
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	private String thumbnailUrl;
-
+	
 	private String shortAddress;
 	private Boolean parkingAvailable;
 	
@@ -42,7 +43,7 @@ public class PlaceInfoSummaryResponse {
 	private Integer reviewCount;
 	private ApprovalStatus approvalStatus;
 	private Boolean isActive;
-
+	
 	/**
 	 * firstImage로부터 thumbnailUrl를 자동 생성 (하위 호환성)
 	 */
