@@ -18,13 +18,13 @@ import java.util.List;
 public class RoomClient {
 	private final WebClient webClient;
 	private final String PREFIX = "/api/rooms";
-
+	
 	public RoomClient(@Qualifier("roomWebClient") WebClient webClient) {
 		this.webClient = webClient;
 	}
-
+	
 	// ========== Command APIs ==========
-
+	
 	/**
 	 * 방 생성
 	 * POST /api/rooms
@@ -38,7 +38,7 @@ public class RoomClient {
 				.retrieve()
 				.bodyToMono(Long.class);
 	}
-
+	
 	/**
 	 * 방 삭제
 	 * DELETE /api/rooms/{roomId}
@@ -51,9 +51,9 @@ public class RoomClient {
 				.retrieve()
 				.bodyToMono(Long.class);
 	}
-
+	
 	// ========== Query APIs ==========
-
+	
 	/**
 	 * 룸 상세 조회 API
 	 * GET /api/rooms/{roomId}
@@ -66,7 +66,7 @@ public class RoomClient {
 				.retrieve()
 				.bodyToMono(RoomDetailResponse.class);
 	}
-
+	
 	/**
 	 * 룸 검색 API
 	 * GET /api/rooms/search
@@ -80,21 +80,21 @@ public class RoomClient {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path(PREFIX + "/search");
-
+					
 					if (roomName != null) uriBuilder.queryParam("roomName", roomName);
 					if (keywordIds != null && !keywordIds.isEmpty()) {
 						keywordIds.forEach(id -> uriBuilder.queryParam("keywordIds", id));
 					}
 					if (placeId != null) uriBuilder.queryParam("placeId", placeId);
 					if (minOccupancy != null) uriBuilder.queryParam("minOccupancy", minOccupancy);
-
+					
 					return uriBuilder.build();
 				})
 				.retrieve()
 				.bodyToFlux(RoomSimpleResponse.class)
 				.collectList();
 	}
-
+	
 	/**
 	 * 특정 장소의 룸 목록 조회 API
 	 * GET /api/rooms/place/{placeId}
@@ -108,7 +108,7 @@ public class RoomClient {
 				.bodyToFlux(RoomSimpleResponse.class)
 				.collectList();
 	}
-
+	
 	/**
 	 * 여러 룸 일괄 조회 API
 	 * GET /api/rooms/batch?ids=1,2,3
@@ -117,18 +117,18 @@ public class RoomClient {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path(PREFIX + "/batch");
-
+					
 					if (ids != null && !ids.isEmpty()) {
 						ids.forEach(id -> uriBuilder.queryParam("ids", id));
 					}
-
+					
 					return uriBuilder.build();
 				})
 				.retrieve()
 				.bodyToFlux(RoomDetailResponse.class)
 				.collectList();
 	}
-
+	
 	/**
 	 * 룸 키워드 맵 조회 API
 	 * GET /api/rooms/keywords
