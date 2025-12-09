@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class CouponDirectIssueRequest {
-    private Long couponPolicyId;
-    private List<Long> userIds;
-    private String issuedBy;
+	private Long couponPolicyId;
+	private List<Long> userIds;
+	private String issuedBy;
 }
