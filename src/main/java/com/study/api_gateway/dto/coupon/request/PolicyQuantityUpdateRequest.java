@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class PolicyQuantityUpdateRequest {
-    private Integer newMaxIssueCount;
-    private String modifiedBy;
-    private String reason;
+	private Integer newMaxIssueCount;
+	private String modifiedBy;
+	private String reason;
 }
