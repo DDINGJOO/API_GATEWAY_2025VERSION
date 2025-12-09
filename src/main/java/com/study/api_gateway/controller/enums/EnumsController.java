@@ -24,102 +24,102 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/bff/v1/enums")
 @RequiredArgsConstructor
 public class EnumsController {
-    private final ProfileClient profileClient;
-    private final AuthClient authClient;
-    private final ImageClient imageClient;
-    private final ResponseFactory responseFactory;
+	private final ProfileClient profileClient;
+	private final AuthClient authClient;
+	private final ImageClient imageClient;
+	private final ResponseFactory responseFactory;
 	private final ArticleClient articleClient;
 	private final FaqClient faqClient;
 	private final PlaceClient placeClient;
 	private final RoomClient roomClient;
-
-    @Operation(summary = "장르 목록")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "성공",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BaseResponse.class),
-                            examples = @ExampleObject(name = "GenresExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": { \"ROCK\": \"록\" },\n  \"request\": { \"path\": \"/bff/v1/enums/genres\" }\n}")))
-    })
-    @GetMapping("/genres")
-    public Mono<ResponseEntity<BaseResponse>> genres(ServerHttpRequest request){
-        return profileClient.fetchGenres()
-                .map(result -> responseFactory.ok(result, request));
-    }
-
-    @Operation(summary = "악기 목록")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "성공",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BaseResponse.class),
-                            examples = @ExampleObject(name = "InstrumentsExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": { \"GUITAR\": \"기타\" },\n  \"request\": { \"path\": \"/bff/v1/enums/instruments\" }\n}")))
-    })
-    @GetMapping("/instruments")
-    public Mono<ResponseEntity<BaseResponse>> instruments(ServerHttpRequest request){
-        return profileClient.fetchInstruments()
-                .map(result -> responseFactory.ok(result, request));
-    }
-
-    @Operation(summary = "활동지역 목록")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "성공",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BaseResponse.class),
-                            examples = @ExampleObject(name = "LocationsExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": { \"SEOUL\": \"서울\" },\n  \"request\": { \"path\": \"/bff/v1/enums/locations\" }\n}")))
-    })
-    @GetMapping("/locations")
-    public Mono<ResponseEntity<BaseResponse>> locations(ServerHttpRequest request){
-        return profileClient.fetchLocations()
-                .map(result -> responseFactory.ok(result, request));
-    }
-
-    @Operation(summary = "동의항목 목록")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "성공",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BaseResponse.class),
-                            examples = @ExampleObject(name = "ConsentsExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": { \"MANDATORY\": { \"title\": \"필수 동의\" } },\n  \"request\": { \"path\": \"/bff/v1/enums/consents\" }\n}")))
-    })
-    @GetMapping("/consents")
-    public Mono<ResponseEntity<BaseResponse>> consents(@RequestParam(name = "all") Boolean all, ServerHttpRequest request){
-        return authClient.fetchAllConsents(all)
-                .map(result -> responseFactory.ok(result, request));
-    }
-
-    @Operation(summary = "이미지 확장자 목록")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "성공",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BaseResponse.class),
-                            examples = @ExampleObject(name = "ExtensionsExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": [\"png\", \"jpg\"],\n  \"request\": { \"path\": \"/bff/v1/enums/extensions\" }\n}")))
-    })
-    @GetMapping("/extensions")
-    public Mono<ResponseEntity<BaseResponse>> extensions(ServerHttpRequest request){
-        return imageClient.getExtensions()
-                .map(result -> responseFactory.ok(result, request));
-    }
-
-    @Operation(summary = "이미지 레퍼런스 타입")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "성공",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BaseResponse.class),
-                            examples = @ExampleObject(name = "ReferenceTypesExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": [\"ARTICLE\", \"PROFILE\"],\n  \"request\": { \"path\": \"/bff/v1/enums/reference-types\" }\n}")))
-    })
-    @GetMapping("/reference-types")
-    public Mono<ResponseEntity<BaseResponse>> referenceType(ServerHttpRequest request){
-        return imageClient.getReferenceType()
-                .map(result -> responseFactory.ok(result, request));
-    }
+	
+	@Operation(summary = "장르 목록")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "GenresExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": { \"ROCK\": \"록\" },\n  \"request\": { \"path\": \"/bff/v1/enums/genres\" }\n}")))
+	})
+	@GetMapping("/genres")
+	public Mono<ResponseEntity<BaseResponse>> genres(ServerHttpRequest request) {
+		return profileClient.fetchGenres()
+				.map(result -> responseFactory.ok(result, request));
+	}
+	
+	@Operation(summary = "악기 목록")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "InstrumentsExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": { \"GUITAR\": \"기타\" },\n  \"request\": { \"path\": \"/bff/v1/enums/instruments\" }\n}")))
+	})
+	@GetMapping("/instruments")
+	public Mono<ResponseEntity<BaseResponse>> instruments(ServerHttpRequest request) {
+		return profileClient.fetchInstruments()
+				.map(result -> responseFactory.ok(result, request));
+	}
+	
+	@Operation(summary = "활동지역 목록")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "LocationsExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": { \"SEOUL\": \"서울\" },\n  \"request\": { \"path\": \"/bff/v1/enums/locations\" }\n}")))
+	})
+	@GetMapping("/locations")
+	public Mono<ResponseEntity<BaseResponse>> locations(ServerHttpRequest request) {
+		return profileClient.fetchLocations()
+				.map(result -> responseFactory.ok(result, request));
+	}
+	
+	@Operation(summary = "동의항목 목록")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "ConsentsExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": { \"MANDATORY\": { \"title\": \"필수 동의\" } },\n  \"request\": { \"path\": \"/bff/v1/enums/consents\" }\n}")))
+	})
+	@GetMapping("/consents")
+	public Mono<ResponseEntity<BaseResponse>> consents(@RequestParam(name = "all") Boolean all, ServerHttpRequest request) {
+		return authClient.fetchAllConsents(all)
+				.map(result -> responseFactory.ok(result, request));
+	}
+	
+	@Operation(summary = "이미지 확장자 목록")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "ExtensionsExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": [\"png\", \"jpg\"],\n  \"request\": { \"path\": \"/bff/v1/enums/extensions\" }\n}")))
+	})
+	@GetMapping("/extensions")
+	public Mono<ResponseEntity<BaseResponse>> extensions(ServerHttpRequest request) {
+		return imageClient.getExtensions()
+				.map(result -> responseFactory.ok(result, request));
+	}
+	
+	@Operation(summary = "이미지 레퍼런스 타입")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "ReferenceTypesExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": [\"ARTICLE\", \"PROFILE\"],\n  \"request\": { \"path\": \"/bff/v1/enums/reference-types\" }\n}")))
+	})
+	@GetMapping("/reference-types")
+	public Mono<ResponseEntity<BaseResponse>> referenceType(ServerHttpRequest request) {
+		return imageClient.getReferenceType()
+				.map(result -> responseFactory.ok(result, request));
+	}
 	
 	@Operation(summary = "게시글 보드 목록")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
-						schema = @Schema(implementation = BaseResponse.class),
-						examples = @ExampleObject(name = "BoardsExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": { \"1\": \"FREE\" },\n  \"request\": { \"path\": \"/bff/v1/enums/articles/boards\" }\n}")))
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "BoardsExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": { \"1\": \"FREE\" },\n  \"request\": { \"path\": \"/bff/v1/enums/articles/boards\" }\n}")))
 	})
 	@GetMapping("/articles/boards")
-	public Mono<ResponseEntity<BaseResponse>> boards(ServerHttpRequest request){
+	public Mono<ResponseEntity<BaseResponse>> boards(ServerHttpRequest request) {
 		return articleClient.getBoards()
 				.map(result -> responseFactory.ok(result, request));
 	}
@@ -128,11 +128,11 @@ public class EnumsController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
-						schema = @Schema(implementation = BaseResponse.class),
-						examples = @ExampleObject(name = "KeywordsExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": { \"1\": \"MUSIC\" },\n  \"request\": { \"path\": \"/bff/v1/enums/articles/keywords\" }\n}")))
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "KeywordsExample", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": { \"1\": \"MUSIC\" },\n  \"request\": { \"path\": \"/bff/v1/enums/articles/keywords\" }\n}")))
 	})
 	@GetMapping("/articles/keywords")
-	public Mono<ResponseEntity<BaseResponse>> articleKeywords(ServerHttpRequest request){
+	public Mono<ResponseEntity<BaseResponse>> articleKeywords(ServerHttpRequest request) {
 		return articleClient.getKeywords()
 				.map(result -> responseFactory.ok(result, request));
 	}
