@@ -14,16 +14,16 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class CouponPolicyCreateRequest {
-    private String couponName;
-    private String couponCode;
-    private DiscountType discountType;
-    private Integer discountValue;
-    private Integer minimumOrderAmount;
-    private Integer maxDiscountAmount;
-    private IssueType issueType;
-    private Integer maxIssueCount;
-    private Integer maxIssuePerUser;
-    private Integer validDays;
-    private LocalDateTime issueStartDate;
-    private LocalDateTime issueEndDate;
+	private String couponName;
+	private String couponCode;
+	private DiscountType discountType;
+	private Integer discountValue;
+	private Integer minimumOrderAmount;
+	private Integer maxDiscountAmount;
+	private IssueType issueType;
+	private Integer maxIssueCount;
+	private Integer maxIssuePerUser;
+	private Integer validDays;
+	private LocalDateTime issueStartDate;
+	private LocalDateTime issueEndDate;
 }
