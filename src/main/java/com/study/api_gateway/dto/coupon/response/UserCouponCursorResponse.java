@@ -15,21 +15,21 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class UserCouponCursorResponse {
-    private List<CouponItem> coupons;
-    private Long nextCursor;
-    private Boolean hasMore;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class CouponItem {
-        private Long couponId;
-        private String couponName;
-        private DiscountType discountType;
-        private Integer discountValue;
-        private CouponStatus status;
-        private LocalDateTime expiryDate;
-        private LocalDateTime issuedAt;
-    }
+	private List<CouponItem> coupons;
+	private Long nextCursor;
+	private Boolean hasMore;
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	@Builder
+	public static class CouponItem {
+		private Long couponId;
+		private String couponName;
+		private DiscountType discountType;
+		private Integer discountValue;
+		private CouponStatus status;
+		private LocalDateTime expiryDate;
+		private LocalDateTime issuedAt;
+	}
 }
