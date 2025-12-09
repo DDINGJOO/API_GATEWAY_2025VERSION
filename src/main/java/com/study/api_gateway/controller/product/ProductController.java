@@ -34,7 +34,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Product", description = "상품 관리 API")
 public class ProductController {
-
+	
 	private final YeYakHaeYoClient yeYakHaeYoClient;
 	private final ResponseFactory responseFactory;
 	
@@ -57,7 +57,7 @@ public class ProductController {
 		return yeYakHaeYoClient.createProduct(request)
 				.map(response -> responseFactory.ok(response, req, org.springframework.http.HttpStatus.CREATED));
 	}
-
+	
 	/**
 	 * 상품 ID로 조회
 	 * GET /bff/v1/products/{productId}
