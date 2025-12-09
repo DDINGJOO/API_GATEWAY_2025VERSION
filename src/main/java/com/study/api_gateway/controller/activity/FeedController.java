@@ -36,7 +36,7 @@ public class FeedController {
 	private final ArticleCountUtil articleCountUtil;
 	private final ResponseFactory responseFactory;
 	private final UserIdValidator userIdValidator;
-
+	
 	private final String categoryId = "ARTICLE";
 	
 	@Operation(summary = "피드 활동 총합 조회",
@@ -128,7 +128,7 @@ public class FeedController {
 									HttpStatus.INTERNAL_SERVER_ERROR, req))
 					);
 		}
-
+		
 		// article, comment 카테고리는 공개 (검증 불필요)
 		return activityClient.getFeedByCategory(category, viewerId, targetUserId, cursor, size, sort)
 				.flatMap(feedResponse -> enrichFeedResponse(feedResponse))
@@ -138,7 +138,7 @@ public class FeedController {
 								HttpStatus.INTERNAL_SERVER_ERROR, req))
 				);
 	}
-
+	
 	/**
 	 * Feed 응답을 Article 정보, 프로필 정보, 댓글/좋아요 수로 보강합니다.
 	 * <p>
@@ -155,7 +155,7 @@ public class FeedController {
 	 */
 	private Mono<EnrichedFeedPageResponse> enrichFeedResponse(
 			com.study.api_gateway.dto.activity.response.FeedPageResponse feedResponse) {
-
+		
 		// articleIds가 없으면 빈 응답 반환
 		if (feedResponse == null || feedResponse.getArticleIds() == null || feedResponse.getArticleIds().isEmpty()) {
 			return Mono.just(EnrichedFeedPageResponse.builder()
@@ -163,7 +163,7 @@ public class FeedController {
 					.nextCursor(feedResponse != null ? feedResponse.getNextCursor() : null)
 					.build());
 		}
-
+		
 		// 1. Article 도메인에서 게시글 상세 정보 배치 조회
 		return articleClient.getBulkArticles(feedResponse.getArticleIds())
 				.flatMap(articles -> {
@@ -174,12 +174,12 @@ public class FeedController {
 								.nextCursor(feedResponse.getNextCursor())
 								.build());
 					}
-
+					
 					// 2. ProfileEnrichmentUtil을 통해 프로필 정보 배치 조회 및 주입
 					return profileEnrichmentUtil.enrichArticleList(articles)
 							.flatMap(enrichedArticles ->
-								// 3. ArticleCountUtil을 통해 좋아요 수 및 댓글 수 조회 및 주입
-								articleCountUtil.enrichWithCounts(enrichedArticles, categoryId)
+									// 3. ArticleCountUtil을 통해 좋아요 수 및 댓글 수 조회 및 주입
+									articleCountUtil.enrichWithCounts(enrichedArticles, categoryId)
 							)
 							.map(enrichedArticles -> EnrichedFeedPageResponse.builder()
 									.articles(enrichedArticles)
