@@ -15,9 +15,9 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class RoomsPricingBatchResponse {
-
-    /**
-     * Room별 가격 정보 리스트
-     */
-    private List<RoomPricingInfo> rooms;
+	
+	/**
+	 * Room별 가격 정보 리스트
+	 */
+	private List<RoomPricingInfo> rooms;
 }
