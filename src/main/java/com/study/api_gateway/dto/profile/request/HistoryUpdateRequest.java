@@ -10,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class HistoryUpdateRequest {
-    private String columnName;
-    private String oldValue;
-    private String newValue;
+	private String columnName;
+	private String oldValue;
+	private String newValue;
 }
