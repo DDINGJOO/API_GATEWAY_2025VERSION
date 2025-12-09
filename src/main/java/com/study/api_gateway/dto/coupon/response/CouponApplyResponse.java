@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class CouponApplyResponse {
-    private String couponId;
-    private String couponName;
-    private DiscountType discountType;
-    private Integer discountValue;
-    private Integer maxDiscountAmount;
+	private String couponId;
+	private String couponName;
+	private DiscountType discountType;
+	private Integer discountValue;
+	private Integer maxDiscountAmount;
 }
