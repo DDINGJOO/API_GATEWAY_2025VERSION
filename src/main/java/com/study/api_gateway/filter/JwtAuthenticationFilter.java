@@ -62,7 +62,7 @@ public class JwtAuthenticationFilter implements WebFilter {
 		ServerHttpRequest request = exchange.getRequest();
 		String path = request.getPath().value();
 		String method = request.getMethod().name();
-
+		
 		// Public 경로는 인증 스킵
 		if (isPublicPath(path)) {
 			log.debug("Public path accessed: {}", path);
