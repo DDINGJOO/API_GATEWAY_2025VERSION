@@ -55,7 +55,7 @@ public class PricingPolicyController {
 			ServerHttpRequest req
 	) {
 		log.info("가격 정책 조회: roomId={}", roomId);
-
+		
 		return yeYakHaeYoClient.getPricingPolicy(roomId)
 				.map(response -> responseFactory.ok(response, req));
 	}
