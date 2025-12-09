@@ -19,7 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class RoomDetailWithPlaceResponse {
-
+	
 	/**
 	 * 룸 상세 정보
 	 */
