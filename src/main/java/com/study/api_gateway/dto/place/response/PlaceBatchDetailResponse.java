@@ -18,15 +18,15 @@ import java.util.List;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PlaceBatchDetailResponse {
-
-    /**
-     * 조회에 성공한 공간 정보 목록
-     */
-    private List<PlaceInfoResponse> results;
-
-    /**
-     * 조회에 실패한 placeId 목록
-     * 빈 배열인 경우 필드 자체가 제외됨
-     */
-    private List<Long> failed;
+	
+	/**
+	 * 조회에 성공한 공간 정보 목록
+	 */
+	private List<PlaceInfoResponse> results;
+	
+	/**
+	 * 조회에 실패한 placeId 목록
+	 * 빈 배열인 경우 필드 자체가 제외됨
+	 */
+	private List<Long> failed;
 }
