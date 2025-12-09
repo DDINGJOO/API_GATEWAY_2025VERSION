@@ -14,11 +14,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class CouponIssueResponse {
-    private Long couponId;
-    private String couponName;
-    private DiscountType discountType;
-    private Integer discountValue;
-    private CouponStatus status;
-    private LocalDateTime expiryDate;
-    private LocalDateTime issuedAt;
+	private Long couponId;
+	private String couponName;
+	private DiscountType discountType;
+	private Integer discountValue;
+	private CouponStatus status;
+	private LocalDateTime expiryDate;
+	private LocalDateTime issuedAt;
 }
