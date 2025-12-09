@@ -15,23 +15,23 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class UserCouponListResponse {
-    private List<UserCouponItem> content;
-    private Long totalElements;
-    private Integer totalPages;
-    private Integer number;
-    private Integer size;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class UserCouponItem {
-        private Long couponId;
-        private String couponName;
-        private DiscountType discountType;
-        private Integer discountValue;
-        private CouponStatus status;
-        private LocalDateTime expiryDate;
-        private LocalDateTime issuedAt;
-    }
+	private List<UserCouponItem> content;
+	private Long totalElements;
+	private Integer totalPages;
+	private Integer number;
+	private Integer size;
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	@Builder
+	public static class UserCouponItem {
+		private Long couponId;
+		private String couponName;
+		private DiscountType discountType;
+		private Integer discountValue;
+		private CouponStatus status;
+		private LocalDateTime expiryDate;
+		private LocalDateTime issuedAt;
+	}
 }
