@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class CouponUseRequest {
-    private String reservationId;
-    private String paymentId;
+	private String reservationId;
+	private String paymentId;
 }
