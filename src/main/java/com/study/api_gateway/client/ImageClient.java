@@ -18,11 +18,11 @@ import java.util.Map;
 @Component
 @Slf4j
 public class ImageClient {
-    private final WebClient webClient;
-
-    public ImageClient(@Qualifier(value = "imageWebClient") WebClient webClient) {
-        this.webClient = webClient;
-    }
+	private final WebClient webClient;
+	
+	public ImageClient(@Qualifier(value = "imageWebClient") WebClient webClient) {
+		this.webClient = webClient;
+	}
 	
 	
 	public Mono<Void> confirmImage(String referenceId, String imageId) {
@@ -37,7 +37,7 @@ public class ImageClient {
 				.retrieve()
 				.bodyToMono(Void.class);
 	}
-
+	
 	
 	/**
 	 * 이미지 확정 처리 (배치)
@@ -50,24 +50,24 @@ public class ImageClient {
 	public Mono<Void> confirmImage(String referenceId, List<String> imageIds) {
 		String uriString = UriComponentsBuilder.fromPath("/api/v1/images/confirm")
 				.toUriString();
-
+		
 		ImageConfirmRequest request = ImageConfirmRequest.builder()
 				.referenceId(referenceId)
 				.imageIds(imageIds)
 				.build();
-
+		
 		log.info("Confirming batch images - referenceId: {}, imageIds: {}, uri: {}, request body: {}",
-			referenceId, imageIds, uriString, request);
-
+				referenceId, imageIds, uriString, request);
+		
 		return webClient.post()
 				.uri(uriString)
 				.bodyValue(request)
 				.retrieve()
 				.bodyToMono(Void.class)
 				.doOnSuccess(v -> log.info("Batch image confirmation success - referenceId: {}, imageIds: {}",
-					referenceId, imageIds))
+						referenceId, imageIds))
 				.doOnError(error -> log.error("Batch image confirmation failed - referenceId: {}, imageIds: {}, error: {}",
-					referenceId, imageIds, error.getMessage(), error));
+						referenceId, imageIds, error.getMessage(), error));
 	}
 	
 	/**
@@ -98,7 +98,8 @@ public class ImageClient {
 		return webClient.get()
 				.uri(uriString)
 				.retrieve()
-				.bodyToMono(new ParameterizedTypeReference<Map<String, ReferenceTypeDto>>() {});
+				.bodyToMono(new ParameterizedTypeReference<Map<String, ReferenceTypeDto>>() {
+				});
 	}
-
+	
 }
