@@ -16,18 +16,18 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class RoomsPricingBatchRequest {
-
-    /**
-     * 조회할 Room ID 리스트
-     * - 최소 1개 이상
-     * - 각 ID는 양수여야 함
-     */
-    private List<Long> roomIds;
-
-    /**
-     * 시간대별 가격 조회 날짜 (선택사항)
-     * - 형식: yyyy-MM-dd
-     * - null인 경우 기본 가격만 조회
-     */
-    private LocalDate date;
+	
+	/**
+	 * 조회할 Room ID 리스트
+	 * - 최소 1개 이상
+	 * - 각 ID는 양수여야 함
+	 */
+	private List<Long> roomIds;
+	
+	/**
+	 * 시간대별 가격 조회 날짜 (선택사항)
+	 * - 형식: yyyy-MM-dd
+	 * - null인 경우 기본 가격만 조회
+	 */
+	private LocalDate date;
 }
