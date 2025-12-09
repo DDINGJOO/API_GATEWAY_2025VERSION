@@ -12,15 +12,15 @@ import lombok.*;
 @Setter
 @Builder
 public class PasswordChangeRequest {
-    @Email
-    @NotBlank
-    private String email;
-
-    @NotBlank
-    @Size(min = 8)
-    private String newPassword;
-
-    @NotBlank
-    @Size(min = 8)
-    private String newPasswordConfirm;
+	@Email
+	@NotBlank
+	private String email;
+	
+	@NotBlank
+	@Size(min = 8)
+	private String newPassword;
+	
+	@NotBlank
+	@Size(min = 8)
+	private String newPasswordConfirm;
 }
