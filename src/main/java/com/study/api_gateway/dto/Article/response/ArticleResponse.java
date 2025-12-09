@@ -19,7 +19,7 @@ import java.util.List;
 public class ArticleResponse {
 	@Schema(description = "게시글 ID", example = "ART_20251025_001")
 	private String articleId;
-
+	
 	@Schema(description = "제목", example = "첫 게시글")
 	private String title;
 	
@@ -28,13 +28,13 @@ public class ArticleResponse {
 	
 	@Schema(description = "작성자 ID", example = "user_123")
 	private String writerId;
-
+	
 	@Schema(description = "작성자 이름 (API Gateway에서 Profile 정보 기반 주입)", example = "홍길동")
 	private String writerName;
-
+	
 	@Schema(description = "작성자 프로필 이미지 URL (API Gateway에서 Profile 정보 기반 주입)", example = "https://cdn.example.com/profile.jpg")
 	private String writerProfileImage;
-
+	
 	@Schema(description = "게시판 정보")
 	private BoardInfo board;
 	
