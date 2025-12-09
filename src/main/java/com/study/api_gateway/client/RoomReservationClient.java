@@ -18,11 +18,11 @@ import java.util.List;
 @Component
 public class RoomReservationClient {
 	private final WebClient webClient;
-
+	
 	public RoomReservationClient(@Qualifier("roomReservationWebClient") WebClient webClient) {
 		this.webClient = webClient;
 	}
-
+	
 	/**
 	 * 룸 운영 정책 설정 및 슬롯 생성 요청
 	 * POST /api/rooms/setup
@@ -36,7 +36,7 @@ public class RoomReservationClient {
 				.retrieve()
 				.bodyToMono(RoomSetupResponse.class);
 	}
-
+	
 	/**
 	 * 슬롯 생성 상태 조회
 	 * GET /api/rooms/setup/{requestId}/status
@@ -49,7 +49,7 @@ public class RoomReservationClient {
 				.retrieve()
 				.bodyToMono(SlotGenerationStatusResponse.class);
 	}
-
+	
 	/**
 	 * 휴무일 설정
 	 * POST /api/rooms/setup/closed-dates
@@ -63,7 +63,7 @@ public class RoomReservationClient {
 				.retrieve()
 				.bodyToMono(ClosedDatesResponse.class);
 	}
-
+	
 	/**
 	 * 예약 가능 슬롯 조회
 	 * GET /api/v1/reservations/available-slots
@@ -79,7 +79,7 @@ public class RoomReservationClient {
 				.bodyToFlux(AvailableSlotResponse.class)
 				.collectList();
 	}
-
+	
 	/**
 	 * 다중 슬롯 예약
 	 * POST /api/v1/reservations/multi
