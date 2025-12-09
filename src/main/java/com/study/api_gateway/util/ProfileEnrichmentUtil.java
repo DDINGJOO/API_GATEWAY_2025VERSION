@@ -42,7 +42,7 @@ public class ProfileEnrichmentUtil {
 	
 	private static final int BATCH_SIZE = 200; // 대량 방어용 내부 분할 크기
 	private static final int SOFT_CAP = 5000; // 너무 큰 요청에 대한 소프트 상한
-
+	
 	private final ProfileClient profileClient;
 	private final ProfileCache profileCache; // placeholder for future Redis integration
 	
@@ -115,7 +115,7 @@ public class ProfileEnrichmentUtil {
 					return buildArticleWithComments(article, comments);
 				});
 	}
-
+	
 	/**
 	 * 게시글 리스트 보강 (Article 도메인 응답 전용)
 	 * - ArticleSimpleResponse 리스트에서 writerId를 추출하여 프로필 정보를 배치 조회/캐시 조회 후 주입합니다.
@@ -129,26 +129,26 @@ public class ProfileEnrichmentUtil {
 		if (articles == null || articles.isEmpty()) {
 			return Mono.just(articles == null ? List.of() : List.of());
 		}
-
+		
 		// Extract all unique writerIds
 		Set<String> writerIds = articles.stream()
 				.map(ArticleSimpleResponse::getWriterId)
 				.filter(Objects::nonNull)
 				.collect(Collectors.toCollection(LinkedHashSet::new));
-
+		
 		if (writerIds.isEmpty()) {
 			// No writerIds to enrich, just convert to EnrichedArticleResponse
 			return Mono.just(articles.stream()
 					.map(EnrichedArticleResponse::from)
 					.collect(Collectors.toList()));
 		}
-
+		
 		// Load profiles (uses cache first, then batch API for missing profiles)
 		return loadProfiles(writerIds)
 				.map(profileMap -> articles.stream()
 						.map(article -> {
 							EnrichedArticleResponse enriched = EnrichedArticleResponse.from(article);
-
+							
 							// Apply profile information if available
 							String writerId = article.getWriterId();
 							if (writerId != null) {
@@ -161,12 +161,12 @@ public class ProfileEnrichmentUtil {
 										: profile.getProfileImageUrl();
 								enriched.withProfile(writerName, writerProfileImage);
 							}
-
+							
 							return enriched;
 						})
 						.collect(Collectors.toList()));
 	}
-
+	
 	/**
 	 * 게시글 상세 리스트 보강 (Article 검색/목록 응답 전용)
 	 * - ArticleResponse 리스트에서 writerId를 추출하여 프로필 정보를 배치 조회/캐시 조회 후 주입합니다.
@@ -180,18 +180,18 @@ public class ProfileEnrichmentUtil {
 		if (articles == null || articles.isEmpty()) {
 			return Mono.just(articles == null ? List.of() : articles);
 		}
-
+		
 		// Extract all unique writerIds
 		Set<String> writerIds = articles.stream()
 				.map(ArticleResponse::getWriterId)
 				.filter(Objects::nonNull)
 				.collect(Collectors.toCollection(LinkedHashSet::new));
-
+		
 		if (writerIds.isEmpty()) {
 			// No writerIds to enrich, return as is
 			return Mono.just(articles);
 		}
-
+		
 		// Load profiles (uses cache first, then batch API for missing profiles)
 		return loadProfiles(writerIds)
 				.map(profileMap -> {
@@ -226,9 +226,9 @@ public class ProfileEnrichmentUtil {
 			log.debug("[ProfileEnrichmentUtil] No userIds to load");
 			return Mono.just(Map.of());
 		}
-
+		
 		log.info("[ProfileEnrichmentUtil] Loading profiles for {} userIds: {}", userIds.size(), userIds);
-
+		
 		// 너무 큰 요청에 대해서는 소프트 상한을 적용하고 경고 로그만 남김
 		final Set<String> idsToUse;
 		if (userIds.size() > SOFT_CAP) {
@@ -465,5 +465,5 @@ public class ProfileEnrichmentUtil {
 	private boolean isBlank(String s) {
 		return s == null || s.trim().isEmpty();
 	}
-
+	
 }
