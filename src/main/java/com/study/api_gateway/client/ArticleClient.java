@@ -22,7 +22,7 @@ import java.util.Map;
 public class ArticleClient {
 	private final WebClient webClient;
 	private final String PREFIX = "/api/v1";
-
+	
 	public ArticleClient(@Qualifier(value = "articleWebClient") WebClient webClient) {
 		this.webClient = webClient;
 	}
@@ -36,7 +36,7 @@ public class ArticleClient {
 	public Mono<ArticleResponse> postArticle(ArticleCreateRequest request) {
 		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/articles")
 				.toUriString();
-
+		
 		return webClient.post()
 				.uri(uriString)
 				.bodyValue(request)
@@ -52,7 +52,7 @@ public class ArticleClient {
 		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/articles/{articleId}")
 				.buildAndExpand(articleId)
 				.toUriString();
-
+		
 		return webClient.get()
 				.uri(uriString)
 				.retrieve()
@@ -67,7 +67,7 @@ public class ArticleClient {
 		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/articles/{articleId}")
 				.buildAndExpand(articleId)
 				.toUriString();
-
+		
 		return webClient.delete()
 				.uri(uriString)
 				.retrieve()
@@ -82,7 +82,7 @@ public class ArticleClient {
 		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/articles/{articleId}")
 				.buildAndExpand(articleId)
 				.toUriString();
-
+		
 		return webClient.put()
 				.uri(uriString)
 				.bodyValue(req)
@@ -108,7 +108,7 @@ public class ArticleClient {
 		if (writerId != null && !writerId.isBlank()) builder.queryParam("writerId", writerId);
 		
 		String uriString = builder.toUriString();
-
+		
 		return webClient.get()
 				.uri(uriString)
 				.retrieve()
