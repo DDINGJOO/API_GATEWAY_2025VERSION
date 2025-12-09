@@ -12,9 +12,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class CouponReservationResponse {
-    private String reservationId;
-    private Long couponId;
-    private Boolean success;
-    private String message;
-    private LocalDateTime reservedAt;
+	private String reservationId;
+	private Long couponId;
+	private Boolean success;
+	private String message;
+	private LocalDateTime reservedAt;
 }
