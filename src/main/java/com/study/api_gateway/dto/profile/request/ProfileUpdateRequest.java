@@ -17,21 +17,21 @@ import java.util.List;
 public class ProfileUpdateRequest {
 	
 	@Schema(description = "프로필 이미지 ID", example = "img_100")
-    private String profileImageId;
+	private String profileImageId;
 	@Schema(description = "닉네임", example = "띵주")
-    private String nickname;
+	private String nickname;
 	@Schema(description = "활동 도시(코드)", example = "SEOUL")
-    private String city;
+	private String city;
 	
 	@Schema(description = "자기소개", example = "안녕하세요! 음악을 사랑하는 사람입니다.")
 	private String introduction;
-
+	
 	@Schema(description = "채팅 가능 여부", example = "true")
-    private boolean chattable;
+	private boolean chattable;
 	@Schema(description = "프로필 공개 여부", example = "true")
-    private boolean publicProfile;
+	private boolean publicProfile;
 	@Schema(description = "성별", example = "M")
-    private Character sex;
+	private Character sex;
 	
 	@Schema(description = "장르 ID-이름 매핑", example = "[1, 2]")
 	private List<Integer> genres;
