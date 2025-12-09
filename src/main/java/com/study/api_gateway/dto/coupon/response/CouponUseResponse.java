@@ -13,9 +13,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class CouponUseResponse {
-    private Long couponId;
-    private CouponStatus status;
-    private LocalDateTime usedAt;
-    private String orderId;
-    private Integer discountAmount;
+	private Long couponId;
+	private CouponStatus status;
+	private LocalDateTime usedAt;
+	private String orderId;
+	private Integer discountAmount;
 }
