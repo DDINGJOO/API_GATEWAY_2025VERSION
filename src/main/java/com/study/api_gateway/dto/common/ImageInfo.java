@@ -18,13 +18,13 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Schema(description = "이미지 정보")
 public class ImageInfo {
-
+	
 	@Schema(description = "이미지 ID", example = "IMG_001")
 	private String imageId;
-
+	
 	@Schema(description = "이미지 URL", example = "https://cdn.example.com/images/sample.jpg")
 	private String imageUrl;
-
+	
 	@Schema(description = "이미지 순서", example = "1")
 	private Integer sequence;
 }
