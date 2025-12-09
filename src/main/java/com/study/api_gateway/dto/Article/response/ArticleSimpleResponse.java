@@ -48,6 +48,6 @@ public class ArticleSimpleResponse {
 	
 	@Schema(description = "수정일시", example = "2025-10-25T10:30:00")
 	private LocalDateTime updatedAt;
-
-
+	
+	
 }
