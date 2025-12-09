@@ -16,16 +16,16 @@ import java.util.Map;
 
 @RestController
 public class HealthCheckController {
-
-    @Operation(summary = "헬스 체크")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "성공",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = BaseResponse.class),
-                            examples = @ExampleObject(name = "HealthOk", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": \"ok\",\n  \"request\": { \"path\": \"/health\" }\n}")))
-    })
-    @GetMapping("/health")
-    public Mono<ResponseEntity<BaseResponse>> health() {
-        return Mono.just(BaseResponse.success("ok", Map.of("path", "/health")));
-    }
+	
+	@Operation(summary = "헬스 체크")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "HealthOk", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": \"ok\",\n  \"request\": { \"path\": \"/health\" }\n}")))
+	})
+	@GetMapping("/health")
+	public Mono<ResponseEntity<BaseResponse>> health() {
+		return Mono.just(BaseResponse.success("ok", Map.of("path", "/health")));
+	}
 }
