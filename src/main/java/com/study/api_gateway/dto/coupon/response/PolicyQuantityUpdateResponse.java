@@ -10,11 +10,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class PolicyQuantityUpdateResponse {
-    private Long couponPolicyId;
-    private Integer previousMaxIssueCount;
-    private Integer newMaxIssueCount;
-    private Integer currentIssuedCount;
-    private Integer remainingCount;
-    private Boolean success;
-    private String message;
+	private Long couponPolicyId;
+	private Integer previousMaxIssueCount;
+	private Integer newMaxIssueCount;
+	private Integer currentIssuedCount;
+	private Integer remainingCount;
+	private Boolean success;
+	private String message;
 }
