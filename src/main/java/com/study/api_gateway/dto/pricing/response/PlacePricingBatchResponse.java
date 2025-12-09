@@ -16,14 +16,14 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class PlacePricingBatchResponse {
-
-    /**
-     * 장소 ID
-     */
-    private Long placeId;
-
-    /**
-     * Room별 가격 정보 리스트
-     */
-    private List<RoomPricingInfo> rooms;
+	
+	/**
+	 * 장소 ID
+	 */
+	private Long placeId;
+	
+	/**
+	 * Room별 가격 정보 리스트
+	 */
+	private List<RoomPricingInfo> rooms;
 }
