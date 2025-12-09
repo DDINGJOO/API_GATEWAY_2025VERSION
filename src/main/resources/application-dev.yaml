@@ -11,7 +11,7 @@ service:
     port: ${AUTH_PORT}
 
   profile:
-    url : ${PROFILE_URL}
+    url: ${PROFILE_URL}
     port: ${PROFILE_PORT}
 
   image:
