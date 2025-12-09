@@ -10,28 +10,28 @@ import java.util.Map;
 
 @Component
 public class ResponseFactory {
-
-    private final RequestPathHelper pathHelper;
-
-    public ResponseFactory(RequestPathHelper pathHelper) {
-        this.pathHelper = pathHelper;
-    }
-
-    public ResponseEntity<BaseResponse> ok(Object data, ServerHttpRequest request) {
-        String path = pathHelper.extractClientPath(request);
-        String url = pathHelper.extractClientUrl(request);
-        return BaseResponse.success(data, Map.of("path", path, "url", url));
-    }
-
-    public ResponseEntity<BaseResponse> ok(Object data, ServerHttpRequest request, HttpStatus status) {
-        String path = pathHelper.extractClientPath(request);
-        String url = pathHelper.extractClientUrl(request);
-        return BaseResponse.success(data, Map.of("path", path, "url", url), status);
-    }
-
-    public ResponseEntity<BaseResponse> error(String message, HttpStatus status, ServerHttpRequest request) {
-        String path = pathHelper.extractClientPath(request);
-        String url = pathHelper.extractClientUrl(request);
-        return BaseResponse.error(message, status, Map.of("path", path, "url", url));
-    }
+	
+	private final RequestPathHelper pathHelper;
+	
+	public ResponseFactory(RequestPathHelper pathHelper) {
+		this.pathHelper = pathHelper;
+	}
+	
+	public ResponseEntity<BaseResponse> ok(Object data, ServerHttpRequest request) {
+		String path = pathHelper.extractClientPath(request);
+		String url = pathHelper.extractClientUrl(request);
+		return BaseResponse.success(data, Map.of("path", path, "url", url));
+	}
+	
+	public ResponseEntity<BaseResponse> ok(Object data, ServerHttpRequest request, HttpStatus status) {
+		String path = pathHelper.extractClientPath(request);
+		String url = pathHelper.extractClientUrl(request);
+		return BaseResponse.success(data, Map.of("path", path, "url", url), status);
+	}
+	
+	public ResponseEntity<BaseResponse> error(String message, HttpStatus status, ServerHttpRequest request) {
+		String path = pathHelper.extractClientPath(request);
+		String url = pathHelper.extractClientUrl(request);
+		return BaseResponse.error(message, status, Map.of("path", path, "url", url));
+	}
 }
