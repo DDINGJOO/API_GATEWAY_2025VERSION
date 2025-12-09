@@ -6,13 +6,11 @@ import com.study.api_gateway.dto.place.response.PlaceInfoResponse;
 import com.study.api_gateway.dto.place.response.PlaceSearchResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
 
 /**
  * PlaceInfo Server와 통신하는 WebClient 기반 클라이언트
@@ -23,11 +21,11 @@ import java.util.stream.Collectors;
 public class PlaceClient {
 	private final WebClient webClient;
 	private final String PREFIX = "/api/v1/places";
-
+	
 	public PlaceClient(@Qualifier("placeInfoWebClient") WebClient webClient) {
 		this.webClient = webClient;
 	}
-
+	
 	/**
 	 * 통합 검색 API
 	 * GET /api/v1/places/search
@@ -53,7 +51,7 @@ public class PlaceClient {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path(PREFIX + "/search");
-
+					
 					if (keyword != null) uriBuilder.queryParam("keyword", keyword);
 					if (placeName != null) uriBuilder.queryParam("placeName", placeName);
 					if (category != null) uriBuilder.queryParam("category", category);
@@ -72,13 +70,13 @@ public class PlaceClient {
 					if (sortDirection != null) uriBuilder.queryParam("sortDirection", sortDirection);
 					if (cursor != null) uriBuilder.queryParam("cursor", cursor);
 					if (size != null) uriBuilder.queryParam("size", size);
-
+					
 					return uriBuilder.build();
 				})
 				.retrieve()
 				.bodyToMono(PlaceSearchResponse.class);
 	}
-
+	
 	/**
 	 * 지역별 검색 API
 	 * GET /api/v1/places/search/region
@@ -93,19 +91,19 @@ public class PlaceClient {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path(PREFIX + "/search/region");
-
+					
 					uriBuilder.queryParam("province", province);
 					if (city != null) uriBuilder.queryParam("city", city);
 					if (district != null) uriBuilder.queryParam("district", district);
 					if (cursor != null) uriBuilder.queryParam("cursor", cursor);
 					if (size != null) uriBuilder.queryParam("size", size);
-
+					
 					return uriBuilder.build();
 				})
 				.retrieve()
 				.bodyToMono(PlaceSearchResponse.class);
 	}
-
+	
 	/**
 	 * 인기 장소 조회 API
 	 * GET /api/v1/places/search/popular
@@ -114,15 +112,15 @@ public class PlaceClient {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path(PREFIX + "/search/popular");
-
+					
 					if (size != null) uriBuilder.queryParam("size", size);
-
+					
 					return uriBuilder.build();
 				})
 				.retrieve()
 				.bodyToMono(PlaceSearchResponse.class);
 	}
-
+	
 	/**
 	 * 최신 장소 조회 API
 	 * GET /api/v1/places/search/recent
@@ -131,9 +129,9 @@ public class PlaceClient {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path(PREFIX + "/search/recent");
-
+					
 					if (size != null) uriBuilder.queryParam("size", size);
-
+					
 					return uriBuilder.build();
 				})
 				.retrieve()
@@ -161,16 +159,16 @@ public class PlaceClient {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path("/api/v1/keywords");
-
+					
 					if (type != null) uriBuilder.queryParam("type", type);
-
+					
 					return uriBuilder.build();
 				})
 				.retrieve()
 				.bodyToFlux(com.study.api_gateway.dto.place.response.KeywordResponse.class)
 				.collectList();
 	}
-
+	
 	/**
 	 * 여러 장소 배치 상세 조회 API
 	 * POST /api/v1/places/search/batch/details
@@ -184,11 +182,11 @@ public class PlaceClient {
 					.results(List.of())
 					.build());
 		}
-
+		
 		PlaceBatchDetailRequest request = PlaceBatchDetailRequest.builder()
 				.placeIds(placeIds)
 				.build();
-
+		
 		return webClient.post()
 				.uri(uriBuilder -> uriBuilder
 						.path(PREFIX + "/search/batch/details")
