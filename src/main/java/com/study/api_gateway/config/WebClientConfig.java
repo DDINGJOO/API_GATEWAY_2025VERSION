@@ -8,22 +8,22 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class WebClientConfig {
-    @Value("${service.auth.url}")
-    private String AuthDns;
-    @Value("${service.auth.port}")
-    private String AuthPort;
-
-
-    @Value("${service.profile.url}")
-    private String ProfileDns;
-    @Value("${service.profile.port}")
-    private String ProfilePort;
-
-
-    @Value("${service.image.url}")
-    private String ImageDns;
-    @Value("${service.image.port}")
-    private String ImagePort;
+	@Value("${service.auth.url}")
+	private String AuthDns;
+	@Value("${service.auth.port}")
+	private String AuthPort;
+	
+	
+	@Value("${service.profile.url}")
+	private String ProfileDns;
+	@Value("${service.profile.port}")
+	private String ProfilePort;
+	
+	
+	@Value("${service.image.url}")
+	private String ImageDns;
+	@Value("${service.image.port}")
+	private String ImagePort;
 	
 	@Value("${service.article.url}")
 	private String ArticleDns;
@@ -49,7 +49,7 @@ public class WebClientConfig {
 	private String SupportDns;
 	@Value("${service.support.port}")
 	private String SupportPort;
-
+	
 	@Value("${service.place_info.url}")
 	private String PlaceInfoDns;
 	@Value("${service.place_info.port}")
@@ -74,54 +74,54 @@ public class WebClientConfig {
 	private String YeYakManageDns;
 	@Value("${service.ye_yak_manage.port}")
 	private String YeYakManagePort;
-
+	
 	@Value("${service.coupon.url}")
 	private String CouponDns;
 	@Value("${service.coupon.port}")
 	private String CouponPort;
-
-    private String normalizeHost(String raw) {
-        if (raw == null) return "";
-        // 공백 제거
-        String s = raw.trim();
-        // scheme 제거 (http:// 또는 https://)
-        s = s.replaceFirst("(?i)^https?://", "");
-        // 만약 포트가 이미 포함되어 있다면 그대로 사용하게(포트는 별도로 붙이지 않음)
-        return s;
-    }
-
-
-    @Bean
-    public WebClient authWebClient(WebClient.Builder builder) {
-        String host = normalizeHost(AuthDns);
-        String url = "http://%s:%s".formatted(host, AuthPort);
-
-        return builder
-                .baseUrl(url)
-                .build();
-    }
-
-    @Bean
-    public WebClient profileWebClient(WebClient.Builder builder) {
-        String host = normalizeHost(ProfileDns);
-        String url = "http://%s:%s".formatted(host, ProfilePort);
-
-
-        return builder
-                .baseUrl(url)
-                .build();
-    }
-
-    @Bean
-    public WebClient imageWebClient(WebClient.Builder builder) {
-        String host = normalizeHost(ImageDns);
-        String url = "http://%s:%s".formatted(host, ImagePort);
-
-
-        return builder
-                .baseUrl(url)
-                .build();
-    }
+	
+	private String normalizeHost(String raw) {
+		if (raw == null) return "";
+		// 공백 제거
+		String s = raw.trim();
+		// scheme 제거 (http:// 또는 https://)
+		s = s.replaceFirst("(?i)^https?://", "");
+		// 만약 포트가 이미 포함되어 있다면 그대로 사용하게(포트는 별도로 붙이지 않음)
+		return s;
+	}
+	
+	
+	@Bean
+	public WebClient authWebClient(WebClient.Builder builder) {
+		String host = normalizeHost(AuthDns);
+		String url = "http://%s:%s".formatted(host, AuthPort);
+		
+		return builder
+				.baseUrl(url)
+				.build();
+	}
+	
+	@Bean
+	public WebClient profileWebClient(WebClient.Builder builder) {
+		String host = normalizeHost(ProfileDns);
+		String url = "http://%s:%s".formatted(host, ProfilePort);
+		
+		
+		return builder
+				.baseUrl(url)
+				.build();
+	}
+	
+	@Bean
+	public WebClient imageWebClient(WebClient.Builder builder) {
+		String host = normalizeHost(ImageDns);
+		String url = "http://%s:%s".formatted(host, ImagePort);
+		
+		
+		return builder
+				.baseUrl(url)
+				.build();
+	}
 	
 	@Bean
 	public WebClient articleWebClient(WebClient.Builder builder) {
@@ -157,7 +157,7 @@ public class WebClientConfig {
 	public WebClient activitiesClient(WebClient.Builder builder) {
 		String host = normalizeHost(ActivityDns);
 		String url = "http://%s:%s".formatted(host, ActivityPort);
-
+		
 		return builder
 				.baseUrl(url)
 				.build();
@@ -167,17 +167,17 @@ public class WebClientConfig {
 	public WebClient supportWebClient(WebClient.Builder builder) {
 		String host = normalizeHost(SupportDns);
 		String url = "http://%s:%s".formatted(host, SupportPort);
-
+		
 		return builder
 				.baseUrl(url)
 				.build();
 	}
-
+	
 	@Bean
 	public WebClient placeInfoWebClient(WebClient.Builder builder) {
 		String host = normalizeHost(PlaceInfoDns);
 		String url = "http://%s:%s".formatted(host, PlaceInfoPort);
-
+		
 		return builder
 				.baseUrl(url)
 				.build();
@@ -197,7 +197,7 @@ public class WebClientConfig {
 	public WebClient yeYakHaeYoWebClient(WebClient.Builder builder) {
 		String host = normalizeHost(YeYakHaeYoDns);
 		String url = "http://%s:%s".formatted(host, YeYakHaeYoPort);
-
+		
 		return builder
 				.baseUrl(url)
 				.build();
@@ -207,7 +207,7 @@ public class WebClientConfig {
 	public WebClient roomReservationWebClient(WebClient.Builder builder) {
 		String host = normalizeHost(RoomReservationDns);
 		String url = "http://%s:%s".formatted(host, RoomReservationPort);
-
+		
 		return builder
 				.baseUrl(url)
 				.build();
@@ -217,20 +217,20 @@ public class WebClientConfig {
 	public WebClient yeYakManageWebClient(WebClient.Builder builder) {
 		String host = normalizeHost(YeYakManageDns);
 		String url = "http://%s:%s".formatted(host, YeYakManagePort);
-
+		
 		return builder
 				.baseUrl(url)
 				.build();
 	}
-
+	
 	@Bean
 	public WebClient couponWebClient(WebClient.Builder builder) {
 		String host = normalizeHost(CouponDns);
 		String url = "http://%s:%s".formatted(host, CouponPort);
-
+		
 		return builder
 				.baseUrl(url)
 				.build();
 	}
-
+	
 }
