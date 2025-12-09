@@ -15,20 +15,20 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SignupRequest {
-
-    @Email
-    @NotBlank
-    private String email;
-
-    @NotBlank
-    @Size(min = 8)
-    private String password;
-
-    @NotBlank
-    @Size(min = 8)
-    private String passwordConfirm;
-
-    @NotEmpty
-    @Valid
-    private List<ConsentRequest> consentReqs;
+	
+	@Email
+	@NotBlank
+	private String email;
+	
+	@NotBlank
+	@Size(min = 8)
+	private String password;
+	
+	@NotBlank
+	@Size(min = 8)
+	private String passwordConfirm;
+	
+	@NotEmpty
+	@Valid
+	private List<ConsentRequest> consentReqs;
 }
