@@ -10,9 +10,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class UserCouponStatisticsResponse {
-    private Integer totalCoupons;
-    private Integer availableCoupons;
-    private Integer usedCoupons;
-    private Integer expiredCoupons;
-    private Integer totalSavedAmount;
+	private Integer totalCoupons;
+	private Integer availableCoupons;
+	private Integer usedCoupons;
+	private Integer expiredCoupons;
+	private Integer totalSavedAmount;
 }
