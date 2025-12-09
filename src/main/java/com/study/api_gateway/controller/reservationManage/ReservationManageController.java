@@ -38,7 +38,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Reservation Management", description = "예약 관리 API")
 public class ReservationManageController {
-
+	
 	private final YeYakManageClient yeYakManageClient;
 	private final CouponClient couponClient;
 	private final ResponseFactory responseFactory;
@@ -67,11 +67,11 @@ public class ReservationManageController {
 		return yeYakManageClient.createReservation(request)
 				.map(response -> responseFactory.ok(response, req));
 	}
-
+	
 	/**
 	 * 예약 사용자 정보 업데이트 (예약 생성 2단계)
 	 * POST /bff/v1/reservations/{reservationId}/user-info
-	 *
+	 * <p>
 	 * 사용자 정보와 함께 쿠폰 적용을 처리합니다.
 	 * 쿠폰이 제공된 경우, 쿠폰 적용 가능 여부를 확인한 후 예약 정보를 업데이트합니다.
 	 */
@@ -93,7 +93,7 @@ public class ReservationManageController {
 	) {
 		log.info("예약 사용자 정보 업데이트: reservationId={}, userId={}, couponId={}",
 				reservationId, request.getUserId(), request.getCouponId());
-
+		
 		// 쿠폰이 제공된 경우 쿠폰 적용 처리
 		if (request.getCouponId() != null && request.getRoomId() != null && request.getPlaceId() != null) {
 			// 쿠폰 적용 요청 생성
@@ -103,12 +103,12 @@ public class ReservationManageController {
 					.couponId(request.getCouponId())
 					.orderAmount(null) // 필요시 금액 추가
 					.build();
-
+			
 			// 쿠폰 적용 후 사용자 정보 업데이트
 			return couponClient.applyCoupon(couponApplyRequest)
 					.flatMap(couponResponse -> {
 						log.info("쿠폰 적용 성공: reservationId={}, couponResponse={}", reservationId, couponResponse);
-
+						
 						// 쿠폰 정보를 UserInfoUpdateRequest에 설정
 						UserInfoUpdateRequest.CouponInfo couponInfo = UserInfoUpdateRequest.CouponInfo.builder()
 								.couponId(String.valueOf(request.getCouponId()))
@@ -117,9 +117,9 @@ public class ReservationManageController {
 								.discountValue(couponResponse.getDiscountValue())
 								.maxDiscountAmount(couponResponse.getMaxDiscountAmount())
 								.build();
-
+						
 						request.setCouponInfo(couponInfo);
-
+						
 						// YeYakManage 서버로 사용자 정보 업데이트 요청
 						return yeYakManageClient.updateUserInfo(reservationId, request)
 								.map(response -> responseFactory.ok(response, req));
@@ -142,7 +142,7 @@ public class ReservationManageController {
 					});
 		}
 	}
-
+	
 	/**
 	 * 예약 상세 조회
 	 * GET /bff/v1/reservations/{id}
