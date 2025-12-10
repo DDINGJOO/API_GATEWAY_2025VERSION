@@ -130,7 +130,7 @@ public class YeYakManageClient {
 	}
 	
 	/**
-	 * 예약 사용자 정보 업데이트 (예약 생성 2단계)
+	 * 예약 사용자 정
 	 * POST /api/v1/reservations/{id}/user-info
 	 */
 	public Mono<UserInfoUpdateResponse> updateUserInfo(Long reservationId, UserInfoUpdateRequest request) {

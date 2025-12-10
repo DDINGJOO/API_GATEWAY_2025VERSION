@@ -84,12 +84,14 @@ public class AuthClient {
 	}
 	
 	public Mono<Boolean> changePassword(PasswordChangeRequest req) {
-		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/passwordChange/changePassword")
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/password")
+				.queryParam("email", req.getEmail())
+				.queryParam("newPassword", req.getNewPassword())
+				.queryParam("passConfirm", req.getNewPasswordConfirm())
 				.toUriString();
 		
-		return webClient.put()
+		return webClient.post()
 				.uri(uriString)
-				.bodyValue(req)
 				.retrieve()
 				.bodyToMono(Boolean.class);
 	}
