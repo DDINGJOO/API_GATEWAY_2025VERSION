@@ -2,6 +2,7 @@ package com.study.api_gateway.client;
 
 import com.study.api_gateway.dto.gaechu.LikeCountResponse;
 import com.study.api_gateway.dto.gaechu.LikeDetailResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 @Component
+@Slf4j
 public class LikeClient {
 	
 	private final WebClient webClient;
@@ -73,10 +75,13 @@ public class LikeClient {
 				.buildAndExpand(categoryId, userId)
 				.toUriString();
 		
+		log.info("=== LikeClient.getUserLikedCounts === requesting: {}", uri);
+
 		return webClient.get()
 				.uri(uri)
 				.retrieve()
 				.bodyToMono(new ParameterizedTypeReference<List<LikeCountResponse>>() {
-				});
+				})
+				.doOnError(e -> log.error("=== LikeClient.getUserLikedCounts ERROR === {}", e.getMessage()));
 	}
 }
