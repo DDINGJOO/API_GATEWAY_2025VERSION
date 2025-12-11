@@ -104,10 +104,13 @@ public class ProfileClient {
 		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/" + userId)
 				.toUriString();
 		
+		log.info("=== ProfileClient.fetchProfile === requesting: {}", uriString);
+
 		return webClient.get()
 				.uri(uriString)
 				.retrieve()
-				.bodyToMono(UserResponse.class);
+				.bodyToMono(UserResponse.class)
+				.doOnError(e -> log.error("=== ProfileClient.fetchProfile ERROR === {}", e.getMessage()));
 	}
 	
 	public Flux<UserResponse> fetchProfiles(String city, String nickname, List<Integer> genres, List<Integer> instruments, Character sex, String cursor, Integer size) {
