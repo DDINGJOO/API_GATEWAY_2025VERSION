@@ -68,23 +68,33 @@ public class ProfileController {
 	})
 	@GetMapping("/me")
 	public Mono<ResponseEntity<BaseResponse>> fetchMyProfile(ServerHttpRequest request) {
+		log.info("=== /profiles/me endpoint called === path: {}", request.getPath());
+
 		// JWT 필터에서 추가한 X-User-Id 헤더에서 userId 추출
 		String userId = request.getHeaders().getFirst("X-User-Id");
-		
+
 		if (userId == null || userId.isEmpty()) {
 			log.warn("X-User-Id header is missing or empty in /profiles/me request");
 			return Mono.just(responseFactory.error("사용자 인증 정보를 찾을 수 없습니다", HttpStatus.UNAUTHORIZED, request));
 		}
 		
-		log.debug("Fetching profile for authenticated user: {}", userId);
+		log.info("Fetching profile for authenticated user: {}", userId);
 		
-		return reactor.core.publisher.Mono.zip(
-				profileClient.fetchProfile(userId),
-				likeClient.getUserLikedCounts(categoryId, userId)
-		).map(tuple2 -> responseFactory.ok(java.util.Map.of(
-				"profile", tuple2.getT1(),
-				"liked", tuple2.getT2()
-		), request));
+		// 프로필 조회 (필수)
+		Mono<Object> profileMono = profileClient.fetchProfile(userId)
+				.map(profile -> (Object) profile);
+		
+		// 좋아요 수 조회 (선택 - 실패 시 빈 리스트 반환)
+		Mono<Object> likedMono = likeClient.getUserLikedCounts(categoryId, userId)
+				.map(liked -> (Object) liked)
+				.doOnError(e -> log.warn("Failed to fetch liked counts for userId={}: {}", userId, e.getMessage()))
+				.onErrorReturn(java.util.Collections.emptyList());
+		
+		return Mono.zip(profileMono, likedMono)
+				.map(tuple2 -> responseFactory.ok(java.util.Map.of(
+						"profile", tuple2.getT1(),
+						"liked", tuple2.getT2()
+				), request));
 	}
 	
 	@Operation(summary = "프로필 단건 조회", description = "특정 사용자의 프로필을 userId로 조회합니다.")
@@ -96,13 +106,23 @@ public class ProfileController {
 	})
 	@GetMapping("/{userId}")
 	public Mono<ResponseEntity<BaseResponse>> fetchProfile(@PathVariable String userId, ServerHttpRequest request) {
-		return reactor.core.publisher.Mono.zip(
-				profileClient.fetchProfile(userId),
-				likeClient.getUserLikedCounts(categoryId, userId)
-		).map(tuple2 -> responseFactory.ok(java.util.Map.of(
-				"profile", tuple2.getT1(),
-				"liked", tuple2.getT2()
-		), request));
+		log.info("=== /profiles/{} endpoint called === path: {}", userId, request.getPath());
+		
+		// 프로필 조회 (필수)
+		Mono<Object> profileMono = profileClient.fetchProfile(userId)
+				.map(profile -> (Object) profile);
+		
+		// 좋아요 수 조회 (선택 - 실패 시 빈 리스트 반환)
+		Mono<Object> likedMono = likeClient.getUserLikedCounts(categoryId, userId)
+				.map(liked -> (Object) liked)
+				.doOnError(e -> log.warn("Failed to fetch liked counts for userId={}: {}", userId, e.getMessage()))
+				.onErrorReturn(java.util.Collections.emptyList());
+		
+		return Mono.zip(profileMono, likedMono)
+				.map(tuple2 -> responseFactory.ok(java.util.Map.of(
+						"profile", tuple2.getT1(),
+						"liked", tuple2.getT2()
+				), request));
 	}
 	
 	
