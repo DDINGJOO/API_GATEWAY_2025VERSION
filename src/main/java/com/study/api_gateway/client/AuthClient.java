@@ -124,10 +124,12 @@ public class AuthClient {
 		String uriString = UriComponentsBuilder.fromPath("/api/v1/phone-number/{userId}")
 				.buildAndExpand(userId)
 				.toUriString();
-		
+
 		return webClient.get()
 				.uri(uriString)
 				.retrieve()
-				.bodyToMono(Boolean.class);
+				.bodyToMono(Boolean.class)
+				.onErrorResume(org.springframework.web.reactive.function.client.WebClientResponseException.NotFound.class,
+						e -> Mono.just(false));
 	}
 }
