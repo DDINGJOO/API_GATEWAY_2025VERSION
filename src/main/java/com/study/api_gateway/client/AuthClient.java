@@ -132,4 +132,37 @@ public class AuthClient {
 				.onErrorResume(org.springframework.web.reactive.function.client.WebClientResponseException.NotFound.class,
 						e -> Mono.just(false));
 	}
+
+	public Mono<Void> requestSmsCode(String userId, String phoneNumber) {
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/sms/request")
+				.toUriString();
+
+		return webClient.post()
+				.uri(uriString)
+				.bodyValue(Map.of("userId", userId, "phoneNumber", phoneNumber))
+				.retrieve()
+				.bodyToMono(Void.class);
+	}
+
+	public Mono<Boolean> verifySmsCode(String userId, String phoneNumber, String code) {
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/sms/verify")
+				.toUriString();
+
+		return webClient.post()
+				.uri(uriString)
+				.bodyValue(Map.of("userId", userId, "phoneNumber", phoneNumber, "code", code))
+				.retrieve()
+				.bodyToMono(Boolean.class);
+	}
+
+	public Mono<Boolean> resendSmsCode(String userId, String phoneNumber) {
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/sms/resend")
+				.toUriString();
+
+		return webClient.post()
+				.uri(uriString)
+				.bodyValue(Map.of("userId", userId, "phoneNumber", phoneNumber))
+				.retrieve()
+				.bodyToMono(Boolean.class);
+	}
 }
