@@ -12,6 +12,6 @@ import java.util.Map;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FeedTotalsResponse {
-	private Map<String, Integer> totals;
+	private Map<String, Long> totals;
 	private Boolean isOwner;
 }
