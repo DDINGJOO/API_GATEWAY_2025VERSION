@@ -54,9 +54,11 @@ public class ArticleCountUtil {
 			return Mono.just(articles);
 		}
 		
-		// Fetch like counts and comment counts in parallel
-		Mono<List<LikeCountResponse>> likeCountsMono = likeClient.getLikeCounts(categoryId, articleIds);
-		Mono<Map<String, Integer>> commentCountsMono = commentClient.getCountsForArticles(articleIds);
+		// Fetch like counts and comment counts in parallel (with fallback on error)
+		Mono<List<LikeCountResponse>> likeCountsMono = likeClient.getLikeCounts(categoryId, articleIds)
+				.onErrorReturn(List.of());
+		Mono<Map<String, Integer>> commentCountsMono = commentClient.getCountsForArticles(articleIds)
+				.onErrorReturn(Map.of());
 		
 		return Mono.zip(likeCountsMono, commentCountsMono)
 				.map(tuple2 -> {
