@@ -181,7 +181,7 @@ public class ArticleController {
 						commentClient.getCommentsByArticle(articleId, 0, 10, "visibleCount")
 								.onErrorReturn(List.of()),
 						likeClient.getLikeDetail(categoryId, articleId)
-								.onErrorReturn(null)
+								.onErrorReturn(new LikeDetailResponse())
 				)
 				.flatMap(tuple3 -> {
 					// Try to resolve current userId from headers (placeholder until token parsing is added)
