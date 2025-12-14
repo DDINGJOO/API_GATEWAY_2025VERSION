@@ -2,10 +2,7 @@ package com.study.api_gateway.controller.auth;
 
 import com.study.api_gateway.client.AuthClient;
 import com.study.api_gateway.dto.BaseResponse;
-import com.study.api_gateway.dto.auth.request.LoginRequest;
-import com.study.api_gateway.dto.auth.request.PasswordChangeRequest;
-import com.study.api_gateway.dto.auth.request.SignupRequest;
-import com.study.api_gateway.dto.auth.request.TokenRefreshRequest;
+import com.study.api_gateway.dto.auth.request.*;
 import com.study.api_gateway.util.ResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -124,6 +121,86 @@ public class AuthController {
 	@PostMapping("/withdraw/{userId}")
 	public Mono<ResponseEntity<BaseResponse>> withdraw(@PathVariable String userId, @RequestParam String withdrawReason, ServerHttpRequest request) {
 		return authClient.withdraw(userId, withdrawReason)
+				.map(result -> responseFactory.ok(result, request));
+	}
+
+	@Operation(summary = "SMS 인증 코드 요청", description = "휴대폰 번호로 인증 코드를 발송합니다. (Kafka 이벤트 발행)")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "SmsRequestSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": \"인증 코드가 발송되었습니다\",\n  \"request\": {\n    \"path\": \"/bff/v1/auth/sms/request\"\n  }\n}"))),
+			@ApiResponse(responseCode = "401", description = "인증 실패",
+					content = @Content(mediaType = "application/json",
+							examples = @ExampleObject(value = "{\n  \"isSuccess\": false,\n  \"code\": 401,\n  \"data\": \"사용자 인증 정보를 찾을 수 없습니다\"\n}")))
+	})
+	@PostMapping("/sms/request")
+	public Mono<ResponseEntity<BaseResponse>> requestSmsCode(@RequestBody @Valid SmsCodeRequest req, ServerHttpRequest request) {
+		String userId = request.getHeaders().getFirst("X-User-Id");
+		if (userId == null || userId.isEmpty()) {
+			return Mono.just(responseFactory.error("사용자 인증 정보를 찾을 수 없습니다", HttpStatus.UNAUTHORIZED, request));
+		}
+		return authClient.requestSmsCode(userId, req.getPhoneNumber())
+				.then(Mono.just(responseFactory.ok("인증 코드가 발송되었습니다", request)));
+	}
+
+	@Operation(summary = "SMS 인증 확인", description = "발송된 인증 코드를 검증합니다. 성공 시 전화번호가 암호화되어 저장됩니다.")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "SmsVerifySuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": true,\n  \"request\": {\n    \"path\": \"/bff/v1/auth/sms/verify\"\n  }\n}"))),
+			@ApiResponse(responseCode = "401", description = "인증 실패",
+					content = @Content(mediaType = "application/json",
+							examples = @ExampleObject(value = "{\n  \"isSuccess\": false,\n  \"code\": 401,\n  \"data\": \"사용자 인증 정보를 찾을 수 없습니다\"\n}")))
+	})
+	@PostMapping("/sms/verify")
+	public Mono<ResponseEntity<BaseResponse>> verifySmsCode(@RequestBody @Valid SmsVerifyRequest req, ServerHttpRequest request) {
+		String userId = request.getHeaders().getFirst("X-User-Id");
+		if (userId == null || userId.isEmpty()) {
+			return Mono.just(responseFactory.error("사용자 인증 정보를 찾을 수 없습니다", HttpStatus.UNAUTHORIZED, request));
+		}
+		return authClient.verifySmsCode(userId, req.getPhoneNumber(), req.getCode())
+				.map(result -> responseFactory.ok(result, request));
+	}
+
+	@Operation(summary = "SMS 인증 코드 재발송", description = "인증 코드를 재발송합니다.")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "SmsResendSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": true,\n  \"request\": {\n    \"path\": \"/bff/v1/auth/sms/resend\"\n  }\n}"))),
+			@ApiResponse(responseCode = "401", description = "인증 실패",
+					content = @Content(mediaType = "application/json",
+							examples = @ExampleObject(value = "{\n  \"isSuccess\": false,\n  \"code\": 401,\n  \"data\": \"사용자 인증 정보를 찾을 수 없습니다\"\n}")))
+	})
+	@PostMapping("/sms/resend")
+	public Mono<ResponseEntity<BaseResponse>> resendSmsCode(@RequestBody @Valid SmsCodeRequest req, ServerHttpRequest request) {
+		String userId = request.getHeaders().getFirst("X-User-Id");
+		if (userId == null || userId.isEmpty()) {
+			return Mono.just(responseFactory.error("사용자 인증 정보를 찾을 수 없습니다", HttpStatus.UNAUTHORIZED, request));
+		}
+		return authClient.resendSmsCode(userId, req.getPhoneNumber())
+				.map(result -> responseFactory.ok(result, request));
+	}
+
+	@Operation(summary = "휴대폰 등록 여부 확인", description = "사용자의 휴대폰 번호 등록 여부를 확인합니다.")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "HasPhoneNumberSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": true,\n  \"request\": {\n    \"path\": \"/bff/v1/auth/phone-number\"\n  }\n}"))),
+			@ApiResponse(responseCode = "401", description = "인증 실패",
+					content = @Content(mediaType = "application/json",
+							examples = @ExampleObject(value = "{\n  \"isSuccess\": false,\n  \"code\": 401,\n  \"data\": \"사용자 인증 정보를 찾을 수 없습니다\"\n}")))
+	})
+	@GetMapping("/phone-number")
+	public Mono<ResponseEntity<BaseResponse>> hasPhoneNumber(ServerHttpRequest request) {
+		String userId = request.getHeaders().getFirst("X-User-Id");
+		if (userId == null || userId.isEmpty()) {
+			return Mono.just(responseFactory.error("사용자 인증 정보를 찾을 수 없습니다", HttpStatus.UNAUTHORIZED, request));
+		}
+		return authClient.hasPhoneNumber(userId)
 				.map(result -> responseFactory.ok(result, request));
 	}
 }
