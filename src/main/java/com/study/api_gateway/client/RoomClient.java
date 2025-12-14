@@ -1,6 +1,8 @@
 package com.study.api_gateway.client;
 
+import com.study.api_gateway.dto.room.request.ReservationFieldRequest;
 import com.study.api_gateway.dto.room.request.RoomCreateRequest;
+import com.study.api_gateway.dto.room.response.ReservationFieldResponse;
 import com.study.api_gateway.dto.room.response.RoomDetailResponse;
 import com.study.api_gateway.dto.room.response.RoomSimpleResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -141,5 +143,39 @@ public class RoomClient {
 				.retrieve()
 				.bodyToMono(new org.springframework.core.ParameterizedTypeReference<java.util.Map<Long, com.study.api_gateway.dto.room.response.RoomKeywordResponse>>() {
 				});
+	}
+
+	// ========== Reservation Field APIs ==========
+
+	/**
+	 * 예약 필드 목록 조회
+	 * GET /api/rooms/{roomId}/reservation-fields
+	 */
+	public Mono<List<ReservationFieldResponse>> getReservationFields(Long roomId) {
+		return webClient.get()
+				.uri(uriBuilder -> uriBuilder
+						.path(PREFIX + "/{roomId}/reservation-fields")
+						.build(roomId))
+				.retrieve()
+				.bodyToFlux(ReservationFieldResponse.class)
+				.collectList();
+	}
+
+	/**
+	 * 예약 필드 전체 교체
+	 * PUT /api/rooms/{roomId}/reservation-fields
+	 */
+	public Mono<List<ReservationFieldResponse>> replaceReservationFields(
+			Long roomId,
+			List<ReservationFieldRequest> requests
+	) {
+		return webClient.put()
+				.uri(uriBuilder -> uriBuilder
+						.path(PREFIX + "/{roomId}/reservation-fields")
+						.build(roomId))
+				.bodyValue(requests)
+				.retrieve()
+				.bodyToFlux(ReservationFieldResponse.class)
+				.collectList();
 	}
 }
