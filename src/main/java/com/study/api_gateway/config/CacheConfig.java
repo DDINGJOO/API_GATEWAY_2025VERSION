@@ -34,6 +34,21 @@ public class CacheConfig {
 	}
 	
 	/**
+	 * Room 정보 캐시 설정
+	 * - TTL: 10분 (Room 정보는 자주 변경되지 않음)
+	 * - 최대 크기: 500개 항목
+	 */
+	@Bean(name = "roomCacheManager")
+	public CacheManager roomCacheManager() {
+		CaffeineCacheManager cacheManager = new CaffeineCacheManager("roomCache");
+		cacheManager.setCaffeine(Caffeine.newBuilder()
+				.expireAfterWrite(10, TimeUnit.MINUTES)  // 10분 후 만료
+				.maximumSize(500)  // 최대 500개 항목 캐싱
+				.recordStats());  // 캐시 통계 기록
+		return cacheManager;
+	}
+	
+	/**
 	 * 가격 정책 캐시 설정 (YeYakHaeYo 서버용)
 	 * - TTL: 5분 (가격은 상대적으로 자주 변경될 수 있음)
 	 * - 최대 크기: 1000개 항목

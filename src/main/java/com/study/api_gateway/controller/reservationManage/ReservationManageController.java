@@ -4,10 +4,10 @@ import com.study.api_gateway.client.CouponClient;
 import com.study.api_gateway.client.YeYakManageClient;
 import com.study.api_gateway.dto.BaseResponse;
 import com.study.api_gateway.dto.coupon.request.CouponApplyRequest;
-import com.study.api_gateway.dto.reservationManage.enums.PeriodType;
 import com.study.api_gateway.dto.reservationManage.enums.ReservationStatus;
 import com.study.api_gateway.dto.reservationManage.request.ReservationCreateRequest;
 import com.study.api_gateway.dto.reservationManage.request.UserInfoUpdateRequest;
+import com.study.api_gateway.service.ReservationEnrichmentService;
 import com.study.api_gateway.util.ResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,7 +26,7 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * 예약 관리 API
@@ -41,6 +41,7 @@ public class ReservationManageController {
 	
 	private final YeYakManageClient yeYakManageClient;
 	private final CouponClient couponClient;
+	private final ReservationEnrichmentService reservationEnrichmentService;
 	private final ResponseFactory responseFactory;
 	
 	/**
@@ -145,9 +146,9 @@ public class ReservationManageController {
 	
 	/**
 	 * 예약 상세 조회
-	 * GET /bff/v1/reservations/{id}
+	 * GET /bff/v1/reservations/detail/{id}
 	 */
-	@GetMapping("/{id}")
+	@GetMapping("/detail/{id}")
 	@Operation(summary = "예약 상세 조회", description = "예약 ID로 예약 상세 정보를 조회합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
@@ -167,104 +168,90 @@ public class ReservationManageController {
 	}
 	
 	/**
-	 * 일간 예약 목록 조회
-	 * GET /bff/v1/reservations/daily?date={date}
+	 * 내 예약 목록 조회 (커서 페이징)
+	 * GET /bff/v1/reservations/me?cursor={cursor}&size={size}&statuses={statuses}
 	 */
-	@GetMapping("/daily")
-	@Operation(summary = "일간 예약 목록 조회", description = "특정 날짜의 예약 목록을 장소/방별로 그룹화하여 조회합니다")
+	@GetMapping("/me")
+	@Operation(summary = "내 예약 목록 조회", description = "로그인한 사용자의 예약 목록을 커서 기반 페이징으로 조회합니다. 최신 예약이 먼저 표시됩니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
 					content = @Content(mediaType = "application/json",
-							schema = @Schema(implementation = BaseResponse.class),
-							examples = @ExampleObject(name = "DailyReservationsSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"places\": [\n      {\n        \"placeId\": 100,\n        \"rooms\": [\n          {\n            \"roomId\": 10,\n            \"reservations\": [\n              {\n                \"reservationId\": 123456,\n                \"reserverName\": \"홍길동\",\n                \"startTimes\": [\"11:00\", \"12:00\", \"13:00\"],\n                \"reservationDate\": \"2025-01-17\",\n                \"status\": \"CONFIRMED\",\n                \"needsApproval\": false,\n                \"isBlacklisted\": false\n              },\n              {\n                \"reservationId\": 123457,\n                \"reserverName\": \"김철수\",\n                \"startTimes\": [\"14:00\", \"15:00\"],\n                \"reservationDate\": \"2025-01-17\",\n                \"status\": \"PENDING\",\n                \"needsApproval\": true,\n                \"isBlacklisted\": true\n              }\n            ]\n          }\n        ]\n      }\n    ],\n    \"totalCount\": 2,\n    \"period\": \"DAILY\"\n  },\n  \"request\": {\n    \"method\": \"GET\",\n    \"path\": \"/bff/v1/reservations/daily?date=2025-01-17\"\n  }\n}"))),
-			@ApiResponse(responseCode = "400", description = "잘못된 날짜 형식")
+							schema = @Schema(implementation = BaseResponse.class))),
+			@ApiResponse(responseCode = "400", description = "잘못된 요청 (size는 1-100)"),
+			@ApiResponse(responseCode = "401", description = "인증 필요")
 	})
-	public Mono<ResponseEntity<BaseResponse>> getDailyReservations(
-			@Parameter(description = "조회 날짜 (yyyy-MM-dd)", required = true, example = "2025-01-17")
-			@RequestParam String date,
-			ServerHttpRequest req
-	) {
-		log.info("일간 예약 목록 조회: date={}", date);
-		
-		return yeYakManageClient.getDailyReservations(date)
-				.map(response -> responseFactory.ok(response, req));
-	}
-	
-	/**
-	 * 주간 예약 목록 조회
-	 * GET /bff/v1/reservations/weekly?startDate={startDate}
-	 */
-	@GetMapping("/weekly")
-	@Operation(summary = "주간 예약 목록 조회", description = "특정 주의 예약 목록을 장소/방별로 그룹화하여 조회합니다 (7일치)")
-	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "조회 성공",
-					content = @Content(mediaType = "application/json",
-							schema = @Schema(implementation = BaseResponse.class),
-							examples = @ExampleObject(name = "WeeklyReservationsSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"places\": [\n      {\n        \"placeId\": 100,\n        \"rooms\": [\n          {\n            \"roomId\": 10,\n            \"reservations\": [\n              {\n                \"reservationId\": 123456,\n                \"reserverName\": \"홍길동\",\n                \"startTimes\": [\"11:00\", \"12:00\"],\n                \"reservationDate\": \"2025-01-15\",\n                \"status\": \"CONFIRMED\",\n                \"needsApproval\": false,\n                \"isBlacklisted\": false\n              },\n              {\n                \"reservationId\": 123457,\n                \"reserverName\": \"김철수\",\n                \"startTimes\": [\"14:00\"],\n                \"reservationDate\": \"2025-01-16\",\n                \"status\": \"PENDING\",\n                \"needsApproval\": true,\n                \"isBlacklisted\": true\n              }\n            ]\n          }\n        ]\n      }\n    ],\n    \"totalCount\": 2,\n    \"period\": \"WEEKLY\"\n  },\n  \"request\": {\n    \"method\": \"GET\",\n    \"path\": \"/bff/v1/reservations/weekly?startDate=2025-01-15\"\n  }\n}"))),
-			@ApiResponse(responseCode = "400", description = "잘못된 날짜 형식")
-	})
-	public Mono<ResponseEntity<BaseResponse>> getWeeklyReservations(
-			@Parameter(description = "주 시작 날짜 (yyyy-MM-dd)", required = true, example = "2025-01-15")
-			@RequestParam String startDate,
-			ServerHttpRequest req
-	) {
-		log.info("주간 예약 목록 조회: startDate={}", startDate);
-		
-		return yeYakManageClient.getWeeklyReservations(startDate)
-				.map(response -> responseFactory.ok(response, req));
-	}
-	
-	/**
-	 * 월간 예약 목록 조회
-	 * GET /bff/v1/reservations/monthly?yearMonth={yearMonth}
-	 */
-	@GetMapping("/monthly")
-	@Operation(summary = "월간 예약 목록 조회", description = "특정 월의 예약 목록을 장소/방별로 그룹화하여 조회합니다")
-	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "조회 성공",
-					content = @Content(mediaType = "application/json",
-							schema = @Schema(implementation = BaseResponse.class),
-							examples = @ExampleObject(name = "MonthlyReservationsSuccess", value = "{\\n  \\\"isSuccess\\\": true,\\n  \\\"code\\\": 200,\\n  \\\"data\\\": {\\n    \\\"places\\\": [\\n      {\\n        \\\"placeId\\\": 100,\\n        \\\"rooms\\\": [\\n          {\\n            \\\"roomId\\\": 10,\\n            \\\"reservations\\\": [\\n              {\\n                \\\"reservationId\\\": 123456,\\n                \\\"reserverName\\\": \\\"홍길동\\\",\\n                \\\"startTimes\\\": [\\\"11:00\\\", \\\"12:00\\\"],\\n                \\\"reservationDate\\\": \\\"2025-01-15\\\",\\n                \\\"status\\\": \\\"CONFIRMED\\\",\\n                \\\"needsApproval\\\": false,\\n                \\\"isBlacklisted\\\": false\\n              },\\n              {\\n                \\\"reservationId\\\": 123457,\\n                \\\"reserverName\\\": \\\"김철수\\\",\\n                \\\"startTimes\\\": [\\\"14:00\\\"],\\n                \\\"reservationDate\\\": \\\"2025-01-16\\\",\\n                \\\"status\\\": \\\"PENDING\\\",\\n                \\\"needsApproval\\\": true,\\n                \\\"isBlacklisted\\\": true\\n              },\\n              {\\n                \\\"reservationId\\\": 123458,\\n                \\\"reserverName\\\": \\\"이영희\\\",\\n                \\\"startTimes\\\": [\\\"15:00\\\", \\\"16:00\\\", \\\"17:00\\\"],\\n                \\\"reservationDate\\\": \\\"2025-01-20\\\",\\n                \\\"status\\\": \\\"CONFIRMED\\\",\\n                \\\"needsApproval\\\": false,\\n                \\\"isBlacklisted\\\": false\\n              }\\n            ]\\n          }\\n        ]\\n      }\\n    ],\\n    \\\"totalCount\\\": 3,\\n    \\\"period\\\": \\\"MONTHLY\\\"\\n  },\\n  \\\"request\\\": {\\n    \\\"method\\\": \\\"GET\\\",\\n    \\\"path\\\": \\\"/bff/v1/reservations/monthly?yearMonth=2025-01\\\"\\n  }\\n}"))),
-			@ApiResponse(responseCode = "400", description = "잘못된 날짜 형식")
-	})
-	public Mono<ResponseEntity<BaseResponse>> getMonthlyReservations(
-			@Parameter(description = "조회 연월 (yyyy-MM)", required = true, example = "2025-01")
-			@RequestParam String yearMonth,
-			ServerHttpRequest req
-	) {
-		log.info("월간 예약 목록 조회: yearMonth={}", yearMonth);
-		
-		return yeYakManageClient.getMonthlyReservations(yearMonth)
-				.map(response -> responseFactory.ok(response, req));
-	}
-	
-	/**
-	 * 사용자별 예약 목록 조회 (커서 페이징)
-	 * GET /bff/v1/reservations/users/{userId}?period={period}&cursor={cursor}&size={size}&statuses={statuses}
-	 */
-	@GetMapping("/users/{userId}")
-	@Operation(summary = "사용자별 예약 목록 조회", description = "특정 사용자의 예약 목록을 커서 기반 페이징으로 조회합니다")
-	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "조회 성공",
-					content = @Content(mediaType = "application/json",
-							schema = @Schema(implementation = BaseResponse.class),
-							examples = @ExampleObject(name = "UserReservationsSuccess", value = "{\\n  \\\"isSuccess\\\": true,\\n  \\\"code\\\": 200,\\n  \\\"data\\\": {\\n    \\\"items\\\": [\\n      {\\n        \\\"reservationId\\\": 123456,\\n        \\\"placeId\\\": 100,\\n        \\\"roomId\\\": 10,\\n        \\\"status\\\": \\\"CONFIRMED\\\",\\n        \\\"totalPrice\\\": 72000,\\n        \\\"reservationTimePrice\\\": 60000,\\n        \\\"depositPrice\\\": 10000,\\n        \\\"reservationDate\\\": \\\"2025-01-15\\\",\\n        \\\"reserverName\\\": \\\"홍길동\\\",\\n        \\\"reserverPhone\\\": \\\"010-1234-5678\\\",\\n        \\\"approvedAt\\\": \\\"2025-01-15T10:30:00\\\",\\n        \\\"approvedBy\\\": 0,\\n        \\\"createdAt\\\": \\\"2025-01-15T10:00:00\\\"\\n      },\\n      {\\n        \\\"reservationId\\\": 123455,\\n        \\\"placeId\\\": 100,\\n        \\\"roomId\\\": 11,\\n        \\\"status\\\": \\\"PENDING_PAYMENT\\\",\\n        \\\"totalPrice\\\": 50000,\\n        \\\"reservationTimePrice\\\": 40000,\\n        \\\"depositPrice\\\": 10000,\\n        \\\"reservationDate\\\": \\\"2025-01-14\\\",\\n        \\\"reserverName\\\": \\\"홍길동\\\",\\n        \\\"reserverPhone\\\": \\\"010-1234-5678\\\",\\n        \\\"approvedAt\\\": null,\\n        \\\"approvedBy\\\": null,\\n        \\\"createdAt\\\": \\\"2025-01-14T15:20:00\\\"\\n      }\\n    ],\\n    \\\"nextCursor\\\": \\\"eyJyZXNlcnZhdGlvbkRhdGUiOiIyMDI1LTAxLTE0IiwicmVzZXJ2YXRpb25JZCI6MTIzNDU1fQ==\\\",\\n    \\\"hasNext\\\": true,\\n    \\\"size\\\": 20\\n  },\\n  \\\"request\\\": {\\n    \\\"method\\\": \\\"GET\\\",\\n    \\\"path\\\": \\\"/bff/v1/reservations/users/1001?period=WEEKLY&size=20\\\"\\n  }\\n}"))),
-			@ApiResponse(responseCode = "400", description = "잘못된 요청 (period 필수, size는 1-100)"),
-			@ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
-	})
-	public Mono<ResponseEntity<BaseResponse>> getUserReservations(
-			@Parameter(description = "사용자 ID", required = true) @PathVariable Long userId,
-			@Parameter(description = "기간 타입", required = true) @RequestParam PeriodType period,
-			@Parameter(description = "커서 (Base64 인코딩)") @RequestParam(required = false) String cursor,
+	public Mono<ResponseEntity<BaseResponse>> getMyReservations(
+			@Parameter(description = "커서 (Base64 인코딩, 다음 페이지 조회용)") @RequestParam(required = false) String cursor,
 			@Parameter(description = "페이지 크기 (1-100)", example = "20") @RequestParam(required = false, defaultValue = "20") Integer size,
-			@Parameter(description = "상태 필터 (쉼표 구분)", example = "CONFIRMED,PENDING_PAYMENT")
-			@RequestParam(required = false) List<ReservationStatus> statuses,
+			@Parameter(description = "상태 필터 (다중 선택 가능)", example = "CONFIRMED,PENDING")
+			@RequestParam(required = false) Set<ReservationStatus> statuses,
 			ServerHttpRequest req
 	) {
-		log.info("사용자별 예약 목록 조회: userId={}, period={}, cursor={}, size={}, statuses={}",
-				userId, period, cursor, size, statuses);
+		// JWT 필터에서 추가한 X-User-Id 헤더에서 userId 추출
+		String userIdStr = req.getHeaders().getFirst("X-User-Id");
+		if (userIdStr == null || userIdStr.isEmpty()) {
+			log.warn("X-User-Id header is missing or empty in /reservations/me request");
+			return Mono.just(responseFactory.error("인증이 필요합니다.", HttpStatus.UNAUTHORIZED, req));
+		}
 		
-		return yeYakManageClient.getUserReservations(userId, period, cursor, size, statuses)
+		Long userId = Long.parseLong(userIdStr);
+		log.info("내 예약 목록 조회: userId={}, cursor={}, size={}, statuses={}",
+				userId, cursor, size, statuses);
+		
+		return yeYakManageClient.getUserReservations(userId, cursor, size, statuses)
+				.flatMap(reservationEnrichmentService::enrichUserReservations)
 				.map(response -> responseFactory.ok(response, req));
+	}
+
+	/**
+	 * 결제 취소 (승인 전)
+	 * POST /bff/v1/reservations/{id}/cancel
+	 * PENDING_CONFIRMED 상태의 예약에 대해 결제 취소 요청
+	 */
+	@PostMapping("/{id}/cancel")
+	@Operation(summary = "결제 취소 (승인 전)", description = "PENDING_CONFIRMED 상태의 예약에 대해 결제를 취소합니다. 취소 성공 시 즉시 REFUNDED 상태로 변경됩니다.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "취소 성공"),
+			@ApiResponse(responseCode = "400", description = "취소 불가능한 상태"),
+			@ApiResponse(responseCode = "404", description = "예약을 찾을 수 없음")
+	})
+	public Mono<ResponseEntity<BaseResponse>> cancelPayment(
+			@Parameter(description = "예약 ID", required = true) @PathVariable Long id,
+			ServerHttpRequest req
+	) {
+		log.info("결제 취소 요청: reservationId={}", id);
+		
+		return yeYakManageClient.cancelPayment(id)
+				.then(Mono.fromCallable(() -> responseFactory.ok("결제가 취소되었습니다.", req)))
+				.onErrorResume(error -> {
+					log.error("결제 취소 실패: reservationId={}, error={}", id, error.getMessage());
+					return Mono.just(responseFactory.error(error.getMessage(), HttpStatus.BAD_REQUEST, req));
+				});
+	}
+
+	/**
+	 * 환불 요청 (승인 후)
+	 * POST /bff/v1/reservations/{id}/refund
+	 * CONFIRMED 또는 REJECTED 상태의 예약에 대해 환불 요청
+	 */
+	@PostMapping("/{id}/refund")
+	@Operation(summary = "환불 요청 (승인 후)", description = "CONFIRMED 또는 REJECTED 상태의 예약에 대해 환불을 요청합니다. 실제 상태 변경은 결제 서버의 환불 완료 이벤트 수신 시 처리됩니다.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "환불 요청 성공"),
+			@ApiResponse(responseCode = "400", description = "환불 불가능한 상태"),
+			@ApiResponse(responseCode = "404", description = "예약을 찾을 수 없음")
+	})
+	public Mono<ResponseEntity<BaseResponse>> refundReservation(
+			@Parameter(description = "예약 ID", required = true) @PathVariable Long id,
+			ServerHttpRequest req
+	) {
+		log.info("환불 요청: reservationId={}", id);
+		
+		return yeYakManageClient.refundReservation(id)
+				.then(Mono.fromCallable(() -> responseFactory.ok("환불 요청이 접수되었습니다.", req)))
+				.onErrorResume(error -> {
+					log.error("환불 요청 실패: reservationId={}, error={}", id, error.getMessage());
+					return Mono.just(responseFactory.error(error.getMessage(), HttpStatus.BAD_REQUEST, req));
+				});
 	}
 }

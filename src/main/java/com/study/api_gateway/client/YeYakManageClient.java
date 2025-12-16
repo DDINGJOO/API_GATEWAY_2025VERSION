@@ -1,6 +1,5 @@
 package com.study.api_gateway.client;
 
-import com.study.api_gateway.dto.reservationManage.enums.PeriodType;
 import com.study.api_gateway.dto.reservationManage.enums.ReservationStatus;
 import com.study.api_gateway.dto.reservationManage.request.ReservationCreateRequest;
 import com.study.api_gateway.dto.reservationManage.request.UserInfoUpdateRequest;
@@ -10,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * YeYakManage Server와 통신하는 WebClient 기반 클라이언트
@@ -96,28 +95,28 @@ public class YeYakManageClient {
 	
 	/**
 	 * 사용자별 예약 목록 조회 (커서 페이징)
-	 * GET /api/v1/reservations/users/{userId}?period={period}&cursor={cursor}&size={size}&statuses={statuses}
+	 * GET /api/v1/reservations/users/{userId}?cursor={cursor}&size={size}&statuses={statuses}
+	 *
+	 * @return 내부 응답 DTO (placeId, roomId만 포함) - API Gateway에서 enrichment 필요
 	 */
-	public Mono<UserReservationsResponse> getUserReservations(
+	public Mono<InternalUserReservationsResponse> getUserReservations(
 			Long userId,
-			PeriodType period,
 			String cursor,
 			Integer size,
-			List<ReservationStatus> statuses
+			Set<ReservationStatus> statuses
 	) {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path(PREFIX + "/users/{userId}");
-					uriBuilder.queryParam("period", period.name());
-					
+
 					if (cursor != null) {
 						uriBuilder.queryParam("cursor", cursor);
 					}
-					
+
 					if (size != null) {
 						uriBuilder.queryParam("size", size);
 					}
-					
+
 					if (statuses != null && !statuses.isEmpty()) {
 						String statusesStr = String.join(",", statuses.stream().map(Enum::name).toList());
 						uriBuilder.queryParam("statuses", statusesStr);
@@ -126,11 +125,11 @@ public class YeYakManageClient {
 					return uriBuilder.build(userId);
 				})
 				.retrieve()
-				.bodyToMono(UserReservationsResponse.class);
+				.bodyToMono(InternalUserReservationsResponse.class);
 	}
 	
 	/**
-	 * 예약 사용자 정
+	 * 예약 사용자 정보 업데이트
 	 * POST /api/v1/reservations/{id}/user-info
 	 */
 	public Mono<UserInfoUpdateResponse> updateUserInfo(Long reservationId, UserInfoUpdateRequest request) {
@@ -139,5 +138,33 @@ public class YeYakManageClient {
 				.bodyValue(request)
 				.retrieve()
 				.bodyToMono(UserInfoUpdateResponse.class);
+	}
+	
+	/**
+	 * 결제 취소 (승인 전)
+	 * PENDING_CONFIRMED 상태의 예약에 대해 결제 취소 요청
+	 * POST /api/v1/reservations/{id}/cancel
+	 *
+	 * @param reservationId 예약 ID
+	 */
+	public Mono<Void> cancelPayment(Long reservationId) {
+		return webClient.post()
+				.uri(PREFIX + "/{id}/cancel", reservationId)
+				.retrieve()
+				.bodyToMono(Void.class);
+	}
+	
+	/**
+	 * 환불 요청 (승인 후)
+	 * CONFIRMED 또는 REJECTED 상태의 예약에 대해 환불 요청
+	 * POST /api/v1/reservations/{id}/refund
+	 *
+	 * @param reservationId 예약 ID
+	 */
+	public Mono<Void> refundReservation(Long reservationId) {
+		return webClient.post()
+				.uri(PREFIX + "/{id}/refund", reservationId)
+				.retrieve()
+				.bodyToMono(Void.class);
 	}
 }

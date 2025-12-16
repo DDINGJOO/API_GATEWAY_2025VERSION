@@ -31,6 +31,9 @@ public class ArticleSimpleResponse {
 	@Schema(description = "게시판 이름", example = "자유게시판")
 	private String boardName;
 	
+	@Schema(description = "게시글 내용", example = "게시글 본문 내용입니다.")
+	private String content;
+
 	@Schema(description = "게시글 타입", example = "REGULAR", allowableValues = {"REGULAR", "EVENT", "NOTICE"})
 	private String articleType;
 	

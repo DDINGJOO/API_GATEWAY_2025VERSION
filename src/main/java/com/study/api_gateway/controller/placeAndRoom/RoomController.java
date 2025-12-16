@@ -182,7 +182,7 @@ public class RoomController {
 					log.info("Room 검색 결과: {} 개", rooms.size());
 					
 					// RoomSimpleResponse 리스트로 캐스팅
-					List<RoomSimpleResponse> roomList = (List<RoomSimpleResponse>) rooms;
+					List<RoomSimpleResponse> roomList = rooms;
 					
 					// 2. 고유한 Place ID 추출
 					List<Long> uniquePlaceIds = roomList.stream()
@@ -238,6 +238,7 @@ public class RoomController {
 											PlaceInfoSummary placeSummary = null;
 											if (placeInfo != null) {
 												placeSummary = PlaceInfoSummary.builder()
+														.category(placeInfo.getCategory())
 														.placeName(placeInfo.getPlaceName())
 														.placeType(placeInfo.getPlaceType())
 														.fullAddress(placeInfo.getLocation() != null &&

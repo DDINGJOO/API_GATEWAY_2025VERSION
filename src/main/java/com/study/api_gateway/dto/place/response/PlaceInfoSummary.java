@@ -15,6 +15,11 @@ import lombok.NoArgsConstructor;
 public class PlaceInfoSummary {
 	
 	/**
+	 * 카테고리 (예: MUSIC_STUDIO, DANCE_STUDIO 등)
+	 */
+	private String category;
+
+	/**
 	 * 공간명
 	 */
 	private String placeName;
