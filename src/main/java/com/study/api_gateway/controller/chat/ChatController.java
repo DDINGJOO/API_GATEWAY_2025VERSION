@@ -32,50 +32,50 @@ public class ChatController {
 	private final ChatEnrichmentService chatEnrichmentService;
 	private final ResponseFactory responseFactory;
 
-	// ==================== 채팅방 API ====================
+	// ==================== 대화 API ====================
 
-	@Operation(summary = "채팅방 목록 조회", description = "사용자의 채팅방 목록을 조회합니다. 참여자 프로필 정보가 포함됩니다.")
+	@Operation(summary = "대화 목록 조회", description = "사용자의 대화 목록을 조회합니다. 참여자 프로필 정보가 포함됩니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공")
 	})
-	@GetMapping("/rooms")
-	public Mono<ResponseEntity<BaseResponse>> getChatRooms(
+	@GetMapping("/conversations")
+	public Mono<ResponseEntity<BaseResponse>> getConversations(
 			@RequestHeader("X-User-Id") Long userId,
 			ServerHttpRequest request
 	) {
-		log.debug("getChatRooms: userId={}", userId);
+		log.debug("getConversations: userId={}", userId);
 
 		return chatEnrichmentService.getChatRoomsWithProfiles(userId)
 				.map(result -> responseFactory.ok(result, request));
 	}
 
-	@Operation(summary = "채팅방 상세 조회", description = "특정 채팅방의 상세 정보를 조회합니다.")
+	@Operation(summary = "대화 상세 조회", description = "특정 대화의 상세 정보를 조회합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공"),
-			@ApiResponse(responseCode = "404", description = "채팅방을 찾을 수 없음")
+			@ApiResponse(responseCode = "404", description = "대화를 찾을 수 없음")
 	})
-	@GetMapping("/rooms/{roomId}")
-	public Mono<ResponseEntity<BaseResponse>> getChatRoom(
-			@PathVariable String roomId,
+	@GetMapping("/conversations/{conversationId}")
+	public Mono<ResponseEntity<BaseResponse>> getConversation(
+			@PathVariable String conversationId,
 			@RequestHeader("X-User-Id") Long userId,
 			ServerHttpRequest request
 	) {
-		log.debug("getChatRoom: roomId={}, userId={}", roomId, userId);
+		log.debug("getConversation: conversationId={}, userId={}", conversationId, userId);
 
-		return chatClient.getChatRoom(roomId, userId)
+		return chatClient.getChatRoom(conversationId, userId)
 				.map(result -> responseFactory.ok(result, request));
 	}
 
 	// ==================== 메시지 API ====================
 
-	@Operation(summary = "메시지 목록 조회", description = "채팅방의 메시지 목록을 조회합니다. 발신자 프로필 정보가 포함됩니다.")
+	@Operation(summary = "메시지 목록 조회", description = "대화의 메시지 목록을 조회합니다. 발신자 프로필 정보가 포함됩니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공"),
-			@ApiResponse(responseCode = "403", description = "채팅방 접근 권한 없음")
+			@ApiResponse(responseCode = "403", description = "대화 접근 권한 없음")
 	})
-	@GetMapping("/rooms/{roomId}/messages")
+	@GetMapping("/conversations/{conversationId}/messages")
 	public Mono<ResponseEntity<BaseResponse>> getMessages(
-			@PathVariable String roomId,
+			@PathVariable String conversationId,
 			@RequestHeader("X-User-Id") Long userId,
 			@Parameter(description = "페이징 커서 (마지막 messageId)")
 			@RequestParam(required = false) String cursor,
@@ -83,44 +83,44 @@ public class ChatController {
 			@RequestParam(required = false, defaultValue = "50") Integer limit,
 			ServerHttpRequest request
 	) {
-		log.debug("getMessages: roomId={}, userId={}, cursor={}, limit={}", roomId, userId, cursor, limit);
+		log.debug("getMessages: conversationId={}, userId={}, cursor={}, limit={}", conversationId, userId, cursor, limit);
 
-		return chatEnrichmentService.getMessagesWithProfiles(roomId, userId, cursor, limit)
+		return chatEnrichmentService.getMessagesWithProfiles(conversationId, userId, cursor, limit)
 				.map(result -> responseFactory.ok(result, request));
 	}
 
-	@Operation(summary = "메시지 전송", description = "채팅방에 메시지를 전송합니다.")
+	@Operation(summary = "메시지 전송", description = "대화에 메시지를 전송합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "201", description = "메시지 전송 성공"),
-			@ApiResponse(responseCode = "403", description = "채팅방 접근 권한 없음")
+			@ApiResponse(responseCode = "403", description = "대화 접근 권한 없음")
 	})
-	@PostMapping("/rooms/{roomId}/messages")
+	@PostMapping("/conversations/{conversationId}/messages")
 	public Mono<ResponseEntity<BaseResponse>> sendMessage(
-			@PathVariable String roomId,
+			@PathVariable String conversationId,
 			@RequestHeader("X-User-Id") Long userId,
 			@RequestBody SendMessageRequest messageRequest,
 			ServerHttpRequest request
 	) {
-		log.debug("sendMessage: roomId={}, userId={}", roomId, userId);
+		log.debug("sendMessage: conversationId={}, userId={}", conversationId, userId);
 
-		return chatClient.sendMessage(roomId, userId, messageRequest)
+		return chatClient.sendMessage(conversationId, userId, messageRequest)
 				.map(result -> responseFactory.ok(result, request, HttpStatus.CREATED));
 	}
 
-	@Operation(summary = "메시지 읽음 처리", description = "채팅방의 메시지를 읽음 처리합니다.")
+	@Operation(summary = "메시지 읽음 처리", description = "대화의 메시지를 읽음 처리합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공")
 	})
-	@PostMapping("/rooms/{roomId}/messages/read")
+	@PostMapping("/conversations/{conversationId}/messages/read")
 	public Mono<ResponseEntity<BaseResponse>> markAsRead(
-			@PathVariable String roomId,
+			@PathVariable String conversationId,
 			@RequestHeader("X-User-Id") Long userId,
 			@RequestBody(required = false) ReadMessageRequest readRequest,
 			ServerHttpRequest request
 	) {
-		log.debug("markAsRead: roomId={}, userId={}", roomId, userId);
+		log.debug("markAsRead: conversationId={}, userId={}", conversationId, userId);
 
-		return chatClient.markAsRead(roomId, userId, readRequest)
+		return chatClient.markAsRead(conversationId, userId, readRequest)
 				.map(result -> responseFactory.ok(result, request));
 	}
 
@@ -129,16 +129,16 @@ public class ChatController {
 			@ApiResponse(responseCode = "200", description = "성공"),
 			@ApiResponse(responseCode = "403", description = "메시지 삭제 권한 없음")
 	})
-	@DeleteMapping("/rooms/{roomId}/messages/{messageId}")
+	@DeleteMapping("/conversations/{conversationId}/messages/{messageId}")
 	public Mono<ResponseEntity<BaseResponse>> deleteMessage(
-			@PathVariable String roomId,
+			@PathVariable String conversationId,
 			@PathVariable String messageId,
 			@RequestHeader("X-User-Id") Long userId,
 			ServerHttpRequest request
 	) {
-		log.debug("deleteMessage: roomId={}, messageId={}, userId={}", roomId, messageId, userId);
+		log.debug("deleteMessage: conversationId={}, messageId={}, userId={}", conversationId, messageId, userId);
 
-		return chatClient.deleteMessage(roomId, messageId, userId)
+		return chatClient.deleteMessage(conversationId, messageId, userId)
 				.map(result -> responseFactory.ok(result, request));
 	}
 
@@ -219,37 +219,37 @@ public class ChatController {
 				.map(result -> responseFactory.ok(result, request));
 	}
 
-	@Operation(summary = "상담원 배정", description = "상담원을 채팅방에 배정합니다. (관리자/상담원용)")
+	@Operation(summary = "상담원 배정", description = "상담원을 대화에 배정합니다. (관리자/상담원용)")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공"),
 			@ApiResponse(responseCode = "409", description = "이미 상담원이 배정됨")
 	})
-	@PostMapping("/support/{roomId}/assign")
+	@PostMapping("/support/{conversationId}/assign")
 	public Mono<ResponseEntity<BaseResponse>> assignAgent(
-			@PathVariable String roomId,
+			@PathVariable String conversationId,
 			@RequestHeader("X-Agent-Id") Long agentId,
 			ServerHttpRequest request
 	) {
-		log.debug("assignAgent: roomId={}, agentId={}", roomId, agentId);
+		log.debug("assignAgent: conversationId={}, agentId={}", conversationId, agentId);
 
-		return chatClient.assignAgent(roomId, agentId)
+		return chatClient.assignAgent(conversationId, agentId)
 				.map(result -> responseFactory.ok(result, request));
 	}
 
 	@Operation(summary = "상담 종료", description = "상담을 종료합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공"),
-			@ApiResponse(responseCode = "412", description = "이미 종료된 채팅방")
+			@ApiResponse(responseCode = "412", description = "이미 종료된 대화")
 	})
-	@PostMapping("/support/{roomId}/close")
+	@PostMapping("/support/{conversationId}/close")
 	public Mono<ResponseEntity<BaseResponse>> closeSupportChat(
-			@PathVariable String roomId,
+			@PathVariable String conversationId,
 			@RequestHeader("X-User-Id") Long userId,
 			ServerHttpRequest request
 	) {
-		log.debug("closeSupportChat: roomId={}, userId={}", roomId, userId);
+		log.debug("closeSupportChat: conversationId={}, userId={}", conversationId, userId);
 
-		return chatClient.closeSupport(roomId, userId)
+		return chatClient.closeSupport(conversationId, userId)
 				.map(result -> responseFactory.ok(result, request));
 	}
 }
