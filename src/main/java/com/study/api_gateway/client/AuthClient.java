@@ -102,7 +102,7 @@ public class AuthClient {
 				.buildAndExpand(userId)
 				.toUriString();
 		
-		return webClient.delete()
+		return webClient.post()
 				.uri(uriString)
 				.retrieve()
 				.bodyToMono(Boolean.class);
@@ -164,5 +164,16 @@ public class AuthClient {
 				.bodyValue(Map.of("userId", userId, "phoneNumber", phoneNumber))
 				.retrieve()
 				.bodyToMono(Boolean.class);
+	}
+	
+	public Mono<LoginResponse> socialLoginKakao(String accessToken) {
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/social/kakao")
+				.toUriString();
+		
+		return webClient.post()
+				.uri(uriString)
+				.bodyValue(Map.of("accessToken", accessToken))
+				.retrieve()
+				.bodyToMono(LoginResponse.class);
 	}
 }

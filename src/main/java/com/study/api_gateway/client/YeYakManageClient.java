@@ -41,14 +41,16 @@ public class YeYakManageClient {
 	/**
 	 * 예약 상세 조회
 	 * GET /api/v1/reservations/{id}
+	 *
+	 * @return 내부 응답 DTO (placeId, roomId만 포함) - API Gateway에서 enrichment 필요
 	 */
-	public Mono<ReservationDetailResponse> getReservationById(Long id) {
+	public Mono<InternalReservationDetailResponse> getReservationById(Long id) {
 		return webClient.get()
 				.uri(uriBuilder -> uriBuilder
 						.path(PREFIX + "/{id}")
 						.build(id))
 				.retrieve()
-				.bodyToMono(ReservationDetailResponse.class);
+				.bodyToMono(InternalReservationDetailResponse.class);
 	}
 	
 	/**

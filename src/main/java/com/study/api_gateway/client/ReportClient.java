@@ -5,6 +5,7 @@ import com.study.api_gateway.dto.support.report.ReportSortType;
 import com.study.api_gateway.dto.support.report.ReportStatus;
 import com.study.api_gateway.dto.support.report.SortDirection;
 import com.study.api_gateway.dto.support.report.request.ReportCreateRequest;
+import com.study.api_gateway.dto.support.report.request.ReportWithdrawRequest;
 import com.study.api_gateway.dto.support.report.response.ReportPageResponse;
 import com.study.api_gateway.dto.support.report.response.ReportResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +32,7 @@ public class ReportClient {
 	public Mono<ReportResponse> createReport(ReportCreateRequest request) {
 		String uriString = UriComponentsBuilder.fromPath(PREFIX)
 				.toUriString();
-		
+
 		return webClient.post()
 				.uri(uriString)
 				.bodyValue(request)
@@ -99,5 +100,21 @@ public class ReportClient {
 				.uri(uriString)
 				.retrieve()
 				.bodyToMono(ReportPageResponse.class);
+	}
+	
+	/**
+	 * 신고 철회
+	 * DELETE /api/v1/reports/{reportId}
+	 */
+	public Mono<ReportResponse> withdrawReport(String reportId, ReportWithdrawRequest request) {
+		String uriString = UriComponentsBuilder.fromPath(PREFIX + "/{reportId}")
+				.buildAndExpand(reportId)
+				.toUriString();
+		
+		return webClient.method(org.springframework.http.HttpMethod.DELETE)
+				.uri(uriString)
+				.bodyValue(request)
+				.retrieve()
+				.bodyToMono(ReportResponse.class);
 	}
 }

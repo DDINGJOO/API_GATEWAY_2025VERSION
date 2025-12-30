@@ -40,7 +40,7 @@ public class FeedController {
 	private final String categoryId = "ARTICLE";
 	
 	@Operation(summary = "피드 활동 총합 조회",
-			description = "특정 사용자의 카테고리별 활동 총합(article, comment, like)과 조회자와 대상의 동일 여부를 반환합니다.")
+			description = "특정 사용자의 카테고리별 활동 총합(article, comment, like)과 조회자와 대상의 동일 여부를 반환합니다. viewerId는 JWT 토큰에서 자동 추출됩니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
@@ -58,11 +58,15 @@ public class FeedController {
 			@RequestBody FeedTotalsRequest request,
 			ServerHttpRequest req) {
 		
+		// JWT 토큰에서 viewerId 추출 (로그인하지 않은 경우 null)
+		String viewerId = req.getHeaders().getFirst("X-User-Id");
+		request.setViewerId(viewerId);
+
 		// Validate required field
 		if (request.getTargetUserId() == null || request.getTargetUserId().isBlank()) {
 			return Mono.just(responseFactory.error("targetUserId is required", HttpStatus.BAD_REQUEST, req));
 		}
-		
+
 		// Set default categories if not provided
 		if (request.getCategories() == null || request.getCategories().isEmpty()) {
 			request.setCategories(List.of("article", "comment", "like"));
@@ -76,8 +80,44 @@ public class FeedController {
 				);
 	}
 	
+	@Operation(summary = "내 피드 활동 총합 조회",
+			description = "로그인한 사용자 본인의 카테고리별 활동 총합(article, comment, like)을 조회합니다. targetUserId와 viewerId 모두 JWT 토큰에서 자동 추출됩니다.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "MyFeedTotalsSuccess",
+									value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"totals\": {\n      \"article\": 12,\n      \"comment\": 34,\n      \"like\": 5\n    },\n    \"isOwner\": true\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/activities/feed/me/totals\"\n  }\n}"))),
+			@ApiResponse(responseCode = "401", description = "인증 필요",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class)))
+	})
+	@GetMapping("/me/totals")
+	public Mono<ResponseEntity<BaseResponse>> getMyFeedTotals(ServerHttpRequest req) {
+		
+		// JWT 토큰에서 userId 추출
+		String userId = req.getHeaders().getFirst("X-User-Id");
+		if (userId == null || userId.isBlank()) {
+			return Mono.just(responseFactory.error("인증이 필요합니다.", HttpStatus.UNAUTHORIZED, req));
+		}
+		
+		// 본인 피드 총합 조회 (targetUserId = viewerId = userId)
+		FeedTotalsRequest request = FeedTotalsRequest.builder()
+				.targetUserId(userId)
+				.viewerId(userId)
+				.categories(List.of("article", "comment", "like"))
+				.build();
+
+		return activityClient.getFeedTotals(request)
+				.map(response -> responseFactory.ok(response, req))
+				.onErrorResume(e ->
+						Mono.just(responseFactory.error("Failed to fetch feed totals: " + e.getMessage(),
+								HttpStatus.INTERNAL_SERVER_ERROR, req))
+				);
+	}
+	
 	@Operation(summary = "카테고리별 피드 조회",
-			description = "지정된 카테고리(article, comment, like)에 대해 articleId 목록을 페이징으로 조회합니다. like 카테고리는 본인만 조회 가능합니다.")
+			description = "지정된 카테고리(article, comment, like)에 대해 articleId 목록을 페이징으로 조회합니다. like 카테고리는 본인만 조회 가능합니다. viewerId는 JWT 토큰에서 자동 추출됩니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
 					content = @Content(mediaType = "application/json",
@@ -99,12 +139,14 @@ public class FeedController {
 	public Mono<ResponseEntity<BaseResponse>> getFeedByCategory(
 			@PathVariable String category,
 			@RequestParam String targetUserId,
-			@RequestParam(required = false) String viewerId,
 			@RequestParam(required = false) String cursor,
 			@RequestParam(required = false, defaultValue = "20") Integer size,
 			@RequestParam(required = false, defaultValue = "newest") String sort,
 			ServerHttpRequest req) {
 		
+		// JWT 토큰에서 viewerId 추출 (로그인하지 않은 경우 null)
+		String viewerId = req.getHeaders().getFirst("X-User-Id");
+
 		// Validate required parameter
 		if (targetUserId == null || targetUserId.isBlank()) {
 			return Mono.just(responseFactory.error("targetUserId is required", HttpStatus.BAD_REQUEST, req));
@@ -131,6 +173,46 @@ public class FeedController {
 		
 		// article, comment 카테고리는 공개 (검증 불필요)
 		return activityClient.getFeedByCategory(category, viewerId, targetUserId, cursor, size, sort)
+				.flatMap(feedResponse -> enrichFeedResponse(feedResponse))
+				.map(enrichedResponse -> responseFactory.ok(enrichedResponse, req))
+				.onErrorResume(e ->
+						Mono.just(responseFactory.error("Failed to fetch feed: " + e.getMessage(),
+								HttpStatus.INTERNAL_SERVER_ERROR, req))
+				);
+	}
+	
+	@Operation(summary = "내 피드 카테고리별 조회",
+			description = "로그인한 사용자 본인의 피드를 카테고리별로 조회합니다. targetUserId와 viewerId 모두 JWT 토큰에서 자동 추출됩니다.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class))),
+			@ApiResponse(responseCode = "401", description = "인증 필요",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class)))
+	})
+	@GetMapping("/me/{category}")
+	public Mono<ResponseEntity<BaseResponse>> getMyFeedByCategory(
+			@PathVariable String category,
+			@RequestParam(required = false) String cursor,
+			@RequestParam(required = false, defaultValue = "20") Integer size,
+			@RequestParam(required = false, defaultValue = "newest") String sort,
+			ServerHttpRequest req) {
+		
+		// JWT 토큰에서 userId 추출
+		String userId = req.getHeaders().getFirst("X-User-Id");
+		if (userId == null || userId.isBlank()) {
+			return Mono.just(responseFactory.error("인증이 필요합니다.", HttpStatus.UNAUTHORIZED, req));
+		}
+		
+		// Validate category
+		if (!List.of("article", "comment", "like").contains(category)) {
+			return Mono.just(responseFactory.error("Invalid category. Must be one of: article, comment, like",
+					HttpStatus.BAD_REQUEST, req));
+		}
+		
+		// 본인 피드 조회 (targetUserId = viewerId = userId)
+		return activityClient.getFeedByCategory(category, userId, userId, cursor, size, sort)
 				.flatMap(feedResponse -> enrichFeedResponse(feedResponse))
 				.map(enrichedResponse -> responseFactory.ok(enrichedResponse, req))
 				.onErrorResume(e ->

@@ -203,4 +203,20 @@ public class AuthController {
 		return authClient.hasPhoneNumber(userId)
 				.map(result -> responseFactory.ok(result, request));
 	}
+	
+	@Operation(summary = "카카오 소셜 로그인", description = "카카오 액세스 토큰으로 로그인합니다.")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "KakaoLoginSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"accessToken\": \"<JWT>\",\n    \"refreshToken\": \"<JWT_REFRESH>\",\n    \"deviceId\": \"device-123\"\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/auth/social/kakao\"\n  }\n}"))),
+			@ApiResponse(responseCode = "401", description = "인증 실패",
+					content = @Content(mediaType = "application/json",
+							examples = @ExampleObject(value = "{\n  \"isSuccess\": false,\n  \"code\": 401,\n  \"data\": \"카카오 인증에 실패했습니다\"\n}")))
+	})
+	@PostMapping("/social/kakao")
+	public Mono<ResponseEntity<BaseResponse>> socialLoginKakao(@RequestBody @Valid SocialLoginRequest req, ServerHttpRequest request) {
+		return authClient.socialLoginKakao(req.getAccessToken())
+				.map(loginResp -> responseFactory.ok(loginResp, request));
+	}
 }

@@ -1,7 +1,9 @@
 package com.study.api_gateway.service;
 
 import com.study.api_gateway.dto.place.response.PlaceInfoResponse;
+import com.study.api_gateway.dto.reservationManage.response.InternalReservationDetailResponse;
 import com.study.api_gateway.dto.reservationManage.response.InternalUserReservationsResponse;
+import com.study.api_gateway.dto.reservationManage.response.ReservationDetailResponse;
 import com.study.api_gateway.dto.reservationManage.response.UserReservationsResponse;
 import com.study.api_gateway.dto.room.response.RoomDetailResponse;
 import lombok.RequiredArgsConstructor;
@@ -163,6 +165,128 @@ public class ReservationEnrichmentService {
 				.totalPrice(item.getTotalPrice())
 				.reserverName(item.getReserverName())
 				.reserverPhone(item.getReserverPhone())
+				.build();
+	}
+	
+	/**
+	 * 예약 상세에 Place/Room 정보 주입
+	 *
+	 * @param internalResponse YeYakManage 서버 응답 (placeId, roomId만 포함)
+	 * @return Enriched 응답 (placeInfo, roomInfo 포함)
+	 */
+	public Mono<ReservationDetailResponse> enrichReservationDetail(InternalReservationDetailResponse internalResponse) {
+		if (internalResponse == null) {
+			return Mono.empty();
+		}
+		
+		Long placeId = internalResponse.getPlaceId();
+		Long roomId = internalResponse.getRoomId();
+		
+		log.info("Enriching reservation detail: reservationId={}, placeId={}, roomId={}",
+				internalResponse.getReservationId(), placeId, roomId);
+		
+		// Place/Room 정보 병렬 조회 (캐시 활용)
+		Mono<PlaceInfoResponse> placeMono = placeId != null
+				? placeCacheService.getPlacesByBatchWithCache(List.of(placeId))
+				.map(response -> response.getResults() != null && !response.getResults().isEmpty()
+						? response.getResults().get(0)
+						: null)
+				: Mono.just((PlaceInfoResponse) null);
+		
+		Mono<RoomDetailResponse> roomMono = roomId != null
+				? roomCacheService.getRoomsByBatchWithCache(List.of(roomId))
+				.map(map -> map.get(roomId))
+				: Mono.just((RoomDetailResponse) null);
+		
+		return Mono.zip(placeMono, roomMono)
+				.map(tuple -> {
+					PlaceInfoResponse place = tuple.getT1();
+					RoomDetailResponse room = tuple.getT2();
+					
+					return buildDetailResponse(internalResponse, place, room);
+				})
+				.defaultIfEmpty(buildDetailResponse(internalResponse, null, null));
+	}
+	
+	/**
+	 * 상세 응답 빌드
+	 */
+	private ReservationDetailResponse buildDetailResponse(
+			InternalReservationDetailResponse internal,
+			PlaceInfoResponse place,
+			RoomDetailResponse room
+	) {
+		// Place 정보 매핑
+		ReservationDetailResponse.PlaceInfo placeInfo = null;
+		if (internal.getPlaceId() != null) {
+			ReservationDetailResponse.PlaceInfo.PlaceInfoBuilder builder = ReservationDetailResponse.PlaceInfo.builder()
+					.placeId(internal.getPlaceId());
+			
+			if (place != null) {
+				builder.placeName(place.getPlaceName());
+				if (place.getLocation() != null) {
+					if (place.getLocation().getAddress() != null) {
+						builder.fullAddress(place.getLocation().getAddress().getFullAddress());
+					}
+					builder.latitude(place.getLocation().getLatitude());
+					builder.longitude(place.getLocation().getLongitude());
+				}
+			}
+			placeInfo = builder.build();
+		}
+		
+		// Room 정보 매핑
+		ReservationDetailResponse.RoomInfo roomInfo = null;
+		if (internal.getRoomId() != null) {
+			ReservationDetailResponse.RoomInfo.RoomInfoBuilder builder = ReservationDetailResponse.RoomInfo.builder()
+					.roomId(internal.getRoomId());
+			
+			if (room != null) {
+				builder.roomName(room.getRoomName())
+						.imageUrls(room.getImageUrls())
+						.timeSlot(room.getTimeSlot() != null ? room.getTimeSlot().name() : null);
+			} else {
+				builder.imageUrls(List.of());
+			}
+			roomInfo = builder.build();
+		}
+		
+		// selectedProducts 변환
+		List<ReservationDetailResponse.SelectedProduct> selectedProducts = null;
+		if (internal.getSelectedProducts() != null) {
+			selectedProducts = internal.getSelectedProducts().stream()
+					.map(p -> ReservationDetailResponse.SelectedProduct.builder()
+							.productId(p.getProductId())
+							.productName(p.getProductName())
+							.quantity(p.getQuantity())
+							.unitPrice(p.getUnitPrice())
+							.subtotal(p.getSubtotal())
+							.build())
+					.collect(Collectors.toList());
+		}
+		
+		return ReservationDetailResponse.builder()
+				.reservationId(internal.getReservationId())
+				.userId(internal.getUserId())
+				.placeInfo(placeInfo)
+				.roomInfo(roomInfo)
+				.status(internal.getStatus())
+				.reservationDate(internal.getReservationDate())
+				.startTimes(internal.getStartTimes())
+				.totalPrice(internal.getTotalPrice())
+				.reservationTimePrice(internal.getReservationTimePrice())
+				.isBlackUser(internal.getIsBlackUser())
+				.reserverName(internal.getReserverName())
+				.reserverPhone(internal.getReserverPhone())
+				.selectedProducts(selectedProducts)
+				.additionalInfo(internal.getAdditionalInfo())
+				.approvedAt(internal.getApprovedAt())
+				.approvedBy(internal.getApprovedBy())
+				.rejectedAt(internal.getRejectedAt())
+				.rejectedReason(internal.getRejectedReason())
+				.rejectedBy(internal.getRejectedBy())
+				.createdAt(internal.getCreatedAt())
+				.updatedAt(internal.getUpdatedAt())
 				.build();
 	}
 }

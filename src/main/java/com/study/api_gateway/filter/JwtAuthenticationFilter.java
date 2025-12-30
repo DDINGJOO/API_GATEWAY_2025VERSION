@@ -62,33 +62,30 @@ public class JwtAuthenticationFilter implements WebFilter {
 		ServerHttpRequest request = exchange.getRequest();
 		String path = request.getPath().value();
 		String method = request.getMethod().name();
-		
-		// Public 경로는 인증 스킵
-		if (isPublicPath(path)) {
-			log.debug("Public path accessed: {}", path);
-			return chain.filter(exchange);
-		}
-		
+
 		// OPTIONS 요청(CORS preflight)은 인증 없이 허용
 		if ("OPTIONS".equals(method)) {
 			log.debug("CORS preflight request: {} {}", method, path);
 			return chain.filter(exchange);
 		}
 		
-		// GET 요청 중 Public Read Path만 인증 없이 허용 (단, /me 경로는 제외)
-		if ("GET".equals(method) && isPublicReadPath(path)) {
-			log.debug("Public GET request: {} {}", method, path);
-			return chain.filter(exchange);
-		}
-		
+		// Public 경로 여부 확인
+		boolean isPublic = isPublicPath(path) || ("GET".equals(method) && isPublicReadPath(path));
+
 		// Authorization 헤더에서 토큰 추출
 		String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 		
+		// 토큰이 없는 경우
 		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+			if (isPublic) {
+				log.debug("Public path accessed without token: {}", path);
+				return chain.filter(exchange);
+			}
 			log.warn("Missing or invalid Authorization header for path: {}", path);
 			return handleUnauthorized(exchange, "Missing or invalid Authorization header");
 		}
 		
+		// 토큰이 있으면 무조건 검증 (Public 경로여도)
 		String token = authHeader.substring(7); // "Bearer " 제거
 		
 		// 토큰 검증 (상세한 에러 타입 확인)
@@ -111,7 +108,6 @@ public class JwtAuthenticationFilter implements WebFilter {
 		
 		log.debug("Authenticated request - UserId: {}, Role: {}, DeviceId: {}, Path: {}",
 				userId, role, deviceId, path);
-		
 		
 		// 요청 헤더에 사용자 정보 추가 (다운스트림 서비스에서 사용할 수 있도록)
 		ServerHttpRequest mutatedRequest = request.mutate()

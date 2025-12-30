@@ -162,8 +162,9 @@ public class ReservationManageController {
 			ServerHttpRequest req
 	) {
 		log.info("예약 상세 조회: reservationId={}", id);
-		
+
 		return yeYakManageClient.getReservationById(id)
+				.flatMap(reservationEnrichmentService::enrichReservationDetail)
 				.map(response -> responseFactory.ok(response, req));
 	}
 	

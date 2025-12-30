@@ -57,11 +57,8 @@ public class InquiryController {
 		return inquiryClient.getInquiry(inquiryId)
 				.flatMap(result -> {
 					// 문의 조회 후 작성자 확인 (개인정보 보호)
-					String inquiryWriterId = null;
-					if (result instanceof java.util.Map) {
-						inquiryWriterId = (String) ((java.util.Map<?, ?>) result).get("writerId");
-					}
-					
+					String inquiryWriterId = result.getWriterId();
+
 					if (inquiryWriterId == null) {
 						return Mono.error(new org.springframework.web.server.ResponseStatusException(
 								HttpStatus.INTERNAL_SERVER_ERROR, "문의 작성자 정보를 찾을 수 없습니다"));
