@@ -61,4 +61,6 @@ service:
     url: ${COUPON_URL}
     port: ${COUPON_PORT}
 
-
+  chat:
+    url: ${CHAT_URL}
+    port: ${CHAT_PORT}
