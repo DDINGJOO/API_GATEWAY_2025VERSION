@@ -79,6 +79,11 @@ public class WebClientConfig {
 	private String CouponDns;
 	@Value("${service.coupon.port}")
 	private String CouponPort;
+
+	@Value("${service.chat.url}")
+	private String ChatDns;
+	@Value("${service.chat.port}")
+	private String ChatPort;
 	
 	private String normalizeHost(String raw) {
 		if (raw == null) return "";
@@ -227,10 +232,20 @@ public class WebClientConfig {
 	public WebClient couponWebClient(WebClient.Builder builder) {
 		String host = normalizeHost(CouponDns);
 		String url = "http://%s:%s".formatted(host, CouponPort);
-		
+
 		return builder
 				.baseUrl(url)
 				.build();
 	}
-	
+
+	@Bean
+	public WebClient chatWebClient(WebClient.Builder builder) {
+		String host = normalizeHost(ChatDns);
+		String url = "http://%s:%s".formatted(host, ChatPort);
+
+		return builder
+				.baseUrl(url)
+				.build();
+	}
+
 }
