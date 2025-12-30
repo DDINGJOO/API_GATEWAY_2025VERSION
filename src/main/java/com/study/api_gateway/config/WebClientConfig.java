@@ -84,6 +84,11 @@ public class WebClientConfig {
 	private String ChatDns;
 	@Value("${service.chat.port}")
 	private String ChatPort;
+
+	@Value("${service.notification.url}")
+	private String NotificationDns;
+	@Value("${service.notification.port}")
+	private String NotificationPort;
 	
 	private String normalizeHost(String raw) {
 		if (raw == null) return "";
@@ -242,6 +247,16 @@ public class WebClientConfig {
 	public WebClient chatWebClient(WebClient.Builder builder) {
 		String host = normalizeHost(ChatDns);
 		String url = "http://%s:%s".formatted(host, ChatPort);
+
+		return builder
+				.baseUrl(url)
+				.build();
+	}
+
+	@Bean
+	public WebClient notificationWebClient(WebClient.Builder builder) {
+		String host = normalizeHost(NotificationDns);
+		String url = "http://%s:%s".formatted(host, NotificationPort);
 
 		return builder
 				.baseUrl(url)
