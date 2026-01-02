@@ -169,11 +169,23 @@ public class AuthClient {
 	public Mono<LoginResponse> socialLoginKakao(String accessToken) {
 		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/social/kakao")
 				.toUriString();
-		
+
 		return webClient.post()
 				.uri(uriString)
 				.bodyValue(Map.of("accessToken", accessToken))
 				.retrieve()
 				.bodyToMono(LoginResponse.class);
+	}
+	
+	public Mono<Boolean> updateConsents(String userId, List<ConsentRequest> consentRequests) {
+		String uriString = UriComponentsBuilder.fromPath("/api/v1/auth/consent/{userId}")
+				.buildAndExpand(userId)
+				.toUriString();
+		
+		return webClient.patch()
+				.uri(uriString)
+				.bodyValue(consentRequests)
+				.retrieve()
+				.bodyToMono(Boolean.class);
 	}
 }

@@ -19,6 +19,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/bff/v1/auth")
 @RequiredArgsConstructor
@@ -218,5 +220,43 @@ public class AuthController {
 	public Mono<ResponseEntity<BaseResponse>> socialLoginKakao(@RequestBody @Valid SocialLoginRequest req, ServerHttpRequest request) {
 		return authClient.socialLoginKakao(req.getAccessToken())
 				.map(loginResp -> responseFactory.ok(loginResp, request));
+	}
+	
+	@Operation(summary = "약관 목록 조회", description = "시스템에서 사용 가능한 약관 목록을 조회합니다.")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "ConsentsListSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": {\n    \"TERMS_OF_SERVICE_v1.0\": {\n      \"id\": \"TERMS_OF_SERVICE_v1.0\",\n      \"consentName\": \"TERMS_OF_SERVICE\",\n      \"version\": \"v1.0\",\n      \"consentUrl\": \"https://example.com/terms\",\n      \"required\": true\n    }\n  },\n  \"request\": {\n    \"path\": \"/bff/v1/auth/consents\"\n  }\n}")))
+	})
+	@GetMapping("/consents")
+	public Mono<ResponseEntity<BaseResponse>> getConsents(@RequestParam Boolean all, ServerHttpRequest request) {
+		return authClient.fetchAllConsents(all)
+				.map(result -> responseFactory.ok(result, request));
+	}
+	
+	@Operation(summary = "약관 동의 정보 변경", description = "사용자의 선택 약관 동의/철회를 처리합니다.")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "성공",
+					content = @Content(mediaType = "application/json",
+							schema = @Schema(implementation = BaseResponse.class),
+							examples = @ExampleObject(name = "ConsentUpdateSuccess", value = "{\n  \"isSuccess\": true,\n  \"code\": 200,\n  \"data\": true,\n  \"request\": {\n    \"path\": \"/bff/v1/auth/consent\"\n  }\n}"))),
+			@ApiResponse(responseCode = "400", description = "잘못된 요청",
+					content = @Content(mediaType = "application/json",
+							examples = @ExampleObject(value = "{\n  \"isSuccess\": false,\n  \"code\": 400,\n  \"data\": \"REQUIRED_CONSENT_CANNOT_BE_REVOKED\"\n}"))),
+			@ApiResponse(responseCode = "401", description = "인증 실패",
+					content = @Content(mediaType = "application/json",
+							examples = @ExampleObject(value = "{\n  \"isSuccess\": false,\n  \"code\": 401,\n  \"data\": \"사용자 인증 정보를 찾을 수 없습니다\"\n}")))
+	})
+	@PatchMapping("/consent")
+	public Mono<ResponseEntity<BaseResponse>> updateConsent(
+			@RequestBody @Valid List<ConsentRequest> consentRequests,
+			ServerHttpRequest request) {
+		String userId = request.getHeaders().getFirst("X-User-Id");
+		if (userId == null || userId.isEmpty()) {
+			return Mono.just(responseFactory.error("사용자 인증 정보를 찾을 수 없습니다", HttpStatus.UNAUTHORIZED, request));
+		}
+		return authClient.updateConsents(userId, consentRequests)
+				.map(result -> responseFactory.ok(result, request));
 	}
 }

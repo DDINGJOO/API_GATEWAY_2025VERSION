@@ -110,7 +110,13 @@ public class JwtAuthenticationFilter implements WebFilter {
 				userId, role, deviceId, path);
 		
 		// 요청 헤더에 사용자 정보 추가 (다운스트림 서비스에서 사용할 수 있도록)
+		// 기존 헤더를 제거하고 토큰에서 파싱한 값으로 설정 (보안상 클라이언트가 직접 보낸 값을 무시)
 		ServerHttpRequest mutatedRequest = request.mutate()
+				.headers(headers -> {
+					headers.remove("X-User-Id");
+					headers.remove("X-User-Role");
+					headers.remove("X-Device-Id");
+				})
 				.header("X-User-Id", userId)
 				.header("X-User-Role", role)
 				.header("X-Device-Id", deviceId)

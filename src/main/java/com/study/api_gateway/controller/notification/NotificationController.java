@@ -7,6 +7,7 @@ import com.study.api_gateway.dto.notification.request.RegisterDeviceTokenRequest
 import com.study.api_gateway.dto.notification.request.UpdateNightAdConsentRequest;
 import com.study.api_gateway.util.ResponseFactory;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,7 +37,7 @@ public class NotificationController {
 	})
 	@PostMapping("/devices/token")
 	public Mono<ResponseEntity<BaseResponse>> registerDeviceToken(
-			@RequestHeader("X-User-Id") Long userId,
+			@Parameter(hidden = true) @RequestHeader("X-User-Id") Long userId,
 			@RequestBody RegisterDeviceTokenRequest request,
 			ServerHttpRequest serverRequest
 	) {
@@ -54,7 +55,7 @@ public class NotificationController {
 	})
 	@DeleteMapping("/devices/token")
 	public Mono<ResponseEntity<BaseResponse>> deleteDeviceToken(
-			@RequestHeader("X-User-Id") Long userId,
+			@Parameter(hidden = true) @RequestHeader("X-User-Id") Long userId,
 			@RequestBody DeleteDeviceTokenRequest request,
 			ServerHttpRequest serverRequest
 	) {
@@ -74,7 +75,7 @@ public class NotificationController {
 	})
 	@GetMapping("/consents")
 	public Mono<ResponseEntity<BaseResponse>> getUserConsent(
-			@RequestHeader("X-User-Id") Long userId,
+			@Parameter(hidden = true) @RequestHeader("X-User-Id") Long userId,
 			ServerHttpRequest serverRequest
 	) {
 		log.debug("getUserConsent: userId={}", userId);
@@ -89,7 +90,7 @@ public class NotificationController {
 	})
 	@PutMapping("/consents/night-ad")
 	public Mono<ResponseEntity<BaseResponse>> updateNightAdConsent(
-			@RequestHeader("X-User-Id") Long userId,
+			@Parameter(hidden = true) @RequestHeader("X-User-Id") Long userId,
 			@RequestBody UpdateNightAdConsentRequest request,
 			ServerHttpRequest serverRequest
 	) {

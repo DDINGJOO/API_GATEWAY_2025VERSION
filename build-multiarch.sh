@@ -80,7 +80,6 @@ if [ "$VERSION" != "latest" ]; then
 else
     echo -e "${GREEN}[5/5] 완료 (latest 태그 스킵)${NC}"
 fi
-
 echo ""
 echo -e "${GREEN}=== 빌드 완료 ===${NC}"
 echo -e "이미지: ${YELLOW}${IMAGE_NAME}:${VERSION}${NC}"
