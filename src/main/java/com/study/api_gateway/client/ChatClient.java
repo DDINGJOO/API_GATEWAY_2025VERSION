@@ -1,9 +1,6 @@
 package com.study.api_gateway.client;
 
-import com.study.api_gateway.dto.chat.request.PlaceInquiryRequest;
-import com.study.api_gateway.dto.chat.request.ReadMessageRequest;
-import com.study.api_gateway.dto.chat.request.SendMessageRequest;
-import com.study.api_gateway.dto.chat.request.SupportRequest;
+import com.study.api_gateway.dto.chat.request.*;
 import com.study.api_gateway.dto.chat.response.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,13 +29,19 @@ public class ChatClient {
 
 	/**
 	 * 채팅방 목록 조회
-	 * GET /api/v1/rooms
+	 * GET /api/v1/rooms?type={type}
+	 * @param type 채팅방 타입 필터 (DM, GROUP, PLACE_INQUIRY, SUPPORT) - optional
 	 */
-	public Mono<Map<String, Object>> getChatRooms(Long userId) {
-		String uriString = UriComponentsBuilder.fromPath(ROOMS_PREFIX)
-				.toUriString();
-
-		log.debug("getChatRooms: userId={}, uri={}", userId, uriString);
+	public Mono<Map<String, Object>> getChatRooms(Long userId, String type) {
+		UriComponentsBuilder builder = UriComponentsBuilder.fromPath(ROOMS_PREFIX);
+		
+		if (type != null && !type.isBlank()) {
+			builder.queryParam("type", type);
+		}
+		
+		String uriString = builder.toUriString();
+		
+		log.debug("getChatRooms: userId={}, type={}, uri={}", userId, type, uriString);
 
 		return webClient.get()
 				.uri(uriString)
@@ -63,6 +66,26 @@ public class ChatClient {
 				.header(X_USER_ID, String.valueOf(userId))
 				.retrieve()
 				.bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
+	}
+	
+	/**
+	 * 1:1 DM 채팅방 생성
+	 * POST /api/v1/rooms/dm
+	 */
+	public Mono<CreateDmRoomResponse> createDmRoom(Long userId, CreateDmRoomRequest request) {
+		String uriString = UriComponentsBuilder.fromPath(ROOMS_PREFIX + "/dm")
+				.toUriString();
+		
+		log.debug("createDmRoom: userId={}, recipientId={}", userId, request.getRecipientId());
+		
+		return webClient.post()
+				.uri(uriString)
+				.header(X_USER_ID, String.valueOf(userId))
+				.bodyValue(request)
+				.retrieve()
+				.bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+				})
+				.map(this::extractCreateDmRoomResponse);
 	}
 
 	// ==================== 메시지 API ====================
@@ -284,6 +307,31 @@ public class ChatClient {
 	}
 
 	// ==================== Response 변환 헬퍼 ====================
+	
+	@SuppressWarnings("unchecked")
+	private CreateDmRoomResponse extractCreateDmRoomResponse(Map<String, Object> response) {
+		Map<String, Object> data = (Map<String, Object>) response.get("data");
+		if (data == null) {
+			data = response;
+		}
+		
+		java.util.List<Long> participantIds = null;
+		Object participantIdsObj = data.get("participantIds");
+		if (participantIdsObj instanceof java.util.List) {
+			participantIds = ((java.util.List<?>) participantIdsObj).stream()
+					.map(this::toLong)
+					.filter(java.util.Objects::nonNull)
+					.toList();
+		}
+		
+		return CreateDmRoomResponse.builder()
+				.roomId((String) data.get("roomId"))
+				.type(parseRoomType(data.get("type")))
+				.participantIds(participantIds)
+				.createdAt(parseDateTime(data.get("createdAt")))
+				.isNewRoom((Boolean) data.get("isNewRoom"))
+				.build();
+	}
 
 	@SuppressWarnings("unchecked")
 	private SendMessageResponse extractSendMessageResponse(Map<String, Object> response) {

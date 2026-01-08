@@ -46,12 +46,13 @@ public class PlaceClient {
 			String sortBy,
 			String sortDirection,
 			String cursor,
-			Integer size
+			Integer size,
+			String registrationStatus
 	) {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path(PREFIX + "/search");
-					
+
 					if (keyword != null) uriBuilder.queryParam("keyword", keyword);
 					if (placeName != null) uriBuilder.queryParam("placeName", placeName);
 					if (category != null) uriBuilder.queryParam("category", category);
@@ -70,7 +71,8 @@ public class PlaceClient {
 					if (sortDirection != null) uriBuilder.queryParam("sortDirection", sortDirection);
 					if (cursor != null) uriBuilder.queryParam("cursor", cursor);
 					if (size != null) uriBuilder.queryParam("size", size);
-					
+					if (registrationStatus != null) uriBuilder.queryParam("registrationStatus", registrationStatus);
+
 					return uriBuilder.build();
 				})
 				.retrieve()
@@ -86,18 +88,20 @@ public class PlaceClient {
 			String city,
 			String district,
 			String cursor,
-			Integer size
+			Integer size,
+			String registrationStatus
 	) {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path(PREFIX + "/search/region");
-					
+
 					uriBuilder.queryParam("province", province);
 					if (city != null) uriBuilder.queryParam("city", city);
 					if (district != null) uriBuilder.queryParam("district", district);
 					if (cursor != null) uriBuilder.queryParam("cursor", cursor);
 					if (size != null) uriBuilder.queryParam("size", size);
-					
+					if (registrationStatus != null) uriBuilder.queryParam("registrationStatus", registrationStatus);
+
 					return uriBuilder.build();
 				})
 				.retrieve()
@@ -108,13 +112,14 @@ public class PlaceClient {
 	 * 인기 장소 조회 API
 	 * GET /api/v1/places/search/popular
 	 */
-	public Mono<PlaceSearchResponse> getPopularPlaces(Integer size) {
+	public Mono<PlaceSearchResponse> getPopularPlaces(Integer size, String registrationStatus) {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path(PREFIX + "/search/popular");
-					
+
 					if (size != null) uriBuilder.queryParam("size", size);
-					
+					if (registrationStatus != null) uriBuilder.queryParam("registrationStatus", registrationStatus);
+
 					return uriBuilder.build();
 				})
 				.retrieve()
@@ -125,13 +130,14 @@ public class PlaceClient {
 	 * 최신 장소 조회 API
 	 * GET /api/v1/places/search/recent
 	 */
-	public Mono<PlaceSearchResponse> getRecentPlaces(Integer size) {
+	public Mono<PlaceSearchResponse> getRecentPlaces(Integer size, String registrationStatus) {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path(PREFIX + "/search/recent");
 					
 					if (size != null) uriBuilder.queryParam("size", size);
-					
+					if (registrationStatus != null) uriBuilder.queryParam("registrationStatus", registrationStatus);
+
 					return uriBuilder.build();
 				})
 				.retrieve()

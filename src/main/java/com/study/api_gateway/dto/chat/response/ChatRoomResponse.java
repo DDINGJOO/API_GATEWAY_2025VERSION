@@ -20,8 +20,23 @@ public class ChatRoomResponse {
 	private String roomId;
 	private ChatRoomType type;
 	private String name;
+	private String profileImage;
 	private List<ParticipantInfo> participants;
 	private String lastMessage;
 	private LocalDateTime lastMessageAt;
 	private Long unreadCount;
+	private ContextInfo context;
+	
+	/**
+	 * 채팅방 컨텍스트 정보 (PLACE_INQUIRY 타입일 때 사용)
+	 */
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	@Builder
+	public static class ContextInfo {
+		private String contextType;
+		private Long contextId;
+		private String contextName;
+	}
 }

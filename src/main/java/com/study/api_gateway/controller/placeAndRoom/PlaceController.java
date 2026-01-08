@@ -105,16 +105,18 @@ public class PlaceController {
 			@RequestParam(required = false) String sortDirection,
 			@Parameter(description = "페이징 커서") @RequestParam(required = false) String cursor,
 			@Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") Integer size,
+			@Parameter(description = "등록 상태 필터 (REGISTERED: 등록 업체만, UNREGISTERED: 미등록 업체만, null: 전체)")
+			@RequestParam(required = false) String registrationStatus,
 			ServerHttpRequest req
 	) {
-		log.info("장소 검색: keyword={}, location=({}, {}), radius={}",
-				keyword, latitude, longitude, radius);
-		
+		log.info("장소 검색: keyword={}, location=({}, {}), radius={}, registrationStatus={}",
+				keyword, latitude, longitude, radius, registrationStatus);
+
 		return placeClient.search(
 				keyword, placeName, category, placeType, keywordIds,
 				parkingAvailable, latitude, longitude, radius,
 				province, city, district, sortBy, sortDirection,
-				cursor, size
+				cursor, size, registrationStatus
 		).map(response -> responseFactory.ok(response, req));
 	}
 	
@@ -139,15 +141,17 @@ public class PlaceController {
 			@Parameter(description = "주차 가능 여부") @RequestParam(required = false) Boolean parkingAvailable,
 			@Parameter(description = "페이징 커서") @RequestParam(required = false) String cursor,
 			@Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") Integer size,
+			@Parameter(description = "등록 상태 필터 (REGISTERED: 등록 업체만, UNREGISTERED: 미등록 업체만, null: 전체)")
+			@RequestParam(required = false) String registrationStatus,
 			ServerHttpRequest req
 	) {
-		log.info("주변 장소 조회: ({}, {}) 반경 {}m", latitude, longitude, radius);
-		
+		log.info("주변 장소 조회: ({}, {}) 반경 {}m, registrationStatus={}", latitude, longitude, radius, registrationStatus);
+
 		return placeClient.search(
 				keyword, null, null, null, keywordIds,
 				parkingAvailable, latitude, longitude, radius,
 				null, null, null, "DISTANCE", "ASC",
-				cursor, size
+				cursor, size, registrationStatus
 		).map(response -> responseFactory.ok(response, req));
 	}
 	
@@ -169,11 +173,13 @@ public class PlaceController {
 			@Parameter(description = "동/읍/면") @RequestParam(required = false) String district,
 			@Parameter(description = "페이징 커서") @RequestParam(required = false) String cursor,
 			@Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") Integer size,
+			@Parameter(description = "등록 상태 필터 (REGISTERED: 등록 업체만, UNREGISTERED: 미등록 업체만, null: 전체)")
+			@RequestParam(required = false) String registrationStatus,
 			ServerHttpRequest req
 	) {
-		log.info("지역별 장소 조회: {}/{}/{}", province, city, district);
+		log.info("지역별 장소 조회: {}/{}/{}, registrationStatus={}", province, city, district, registrationStatus);
 		
-		return placeClient.searchByRegion(province, city, district, cursor, size)
+		return placeClient.searchByRegion(province, city, district, cursor, size, registrationStatus)
 				.map(response -> responseFactory.ok(response, req));
 	}
 	
@@ -191,11 +197,13 @@ public class PlaceController {
 	})
 	public Mono<ResponseEntity<BaseResponse>> getPopularPlaces(
 			@Parameter(description = "조회 개수") @RequestParam(defaultValue = "10") Integer size,
+			@Parameter(description = "등록 상태 필터 (REGISTERED: 등록 업체만, UNREGISTERED: 미등록 업체만, null: 전체)")
+			@RequestParam(required = false) String registrationStatus,
 			ServerHttpRequest req
 	) {
-		log.info("인기 장소 조회: {} 건", size);
+		log.info("인기 장소 조회: {} 건, registrationStatus={}", size, registrationStatus);
 		
-		return placeClient.getPopularPlaces(size)
+		return placeClient.getPopularPlaces(size, registrationStatus)
 				.map(response -> responseFactory.ok(response, req));
 	}
 	
@@ -213,11 +221,13 @@ public class PlaceController {
 	})
 	public Mono<ResponseEntity<BaseResponse>> getRecentPlaces(
 			@Parameter(description = "조회 개수") @RequestParam(defaultValue = "10") Integer size,
+			@Parameter(description = "등록 상태 필터 (REGISTERED: 등록 업체만, UNREGISTERED: 미등록 업체만, null: 전체)")
+			@RequestParam(required = false) String registrationStatus,
 			ServerHttpRequest req
 	) {
-		log.info("최신 장소 조회: {} 건", size);
+		log.info("최신 장소 조회: {} 건, registrationStatus={}", size, registrationStatus);
 		
-		return placeClient.getRecentPlaces(size)
+		return placeClient.getRecentPlaces(size, registrationStatus)
 				.map(response -> responseFactory.ok(response, req));
 	}
 }

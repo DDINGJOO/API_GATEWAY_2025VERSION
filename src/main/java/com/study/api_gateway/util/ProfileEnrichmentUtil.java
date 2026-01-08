@@ -127,7 +127,7 @@ public class ProfileEnrichmentUtil {
 	 */
 	public Mono<List<EnrichedArticleResponse>> enrichArticleList(List<ArticleSimpleResponse> articles) {
 		if (articles == null || articles.isEmpty()) {
-			return Mono.just(articles == null ? List.of() : List.of());
+			return Mono.just(List.of());
 		}
 		
 		// Extract all unique writerIds
@@ -221,7 +221,7 @@ public class ProfileEnrichmentUtil {
 	 * @param userIds 조회 대상 사용자 ID 집합
 	 * @return userId -> BatchUserSummaryResponse 맵을 포함하는 Mono
 	 */
-	private Mono<Map<String, BatchUserSummaryResponse>> loadProfiles(Set<String> userIds) {
+	public Mono<Map<String, BatchUserSummaryResponse>> loadProfiles(Set<String> userIds) {
 		if (userIds == null || userIds.isEmpty()) {
 			log.debug("[ProfileEnrichmentUtil] No userIds to load");
 			return Mono.just(Map.of());

@@ -1,11 +1,10 @@
 package com.study.api_gateway.service;
 
 import com.study.api_gateway.client.ChatClient;
-import com.study.api_gateway.client.ProfileClient;
 import com.study.api_gateway.dto.chat.enums.ChatRoomType;
 import com.study.api_gateway.dto.chat.response.*;
 import com.study.api_gateway.dto.profile.response.BatchUserSummaryResponse;
-import com.study.api_gateway.util.cache.ProfileCache;
+import com.study.api_gateway.util.ProfileEnrichmentUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,7 +12,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -28,25 +26,76 @@ import java.util.stream.Collectors;
 public class ChatEnrichmentService {
 
 	private final ChatClient chatClient;
-	private final ProfileClient profileClient;
-	private final ProfileCache profileCache;
+	private final ProfileEnrichmentUtil profileEnrichmentUtil;
 
 	private static final String DEFAULT_NICKNAME = "알 수 없음";
 	private static final String DEFAULT_PROFILE_IMAGE = null;
-	private static final int BATCH_SIZE = 200;
+	
+	// ==================== DM 채팅방 생성 ====================
+	
+	/**
+	 * DM 채팅방 생성 및 상대방 닉네임으로 roomName 설정
+	 * - 요청한 사용자에게는 상대방의 닉네임이 채팅방 이름으로 보임
+	 */
+	public Mono<CreateDmRoomResponse> createDmRoomWithNickname(Long userId, com.study.api_gateway.dto.chat.request.CreateDmRoomRequest request) {
+		return chatClient.createDmRoom(userId, request)
+				.flatMap(response -> enrichDmRoomResponse(response, userId));
+	}
+	
+	/**
+	 * DM 응답에 상대방 닉네임 설정
+	 */
+	private Mono<CreateDmRoomResponse> enrichDmRoomResponse(CreateDmRoomResponse response, Long requestUserId) {
+		if (response == null || response.getParticipantIds() == null || response.getParticipantIds().isEmpty()) {
+			return Mono.just(response);
+		}
+		
+		// 상대방 ID 찾기 (요청한 사용자를 제외한 참여자)
+		Long recipientId = response.getParticipantIds().stream()
+				.filter(id -> !id.equals(requestUserId))
+				.findFirst()
+				.orElse(null);
+		
+		if (recipientId == null) {
+			return Mono.just(response);
+		}
+		
+		// 상대방 프로필 조회
+		Set<Long> userIds = Set.of(recipientId);
+		return loadProfiles(userIds)
+				.map(profileMap -> {
+					BatchUserSummaryResponse profile = profileMap.get(recipientId);
+					String name = (profile != null && profile.getNickname() != null)
+							? profile.getNickname()
+							: DEFAULT_NICKNAME;
+					String profileImage = (profile != null) ? profile.getProfileImageUrl() : DEFAULT_PROFILE_IMAGE;
+					
+					return CreateDmRoomResponse.builder()
+							.roomId(response.getRoomId())
+							.type(response.getType())
+							.name(name)
+							.profileImage(profileImage)
+							.participantIds(response.getParticipantIds())
+							.createdAt(response.getCreatedAt())
+							.isNewRoom(response.getIsNewRoom())
+							.build();
+				});
+	}
 
 	// ==================== 채팅방 목록 ====================
 
 	/**
 	 * 채팅방 목록 조회 및 프로필 병합
+	 * - DM 타입인 경우 상대방의 닉네임을 채팅방 이름으로 설정
+	 * @param type 채팅방 타입 필터 (DM, GROUP, PLACE_INQUIRY, SUPPORT) - optional
 	 */
-	public Mono<ChatRoomListResponse> getChatRoomsWithProfiles(Long userId) {
-		return chatClient.getChatRooms(userId)
-				.flatMap(this::enrichChatRooms);
+	public Mono<ChatRoomListResponse> getChatRoomsWithProfiles(Long userId, String type) {
+		return chatClient.getChatRooms(userId, type)
+				.flatMap(response -> enrichChatRooms(response, userId));
 	}
 
 	@SuppressWarnings("unchecked")
-	private Mono<ChatRoomListResponse> enrichChatRooms(Map<String, Object> response) {
+	private Mono<ChatRoomListResponse> enrichChatRooms(Map<String, Object> response, Long requestUserId) {
 		Map<String, Object> data = extractData(response);
 		List<Map<String, Object>> chatRooms = (List<Map<String, Object>>) data.get("chatRooms");
 
@@ -66,7 +115,7 @@ public class ChatEnrichmentService {
 		return loadProfiles(allParticipantIds)
 				.map(profileMap -> {
 					List<ChatRoomResponse> enrichedRooms = chatRooms.stream()
-							.map(room -> buildChatRoomResponse(room, profileMap))
+							.map(room -> buildChatRoomResponse(room, profileMap, requestUserId))
 							.collect(Collectors.toList());
 
 					return ChatRoomListResponse.builder()
@@ -76,22 +125,57 @@ public class ChatEnrichmentService {
 	}
 
 	@SuppressWarnings("unchecked")
-	private ChatRoomResponse buildChatRoomResponse(Map<String, Object> room, Map<Long, BatchUserSummaryResponse> profileMap) {
+	private ChatRoomResponse buildChatRoomResponse(Map<String, Object> room, Map<Long, BatchUserSummaryResponse> profileMap, Long requestUserId) {
 		List<Number> participantIds = (List<Number>) room.get("participantIds");
 		List<ParticipantInfo> participants = participantIds != null
 				? participantIds.stream()
 				.map(id -> buildParticipantInfo(id.longValue(), profileMap))
 				.collect(Collectors.toList())
 				: List.of();
+		
+		// DM 타입인 경우 상대방의 닉네임과 프로필 이미지를 채팅방 정보로 설정
+		ChatRoomType roomType = parseRoomType(room.get("type"));
+		String roomName = (String) room.get("name");
+		String profileImage = DEFAULT_PROFILE_IMAGE;
+		
+		if (roomType == ChatRoomType.DM && participantIds != null) {
+			// 상대방 ID 찾기 (요청한 사용자를 제외한 참여자)
+			Long recipientId = participantIds.stream()
+					.map(Number::longValue)
+					.filter(id -> !id.equals(requestUserId))
+					.findFirst()
+					.orElse(null);
+			
+			if (recipientId != null) {
+				BatchUserSummaryResponse profile = profileMap.get(recipientId);
+				roomName = (profile != null && profile.getNickname() != null)
+						? profile.getNickname()
+						: DEFAULT_NICKNAME;
+				profileImage = (profile != null) ? profile.getProfileImageUrl() : DEFAULT_PROFILE_IMAGE;
+			}
+		}
+		
+		// context 정보 추출 (PLACE_INQUIRY 타입일 때 존재)
+		ChatRoomResponse.ContextInfo contextInfo = null;
+		Map<String, Object> context = (Map<String, Object>) room.get("context");
+		if (context != null) {
+			contextInfo = ChatRoomResponse.ContextInfo.builder()
+					.contextType((String) context.get("contextType"))
+					.contextId(toLong(context.get("contextId")))
+					.contextName((String) context.get("contextName"))
+					.build();
+		}
 
 		return ChatRoomResponse.builder()
 				.roomId((String) room.get("roomId"))
-				.type(parseRoomType(room.get("type")))
-				.name((String) room.get("name"))
+				.type(roomType)
+				.name(roomName)
+				.profileImage(profileImage)
 				.participants(participants)
 				.lastMessage((String) room.get("lastMessage"))
 				.lastMessageAt(parseDateTime(room.get("lastMessageAt")))
 				.unreadCount(toLong(room.get("unreadCount")))
+				.context(contextInfo)
 				.build();
 	}
 
@@ -216,77 +300,23 @@ public class ChatEnrichmentService {
 	}
 
 	// ==================== 프로필 로딩 ====================
-
+	
+	/**
+	 * 프로필 로딩 (ProfileEnrichmentUtil의 캐시 어사이드 패턴 사용)
+	 */
 	private Mono<Map<Long, BatchUserSummaryResponse>> loadProfiles(Set<Long> userIds) {
 		if (userIds == null || userIds.isEmpty()) {
 			return Mono.just(Map.of());
 		}
-
-		List<String> stringIds = userIds.stream()
+		
+		Set<String> stringIds = userIds.stream()
 				.map(String::valueOf)
-				.collect(Collectors.toList());
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 
 		log.debug("Loading profiles for {} userIds", stringIds.size());
-
-		return profileCache.getAll(new LinkedHashSet<>(stringIds))
-				.onErrorResume(e -> {
-					log.warn("Profile cache getAll failed: {}", e.getMessage());
-					return Mono.just(Map.of());
-				})
-				.defaultIfEmpty(Map.of())
-				.flatMap(cached -> {
-					Set<String> missing = new LinkedHashSet<>(stringIds);
-					missing.removeAll(cached.keySet());
-
-					if (missing.isEmpty()) {
-						return Mono.just(convertToLongKeyMap(cached));
-					}
-
-					log.debug("Cache miss for {} userIds, fetching from API", missing.size());
-
-					return fetchProfilesInBatches(new ArrayList<>(missing))
-							.map(fetched -> {
-								// 캐시에 저장 (fire-and-forget)
-								if (!fetched.isEmpty()) {
-									profileCache.putAll(fetched)
-											.doOnError(e -> log.warn("Failed to cache profiles: {}", e.getMessage()))
-											.subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())
-											.subscribe();
-								}
-
-								Map<String, BatchUserSummaryResponse> merged = new LinkedHashMap<>(cached);
-								merged.putAll(fetched);
-								return convertToLongKeyMap(merged);
-							});
-				});
-	}
-
-	private Mono<Map<String, BatchUserSummaryResponse>> fetchProfilesInBatches(List<String> ids) {
-		if (ids == null || ids.isEmpty()) {
-			return Mono.just(Map.of());
-		}
-
-		List<List<String>> batches = new ArrayList<>();
-		for (int i = 0; i < ids.size(); i += BATCH_SIZE) {
-			batches.add(ids.subList(i, Math.min(i + BATCH_SIZE, ids.size())));
-		}
-
-		return reactor.core.publisher.Flux.fromIterable(batches)
-				.concatMap(batch -> profileClient.fetchUserSummariesBatch(batch)
-						.onErrorResume(e -> {
-							log.warn("Failed to fetch profiles batch: {}", e.getMessage());
-							return Mono.just(Collections.emptyList());
-						}))
-				.collectList()
-				.map(lists -> lists.stream()
-						.filter(Objects::nonNull)
-						.flatMap(Collection::stream)
-						.filter(Objects::nonNull)
-						.collect(Collectors.toMap(
-								BatchUserSummaryResponse::getUserId,
-								Function.identity(),
-								(a, b) -> a
-						)));
+		
+		return profileEnrichmentUtil.loadProfiles(stringIds)
+				.map(this::convertToLongKeyMap);
 	}
 
 	private Map<Long, BatchUserSummaryResponse> convertToLongKeyMap(Map<String, BatchUserSummaryResponse> stringKeyMap) {

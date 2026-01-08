@@ -18,6 +18,8 @@ public class InternalMessageResponse {
 	private String messageId;
 	private String roomId;
 	private Long senderId;
+	private String senderNickname;
+	private String senderProfileImage;
 	private String content;
 	private Integer readCount;
 	private Boolean deleted;

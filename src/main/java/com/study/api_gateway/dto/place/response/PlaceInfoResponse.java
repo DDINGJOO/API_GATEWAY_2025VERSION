@@ -54,6 +54,9 @@ public class PlaceInfoResponse {
 	private Double ratingAverage;
 	private Integer reviewCount;
 	
+	// 등록 상태 (REGISTERED: 등록 업체, UNREGISTERED: 미등록 업체)
+	private String registrationStatus;
+	
 	// Room 정보
 	private Integer roomCount;
 	private List<Long> roomIds;
