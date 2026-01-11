@@ -17,6 +17,23 @@ security:
     secret: ${JWT_SECRET}
     access-token-expire-time: ${JWT_ACCESS_TOKEN_EXPIRE_TIME:30}
     refresh-token-expire-time: ${JWT_REFRESH_TOKEN_EXPIRE_TIME:10080}
+  # 보안 헤더 설정
+  headers:
+    enabled: true
+    # HTTPS 환경에서만 true로 설정
+    hsts-enabled: false
+    hsts-max-age: 31536000
+    hsts-include-sub-domains: true
+    # X-Frame-Options: DENY, SAMEORIGIN
+    frame-options: DENY
+    # Referrer-Policy
+    referrer-policy: strict-origin-when-cross-origin
+    # Content-Security-Policy
+    content-security-policy: "default-src 'self'; frame-ancestors 'none'"
+    # Permissions-Policy
+    permissions-policy: "camera=(), microphone=(), geolocation=(), payment=()"
+    # 캐시 비활성화 (민감 데이터 보호)
+    no-cache-enabled: true
 
 # SpringDoc OpenAPI (Swagger) 설정
 springdoc:
@@ -37,3 +54,114 @@ springdoc:
   use-management-port: false
   cache:
     disabled: true
+
+# Actuator & Monitoring
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus,circuitbreakers,circuitbreakerevents,loggers,env,caches,gateway
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+      probes:
+        enabled: true
+    prometheus:
+      enabled: true
+    loggers:
+      enabled: true
+    env:
+      enabled: true
+    caches:
+      enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+    ratelimiters:
+      enabled: true
+    redis:
+      enabled: true
+    diskspace:
+      enabled: true
+  metrics:
+    enable:
+      all: true
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name:api-gateway}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.75, 0.95, 0.99
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+
+# Application Info
+info:
+  app:
+    name: API Gateway
+    description: BFF API Gateway for Bander Project
+    version: 1.0.0
+  contact:
+    team: Backend Team
+
+# Resilience4j (YAML 설정 - 코드 설정 보완용)
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        register-health-indicator: true
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 80
+        slow-call-duration-threshold: 3s
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 500ms
+
+# Rate Limiting (Bucket4j)
+rate-limit:
+  enabled: true
+  # 인증된 사용자 (분당 요청 수)
+  authenticated:
+    capacity: 100
+    refill-seconds: 60
+    refill-tokens: 100
+  # 비인증 사용자 - IP 기반 (분당 요청 수)
+  anonymous:
+    capacity: 30
+    refill-seconds: 60
+    refill-tokens: 30
+  # 제외 경로
+  exclude-paths:
+    - /swagger-ui/**
+    - /v3/api-docs/**
+    - /actuator/**
+    - /health
+  # 엔드포인트별 커스텀 설정 (예시)
+  endpoints:
+    /bff/v1/auth/login:
+      capacity: 10
+      refill-seconds: 60
+      refill-tokens: 10
+    /bff/v1/auth/register:
+      capacity: 5
+      refill-seconds: 60
+      refill-tokens: 5
