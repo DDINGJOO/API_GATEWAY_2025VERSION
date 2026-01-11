@@ -12,6 +12,11 @@ profile:
   cache:
     ttl-seconds: 3600
 
+app:
+  profile:
+    cache:
+      ttl: PT1H
+
 security:
   jwt:
     secret: test-secret-key-for-jwt-token-validation-minimum-32-characters-long
@@ -56,3 +61,35 @@ service:
   support:
     url: http://localhost
     port: 8088
+
+  place_info:
+    url: http://localhost
+    port: 8089
+
+  room_info:
+    url: http://localhost
+    port: 8090
+
+  ye_yak_hae_yo:
+    url: http://localhost
+    port: 8091
+
+  lee_yong_gwan_lee:
+    url: http://localhost
+    port: 8092
+
+  ye_yak_manage:
+    url: http://localhost
+    port: 8093
+
+  coupon:
+    url: http://localhost
+    port: 8094
+
+  chat:
+    url: http://localhost
+    port: 8095
+
+  notification:
+    url: http://localhost
+    port: 8096

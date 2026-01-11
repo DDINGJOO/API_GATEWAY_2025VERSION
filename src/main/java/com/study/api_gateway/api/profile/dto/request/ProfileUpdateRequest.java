@@ -1,0 +1,40 @@
+package com.study.api_gateway.api.profile.dto.request;
+
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+
+import java.util.List;
+
+@Data
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Schema(name = "ProfileUpdateRequest", description = "프로필 수정 요청 바디",
+		example = "{\n  \"profileImageId\": \"img_100\",\n  \"nickname\": \"딩주\",\n  \"city\": \"SEOUL\",\n  \"chattable\": true,\n  \"publicProfile\": true,\n  \"sex\": \"M\",\n  \"genres\": { 1, 2 },\n  \"instruments\": { 1, 3 }\n}")
+public class ProfileUpdateRequest {
+	
+	@Schema(description = "프로필 이미지 ID", example = "img_100")
+	private String profileImageId;
+	@Schema(description = "닉네임", example = "띵주")
+	private String nickname;
+	@Schema(description = "활동 도시(코드)", example = "SEOUL")
+	private String city;
+	
+	@Schema(description = "자기소개", example = "안녕하세요! 음악을 사랑하는 사람입니다.")
+	private String introduction;
+	
+	@Schema(description = "채팅 가능 여부", example = "true")
+	private boolean chattable;
+	@Schema(description = "프로필 공개 여부", example = "true")
+	private boolean publicProfile;
+	@Schema(description = "성별", example = "M")
+	private Character sex;
+	
+	@Schema(description = "장르 ID-이름 매핑", example = "[1, 2]")
+	private List<Integer> genres;
+	@Schema(description = "악기 ID-이름 매핑", example = "[1, 3 ]")
+	private List<Integer> instruments;
+}
