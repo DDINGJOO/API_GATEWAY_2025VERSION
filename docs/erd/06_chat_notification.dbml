@@ -1,0 +1,131 @@
+// Chat/Notification 도메인 (채팅/알림) - Chat-Server (ChatDDing) / Notification
+// 데이터베이스: MongoDB (채팅), Redis (알림)
+// 설명: 실시간 채팅, 공간 문의, 고객 지원, 푸시 알림 관리
+
+Project ChatNotification {
+  database_type: 'MongoDB'
+  Note: 'Chat/Notification 도메인 - 실시간 채팅, 1:1 DM, 공간 문의, 고객 지원'
+}
+
+// ==================== Enums ====================
+
+Enum chat_room_type {
+  DM            [note: '1:1 개인 대화 (최대 2명)']
+  GROUP         [note: '그룹 채팅 (최대 100명)']
+  PLACE_INQUIRY [note: '공간 문의 (최대 2명)']
+  SUPPORT       [note: '고객 상담 (최대 2명)']
+}
+
+Enum chat_room_status {
+  ACTIVE [note: '활성']
+  CLOSED [note: '종료']
+}
+
+Enum context_type {
+  PLACE   [note: '공간 문의']
+  ORDER   [note: '주문 관련']
+  BOOKING [note: '예약 관련']
+}
+
+Enum support_status {
+  WAITING     [note: '대기 중']
+  IN_PROGRESS [note: '상담 중']
+  CLOSED      [note: '종료됨']
+}
+
+// ==================== MongoDB Collections ====================
+
+Table chat_rooms [headercolor: #3498db, note: '채팅방 컬렉션'] {
+  _id Long [pk, note: '채팅방 ID (Snowflake)']
+  type chat_room_type [not null, note: '채팅방 유형']
+  name String [note: '채팅방 이름']
+  participant_ids "Array<Long>" [not null, note: '참여자 ID 배열 (인덱싱용)']
+  sorted_participant_ids "Array<Long>" [not null, note: '정렬된 참여자 ID (중복 방지)']
+  owner_id Long [not null, note: '소유자 ID (→ Auth)']
+  status chat_room_status [not null, note: '채팅방 상태']
+  created_at DateTime [not null, note: '생성 시각']
+  last_message_at DateTime [note: '마지막 메시지 시각']
+
+  Note: '''
+    participants (embedded array):
+    - userId: Long (사용자 ID)
+    - joinedAt: DateTime (참여 시각)
+    - lastReadAt: DateTime (마지막 읽음 시각)
+
+    context (embedded object, optional):
+    - contextType: Enum (PLACE, ORDER, BOOKING)
+    - contextId: Long (참조 ID)
+  '''
+
+  indexes {
+    (type, sorted_participant_ids) [note: 'DM 중복 방지']
+    (participant_ids, last_message_at) [note: '채팅방 목록 조회']
+    owner_id
+  }
+}
+
+Table participants [headercolor: #9b59b6, note: '참여자 (Embedded Document in chat_rooms)'] {
+  user_id Long [not null, note: '사용자 ID (→ Auth)']
+  joined_at DateTime [not null, note: '참여 시각']
+  last_read_at DateTime [note: '마지막 읽음 시각']
+
+  Note: 'chat_rooms.participants에 embedded로 저장됨'
+}
+
+Table context [headercolor: #e74c3c, note: '컨텍스트 (Embedded Document in chat_rooms)'] {
+  context_type context_type [not null, note: '컨텍스트 유형']
+  context_id Long [not null, note: '참조 ID']
+
+  Note: 'chat_rooms.context에 embedded로 저장됨 (optional)'
+}
+
+Table messages [headercolor: #1abc9c, note: '메시지 컬렉션'] {
+  _id Long [pk, note: '메시지 ID (Snowflake)']
+  room_id Long [not null, note: '채팅방 ID']
+  sender_id Long [not null, note: '발신자 ID (→ Auth)']
+  content String [not null, note: '메시지 내용']
+  read_by "Map<Long, DateTime>" [not null, note: '읽은 사용자와 시각']
+  deleted_by "Set<Long>" [not null, note: '삭제한 사용자']
+  created_at DateTime [not null, note: '생성 시각']
+
+  indexes {
+    (room_id, created_at) [note: '메시지 페이징']
+    sender_id
+  }
+}
+
+// ==================== Support (고객 지원) ====================
+
+Table support_sessions [headercolor: #f39c12, note: '고객 지원 세션'] {
+  _id Long [pk, note: '세션 ID']
+  room_id Long [not null, note: '채팅방 ID']
+  user_id Long [not null, note: '고객 ID (→ Auth)']
+  agent_id Long [note: '상담원 ID (→ Auth)']
+  status support_status [not null, note: '지원 상태']
+  created_at DateTime [not null, note: '생성 시각']
+  assigned_at DateTime [note: '상담원 배정 시각']
+  closed_at DateTime [note: '종료 시각']
+
+  indexes {
+    room_id
+    user_id
+    agent_id
+    status
+    (status, created_at)
+  }
+}
+
+// ==================== Redis (알림) ====================
+
+// Redis 키 구조:
+// - unread:{userId} -> Hash (roomId -> count)
+// - push:token:{userId} -> String (FCM/APNS 토큰)
+// - notification:{userId}:{notificationId} -> Hash (알림 데이터)
+
+// ==================== External References ====================
+
+// chat_rooms.owner_id -> Auth.auth.id
+// chat_rooms.participant_ids[] -> Auth.auth.id
+// messages.sender_id -> Auth.auth.id
+// context.context_id -> Place.place_info.id (when contextType = PLACE)
+// context.context_id -> Reservation.reservation_entity.reservation_id (when contextType = BOOKING)

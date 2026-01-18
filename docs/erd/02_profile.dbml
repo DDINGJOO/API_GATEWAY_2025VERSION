@@ -1,0 +1,94 @@
+// Profile 도메인 (프로필) - Profile-Server
+// 데이터베이스: PostgreSQL
+// 설명: 사용자의 공개 프로필, 음악 장르, 악기 정보 관리
+
+Project Profile {
+  database_type: 'PostgreSQL'
+  Note: 'Profile 도메인 - Auth.userId와 1:1 관계'
+}
+
+// ==================== Tables ====================
+
+Table user_info [headercolor: #3498db, note: '사용자 프로필 - 핵심 테이블'] {
+  user_id String [pk, note: 'PK, Auth.id와 동일 (1:1 관계)']
+  profile_image_url String [note: '프로필 이미지 URL']
+  nickname String [unique, not null, note: '닉네임 (2-20자)']
+  sex Char [note: '성별 (M or F)']
+  city String [note: '거주 지역']
+  introduction String [note: '자기소개 (최대 500자)']
+  is_public Boolean [not null, default: true, note: '프로필 공개 여부']
+  is_chattable Boolean [not null, default: true, note: '채팅 허용 여부']
+  version Long [not null, note: '낙관적 락 버전']
+  created_at DateTime [not null, note: '생성일시']
+  updated_at DateTime [not null, note: '수정일시']
+
+  indexes {
+    nickname [unique]
+    city
+  }
+}
+
+Table user_genres [headercolor: #9b59b6, note: '사용자 선호 장르 (M:N 매핑)'] {
+  user_id String [not null, ref: > user_info.user_id, note: '사용자 ID']
+  genre_id Long [not null, ref: > genre_name_table.id, note: '장르 ID']
+
+  indexes {
+    (user_id, genre_id) [pk]
+    user_id
+    genre_id
+  }
+}
+
+Table genre_name_table [headercolor: #e74c3c, note: '장르 마스터 테이블'] {
+  id Long [pk, increment, note: '장르 ID']
+  genre_name String [unique, not null, note: '장르명']
+
+  Note: '''
+    장르 목록:
+    - ROCK
+    - JAZZ
+    - POP
+    - CLASSICAL
+    - HIPHOP
+    - R&B
+    - ELECTRONIC
+    - FOLK
+    - METAL
+    - BLUES
+  '''
+}
+
+Table user_instruments [headercolor: #f39c12, note: '사용자 연주 악기 (M:N 매핑)'] {
+  user_id String [not null, ref: > user_info.user_id, note: '사용자 ID']
+  instrument_id Long [not null, ref: > instrument_name_table.id, note: '악기 ID']
+
+  indexes {
+    (user_id, instrument_id) [pk]
+    user_id
+    instrument_id
+  }
+}
+
+Table instrument_name_table [headercolor: #1abc9c, note: '악기 마스터 테이블'] {
+  id Long [pk, increment, note: '악기 ID']
+  instrument_name String [unique, not null, note: '악기명']
+
+  Note: '''
+    악기 목록:
+    - GUITAR
+    - BASS
+    - DRUM
+    - KEYBOARD
+    - PIANO
+    - VOCAL
+    - VIOLIN
+    - CELLO
+    - SAXOPHONE
+    - TRUMPET
+  '''
+}
+
+// ==================== External References ====================
+
+// user_info.user_id -> Auth.auth.id (1:1 관계)
+// 외부 서비스 참조이므로 명시적 ref 선언하지 않음

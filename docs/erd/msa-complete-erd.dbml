@@ -1,0 +1,1001 @@
+// ============================================
+// Bander Project - Complete MSA ERD
+// Generated: 2026-01-12
+// dbdiagram.io 형식 - https://dbdiagram.io 에 붙여넣기
+// ============================================
+
+// ============================================
+// 1. AUTH SERVICE (인증 서비스)
+// ============================================
+
+Table auth.auth {
+  id varchar [pk, note: 'Snowflake ID']
+  email varchar [unique]
+  password varchar
+  phone_number varchar
+  provider varchar [note: 'KAKAO, GOOGLE, APPLE, LOCAL']
+  status varchar [note: 'ACTIVE, INACTIVE, SUSPENDED, WITHDRAWN']
+  user_role varchar [note: 'USER, ADMIN, PLACE_OWNER']
+  version bigint [note: '낙관적 락']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table auth.consent {
+  id varchar [pk]
+  user_id varchar [ref: > auth.auth.id]
+  consent_id varchar [ref: > auth.consents_table.id]
+  consented_at timestamp
+}
+
+Table auth.consents_table {
+  id varchar [pk]
+  consent_name varchar
+  description text
+  required boolean
+}
+
+Table auth.history {
+  id varchar [pk]
+  user_id varchar [ref: > auth.auth.id]
+  updated_at timestamp
+  updated_column varchar
+  before_column_value varchar
+  after_column_value varchar
+  version bigint
+}
+
+Table auth.withdraw {
+  id varchar [pk]
+  user_id varchar [unique, ref: - auth.auth.id]
+  reason varchar
+  withdrawn_at timestamp
+}
+
+Table auth.suspend {
+  id varchar [pk]
+  user_id varchar [ref: > auth.auth.id]
+  reason varchar
+  suspended_at timestamp
+  suspended_until timestamp
+}
+
+Table auth.login_status {
+  id varchar [pk]
+  user_id varchar [unique, ref: - auth.auth.id]
+  last_login_at timestamp
+  login_ip varchar
+  device_info varchar
+}
+
+// ============================================
+// 2. PROFILE SERVICE (프로필 서비스)
+// ============================================
+
+Table profile.user_info {
+  user_id varchar [pk, note: 'Auth 서비스의 사용자 ID']
+  profile_image_url varchar
+  nickname varchar [unique]
+  sex char
+  city varchar
+  introduction text
+  is_public boolean [default: true]
+  is_chatable boolean [default: true]
+  version bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table profile.user_genres {
+  user_id varchar [pk, ref: > profile.user_info.user_id]
+  genre_id bigint [pk, ref: > profile.genre_name_table.id]
+}
+
+Table profile.genre_name_table {
+  id bigint [pk, increment]
+  genre_name varchar [unique]
+}
+
+Table profile.user_instruments {
+  user_id varchar [pk, ref: > profile.user_info.user_id]
+  instrument_id bigint [pk, ref: > profile.instrument_name_table.id]
+}
+
+Table profile.instrument_name_table {
+  id bigint [pk, increment]
+  instrument_name varchar [unique]
+}
+
+Table profile.history {
+  id varchar [pk]
+  user_id varchar [ref: > profile.user_info.user_id]
+  updated_at timestamp
+  updated_column varchar
+  before_value varchar
+  after_value varchar
+}
+
+// ============================================
+// 3. IMAGE SERVICE (이미지 서비스)
+// ============================================
+
+Table image.image {
+  id varchar [pk, note: 'Snowflake ID']
+  reference_type_id bigint [ref: > image.reference_type.id]
+  reference_id varchar [note: '참조 대상 ID']
+  image_url varchar
+  uploader_id varchar
+  status varchar [note: 'PENDING, APPROVED, REJECTED']
+  is_deleted boolean [default: false]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table image.reference_type {
+  id bigint [pk, increment]
+  type_name varchar [unique, note: 'ARTICLE, PLACE, ROOM, PROFILE 등']
+}
+
+Table image.storage_object {
+  id varchar [pk, ref: - image.image.id, note: '공유 PK']
+  storage_location varchar
+  origin_size bigint
+  converted_size bigint
+  origin_format_id bigint [ref: > image.extension.id]
+  converted_format_id bigint [ref: > image.extension.id]
+}
+
+Table image.extension {
+  id bigint [pk, increment]
+  extension_name varchar [unique, note: 'jpg, png, webp 등']
+  mime_type varchar
+}
+
+Table image.status_history {
+  id varchar [pk]
+  image_id varchar [ref: > image.image.id]
+  status varchar
+  changed_at timestamp
+  changed_by varchar
+}
+
+// ============================================
+// 4. BOARD SERVICE (게시판 서비스)
+// ============================================
+
+Table board.board {
+  id bigint [pk, increment]
+  name varchar [unique]
+  description text
+  is_active boolean [default: true]
+  display_order int
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table board.article {
+  id varchar [pk, note: 'Snowflake ID']
+  board_id bigint [ref: > board.board.id]
+  article_type varchar [note: 'REGULAR, EVENT, NOTICE (SINGLE_TABLE 상속)']
+  title varchar
+  content text
+  writer_id varchar
+  first_image_url varchar
+  view_count bigint [default: 0]
+  status varchar [note: 'ACTIVE, HIDDEN, DELETED']
+  version bigint
+  event_start_date date [note: 'EventArticle 전용']
+  event_end_date date [note: 'EventArticle 전용']
+  created_at timestamp
+  updated_at timestamp
+
+  Indexes {
+    (board_id, status) [name: 'idx_article_board_status']
+    (writer_id) [name: 'idx_article_writer']
+  }
+}
+
+Table board.article_image {
+  id varchar [pk]
+  article_id varchar [ref: > board.article.id]
+  image_url varchar
+  sequence int
+}
+
+Table board.keyword {
+  id bigint [pk, increment]
+  board_id bigint [ref: > board.board.id, note: 'nullable, 게시판 전용 키워드']
+  name varchar
+  usage_count bigint [default: 0]
+
+  Indexes {
+    (board_id, name) [unique]
+  }
+}
+
+Table board.keyword_mapping {
+  article_id varchar [pk, ref: > board.article.id]
+  keyword_id bigint [pk, ref: > board.keyword.id]
+}
+
+// ============================================
+// 5. COMMENT SERVICE (댓글 서비스)
+// ============================================
+
+Table comment.comment {
+  comment_id varchar [pk]
+  article_id varchar [note: '외부 참조 (Board 서비스)']
+  writer_id varchar
+  parent_comment_id varchar [ref: > comment.comment.comment_id]
+  root_comment_id varchar [ref: > comment.comment.comment_id]
+  depth int [default: 0]
+  contents text
+  is_deleted boolean [default: false]
+  status varchar [note: 'ACTIVE, HIDDEN, BANNED, DELETED']
+  reply_count int [default: 0]
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp
+
+  Indexes {
+    (article_id, created_at) [name: 'idx_comment_article']
+    (root_comment_id, depth) [name: 'idx_comment_thread']
+  }
+}
+
+// ============================================
+// 6. LIKES SERVICE (좋아요 서비스)
+// ============================================
+
+Table gaechu.categories {
+  id bigint [pk, increment]
+  category_name varchar [unique, note: 'ARTICLE, COMMENT, PLACE 등']
+}
+
+Table gaechu.likes {
+  like_id varchar [pk]
+  category_id bigint [ref: > gaechu.categories.id]
+  reference_id varchar [note: '좋아요 대상 ID']
+  liker_id varchar
+  liked_at timestamp
+
+  Indexes {
+    (category_id, reference_id, liker_id) [unique]
+  }
+}
+
+Table gaechu.like_count {
+  category_id bigint [pk, ref: > gaechu.categories.id]
+  reference_id varchar [pk]
+  count bigint [default: 0]
+}
+
+// ============================================
+// 7. HOT ARTICLE SERVICE (인기 게시글)
+// ============================================
+
+Table hot_article.article_score {
+  id bigint [pk, increment]
+  article_id varchar [unique]
+  score double
+  view_count bigint
+  like_count bigint
+  comment_count bigint
+  calculated_at timestamp
+}
+
+// ============================================
+// 8. PLACE INFO SERVICE (업체 정보)
+// ============================================
+
+Table place.place_info {
+  id bigint [pk, note: 'Snowflake ID']
+  user_id varchar [note: '업체 소유자']
+  place_name varchar
+  description text
+  category varchar
+  place_type varchar
+  is_active boolean [default: true]
+  approval_status varchar [note: 'PENDING, APPROVED, REJECTED']
+  registration_status varchar
+  rating_average decimal(2,1) [default: 0]
+  review_count int [default: 0]
+  created_at timestamp
+  updated_at timestamp
+  deleted_at timestamp [note: 'Soft Delete']
+  deleted_by varchar
+}
+
+Table place.place_contact {
+  id bigint [pk, increment]
+  place_id bigint [unique, ref: - place.place_info.id]
+  contact varchar
+  email varchar
+}
+
+Table place.place_contact_websites {
+  place_contact_id bigint [ref: > place.place_contact.id]
+  website varchar
+}
+
+Table place.place_contact_social_links {
+  place_contact_id bigint [ref: > place.place_contact.id]
+  social_link varchar
+}
+
+Table place.place_location {
+  id bigint [pk, increment]
+  place_id bigint [unique, ref: - place.place_info.id]
+  address varchar
+  latitude decimal(10,8)
+  longitude decimal(11,8)
+}
+
+Table place.place_parking {
+  id bigint [pk, increment]
+  place_id bigint [unique, ref: - place.place_info.id]
+  available_parking_lots int
+  parking_type varchar
+}
+
+Table place.place_image {
+  image_id bigint [pk, increment]
+  place_id bigint [ref: > place.place_info.id]
+  image_url varchar
+  sequence int [note: '최대 10개']
+}
+
+Table place.keyword {
+  id bigint [pk, increment]
+  name varchar [unique]
+}
+
+Table place.place_keywords {
+  place_id bigint [pk, ref: > place.place_info.id]
+  keyword_id bigint [pk, ref: > place.keyword.id]
+}
+
+// ============================================
+// 9. ROOM INFO SERVICE (객실 정보)
+// ============================================
+
+Table room.room_info {
+  room_id bigint [pk, note: 'Snowflake ID']
+  place_id bigint [note: '외부 참조 (Place 서비스)']
+  room_name varchar
+  status varchar [note: 'ACTIVE, INACTIVE, DELETED']
+  time_slot varchar [note: '시간대 유형']
+  max_occupancy int
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table room.room_image {
+  image_id bigint [pk, increment]
+  room_id bigint [ref: > room.room_info.room_id]
+  image_url varchar
+  sequence int
+}
+
+Table room.further_detail {
+  id bigint [pk, increment]
+  room_id bigint [ref: > room.room_info.room_id]
+  detail varchar
+}
+
+Table room.caution_detail {
+  id bigint [pk, increment]
+  room_id bigint [ref: > room.room_info.room_id]
+  detail varchar
+}
+
+Table room.room_options_mapper {
+  id bigint [pk, increment]
+  room_id bigint [ref: > room.room_info.room_id]
+  option_name varchar
+}
+
+Table room.reservation_field {
+  field_id bigint [pk, increment]
+  room_id bigint [ref: > room.room_info.room_id]
+  title varchar
+  input_type varchar [note: 'TEXT, NUMBER, DATE, SELECT 등']
+  required boolean
+  max_length int
+  sequence int
+}
+
+// ============================================
+// 10. ROOM OPERATING POLICY (객실 운영 정책)
+// ============================================
+
+Table operating.room_operating_policy {
+  id bigint [pk, increment]
+  room_id bigint [note: '외부 참조']
+  day_of_week varchar
+  start_time time
+  end_time time
+  is_active boolean [default: true]
+}
+
+Table operating.room_time_slot {
+  id bigint [pk, increment]
+  room_id bigint
+  slot_date date
+  start_time time
+  end_time time
+  status varchar [note: 'AVAILABLE, BOOKED, BLOCKED']
+}
+
+// ============================================
+// 11. PRODUCT SERVICE (상품 서비스)
+// ============================================
+
+Table product.product {
+  id bigint [pk, note: 'Snowflake ID']
+  scope varchar [note: 'PLACE, ROOM']
+  place_id bigint [note: '외부 참조']
+  room_id bigint [note: '외부 참조, nullable']
+  name varchar
+  pricing_strategy_type varchar
+  pricing_strategy_value decimal
+  total_quantity int
+  reserved_quantity int [default: 0]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table product.pricing_policy {
+  id bigint [pk, increment]
+  product_id bigint [ref: > product.product.id]
+  condition_type varchar
+  condition_value varchar
+  price_adjustment decimal
+}
+
+Table product.room_allowed_product {
+  room_id bigint [pk]
+  product_id bigint [pk, ref: > product.product.id]
+}
+
+// ============================================
+// 12. RESERVATION SERVICE (예약 서비스)
+// ============================================
+
+Table reservation.reservation {
+  reservation_id bigint [pk, note: 'Snowflake ID']
+  place_id bigint [note: '외부 참조']
+  room_id bigint [note: '외부 참조']
+  user_id varchar
+  status varchar [note: 'PENDING, CONFIRMED, APPROVED, REJECTED, CANCELLED, COMPLETED']
+  reservation_date date
+  total_price decimal
+  reservation_time_price decimal
+  reserver_name varchar [note: '암호화됨']
+  reserver_phone varchar [note: '암호화됨']
+  approved_at timestamp
+  approved_by varchar
+  rejected_at timestamp
+  rejected_reason varchar
+  rejected_by varchar
+  created_at timestamp
+  updated_at timestamp
+
+  Indexes {
+    (room_id, reservation_date) [name: 'idx_reservation_room_date']
+    (user_id, status) [name: 'idx_reservation_user']
+  }
+}
+
+Table reservation.reservation_start_times {
+  reservation_id bigint [ref: > reservation.reservation.reservation_id]
+  start_time time
+}
+
+Table reservation.reservation_product_data {
+  reservation_id bigint [ref: > reservation.reservation.reservation_id]
+  product_key varchar
+  product_value varchar
+}
+
+Table reservation.reservation_additional_info {
+  reservation_id bigint [ref: > reservation.reservation.reservation_id]
+  info_key varchar
+  info_value varchar
+}
+
+Table reservation.blacklist {
+  id bigint [pk, increment]
+  user_id varchar
+  place_id bigint
+  reason varchar
+  blacklisted_at timestamp
+  blacklisted_by varchar
+
+  Indexes {
+    (user_id, place_id) [unique]
+  }
+}
+
+// ============================================
+// 13. COUPON SERVICE (쿠폰 서비스)
+// ============================================
+
+Table coupon.coupon_policy {
+  id bigint [pk, note: 'Snowflake ID']
+  coupon_name varchar
+  coupon_code varchar [unique]
+  description text
+  discount_type varchar [note: 'PERCENTAGE, FIXED_AMOUNT']
+  discount_value decimal
+  max_discount_amount decimal
+  minimum_order_amount decimal
+  applicable_rule jsonb [note: '적용 규칙 JSON']
+  distribution_type varchar [note: 'PUBLIC, PRIVATE, AUTO']
+  valid_from timestamp
+  valid_until timestamp
+  max_issue_count int
+  max_usage_per_user int
+  current_issue_count int [default: 0]
+  is_active boolean [default: true]
+  created_by varchar
+  version bigint
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table coupon.coupon_issue {
+  id bigint [pk, increment]
+  policy_id bigint [ref: > coupon.coupon_policy.id]
+  user_id varchar
+  status varchar [note: 'ISSUED, USED, EXPIRED, CANCELLED']
+  issued_at timestamp
+  used_at timestamp
+  expired_at timestamp
+  reservation_id bigint [note: '사용된 예약 ID']
+
+  Indexes {
+    (user_id, policy_id) [name: 'idx_coupon_user']
+  }
+}
+
+Table coupon.coupon_reservation {
+  id bigint [pk, increment]
+  policy_id bigint [ref: > coupon.coupon_policy.id]
+  user_id varchar
+  reserved_at timestamp
+  expires_at timestamp
+}
+
+Table coupon.coupon_statistics {
+  id bigint [pk, increment]
+  policy_id bigint [ref: > coupon.coupon_policy.id]
+  total_issued int
+  total_used int
+  total_amount_discounted decimal
+  calculated_at timestamp
+}
+
+// ============================================
+// 14. PAYMENT SERVICE (결제 서비스)
+// ============================================
+
+Table payment.payment {
+  payment_id bigint [pk, note: 'Snowflake ID']
+  reservation_id bigint [unique, note: '외부 참조']
+  amount_value decimal
+  amount_currency varchar [default: 'KRW']
+  method varchar [note: 'CARD, BANK_TRANSFER, VIRTUAL_ACCOUNT']
+  status varchar [note: 'PENDING, PAID, CANCELLED, REFUNDED, FAILED']
+  order_id varchar [unique]
+  payment_key varchar
+  transaction_id varchar
+  check_in_date date
+  idempotency_key varchar [unique]
+  paid_at timestamp
+  cancelled_at timestamp
+  failure_reason varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table payment.payment_event {
+  id bigint [pk, increment]
+  payment_id bigint [ref: > payment.payment.payment_id]
+  event_type varchar [note: 'CREATED, APPROVED, FAILED, CANCELLED']
+  event_data jsonb
+  occurred_at timestamp
+}
+
+Table payment.refund {
+  id bigint [pk, increment]
+  payment_id bigint [ref: > payment.payment.payment_id]
+  refund_amount decimal
+  reason varchar
+  status varchar [note: 'PENDING, COMPLETED, REJECTED']
+  refunded_at timestamp
+  processed_by varchar
+}
+
+// ============================================
+// 15. CHAT SERVICE (채팅 서비스 - MongoDB)
+// ============================================
+
+Table chat.chat_room {
+  id bigint [pk, note: 'Snowflake ID - MongoDB _id']
+  type varchar [note: 'DIRECT, GROUP, SUPPORT']
+  name varchar
+  owner_id bigint
+  sorted_participant_ids varchar [note: '정렬된 참가자 ID 문자열']
+  status varchar [note: 'ACTIVE, ARCHIVED, DELETED']
+  created_at timestamp
+  last_message_at timestamp
+  context jsonb [note: '컨텍스트 정보']
+
+  note: 'MongoDB Collection'
+}
+
+Table chat.chat_room_participants {
+  room_id bigint [ref: > chat.chat_room.id]
+  user_id bigint
+  joined_at timestamp
+  role varchar [note: 'OWNER, ADMIN, MEMBER']
+
+  note: 'MongoDB Embedded Document'
+}
+
+Table chat.message {
+  id bigint [pk, note: 'Snowflake ID']
+  room_id bigint [ref: > chat.chat_room.id]
+  sender_id bigint
+  content text
+  created_at timestamp
+
+  note: 'MongoDB Collection'
+}
+
+Table chat.message_read_by {
+  message_id bigint [ref: > chat.message.id]
+  user_id bigint
+  read_at timestamp
+
+  note: 'MongoDB Embedded Map'
+}
+
+// ============================================
+// 16. REVIEW SERVICE (리뷰 서비스 - MongoDB)
+// ============================================
+
+Table review.review {
+  id varchar [pk, note: 'reservationId 사용 - MongoDB _id']
+  room_id bigint [note: '외부 참조']
+  place_id bigint [note: '외부 참조']
+  writer_id varchar
+  rating int [note: '1-5']
+  content text
+  review_number bigint [note: '시퀀스 번호']
+  created_at timestamp
+
+  note: 'MongoDB Collection'
+}
+
+Table review.place_rating {
+  place_id bigint [pk]
+  average_rating decimal(2,1)
+  total_reviews int
+  rating_1_count int
+  rating_2_count int
+  rating_3_count int
+  rating_4_count int
+  rating_5_count int
+  updated_at timestamp
+
+  note: 'MongoDB Collection - 평점 집계'
+}
+
+// ============================================
+// 17. NOTIFICATION SERVICE (알림 서비스)
+// ============================================
+
+Table notification.device_token {
+  id bigint [pk, increment]
+  user_id varchar
+  token varchar
+  platform varchar [note: 'IOS, ANDROID, WEB']
+  created_at timestamp
+  updated_at timestamp
+
+  Indexes {
+    (user_id) [name: 'idx_device_user']
+    (user_id, token) [unique]
+  }
+}
+
+Table notification.user_consent {
+  id bigint [pk, increment]
+  user_id varchar [unique]
+  push_enabled boolean [default: true]
+  email_enabled boolean [default: true]
+  sms_enabled boolean [default: false]
+  marketing_enabled boolean [default: false]
+  updated_at timestamp
+}
+
+// ============================================
+// 18. SUPPORT SERVICE (지원 서비스)
+// ============================================
+
+Table support.report {
+  report_id varchar [pk]
+  reporter_id varchar
+  reported_id varchar [note: '신고 대상 ID']
+  reference_type varchar [note: 'USER, ARTICLE, COMMENT, PLACE, REVIEW']
+  report_category varchar
+  reason text
+  status varchar [note: 'PENDING, PROCESSING, RESOLVED, REJECTED']
+  reported_at timestamp
+
+  Indexes {
+    (reporter_id, reference_type, reported_id, status) [unique]
+  }
+}
+
+Table support.report_category {
+  reference_type varchar [pk]
+  report_category varchar [pk]
+  description varchar
+}
+
+Table support.report_history {
+  id bigint [pk, increment]
+  report_id varchar [ref: > support.report.report_id]
+  status varchar
+  processed_by varchar
+  note text
+  processed_at timestamp
+}
+
+Table support.report_statistics {
+  id bigint [pk, increment]
+  reference_type varchar
+  total_reports int
+  pending_count int
+  resolved_count int
+  calculated_at timestamp
+}
+
+Table support.sanction {
+  id bigint [pk, increment]
+  user_id varchar
+  sanction_type varchar [note: 'WARNING, SUSPEND, BAN']
+  reason varchar
+  duration_days int
+  sanctioned_at timestamp
+  sanctioned_by varchar
+  expires_at timestamp
+}
+
+Table support.sanction_rule {
+  id bigint [pk, increment]
+  report_category varchar
+  violation_count int
+  sanction_type varchar
+  duration_days int
+}
+
+Table support.inquiry {
+  id bigint [pk, increment]
+  user_id varchar
+  category varchar
+  title varchar
+  content text
+  status varchar [note: 'OPEN, IN_PROGRESS, RESOLVED, CLOSED']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table support.answer {
+  id bigint [pk, increment]
+  inquiry_id bigint [ref: > support.inquiry.id]
+  responder_id varchar
+  content text
+  answered_at timestamp
+}
+
+Table support.faq {
+  id bigint [pk, increment]
+  category varchar
+  question varchar
+  answer text
+  display_order int
+  is_active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+}
+
+// ============================================
+// 19. ACTIVITY SERVICE (활동 서비스)
+// ============================================
+
+Table activity.user_article {
+  user_id varchar [pk]
+  article_id varchar [pk]
+  title varchar
+  version bigint
+  created_at timestamp
+}
+
+Table activity.user_like {
+  user_id varchar [pk]
+  category_id bigint [pk]
+  reference_id varchar [pk]
+  liked_at timestamp
+}
+
+Table activity.user_comment {
+  user_id varchar [pk]
+  comment_id varchar [pk]
+  article_id varchar
+  created_at timestamp
+}
+
+Table activity.user_board_activities_count {
+  user_id varchar [pk]
+  article_count int [default: 0]
+  comment_count int [default: 0]
+  like_count int [default: 0]
+  updated_at timestamp
+}
+
+// ============================================
+// 20. OUTBOX PATTERN (이벤트 발행)
+// ============================================
+
+Table outbox.outbox_message {
+  id bigint [pk, increment]
+  aggregate_type varchar
+  aggregate_id varchar
+  event_type varchar
+  payload jsonb
+  status varchar [note: 'PENDING, PUBLISHED, FAILED']
+  created_at timestamp
+  published_at timestamp
+  retry_count int [default: 0]
+
+  Indexes {
+    (status, created_at) [name: 'idx_outbox_pending']
+  }
+}
+
+// ============================================
+// TABLE GROUPS (서비스별 그룹화)
+// ============================================
+
+TableGroup auth_service {
+  auth.auth
+  auth.consent
+  auth.consents_table
+  auth.history
+  auth.withdraw
+  auth.suspend
+  auth.login_status
+}
+
+TableGroup profile_service {
+  profile.user_info
+  profile.user_genres
+  profile.genre_name_table
+  profile.user_instruments
+  profile.instrument_name_table
+  profile.history
+}
+
+TableGroup image_service {
+  image.image
+  image.reference_type
+  image.storage_object
+  image.extension
+  image.status_history
+}
+
+TableGroup board_service {
+  board.board
+  board.article
+  board.article_image
+  board.keyword
+  board.keyword_mapping
+}
+
+TableGroup comment_service {
+  comment.comment
+}
+
+TableGroup likes_service {
+  gaechu.categories
+  gaechu.likes
+  gaechu.like_count
+}
+
+TableGroup place_service {
+  place.place_info
+  place.place_contact
+  place.place_contact_websites
+  place.place_contact_social_links
+  place.place_location
+  place.place_parking
+  place.place_image
+  place.keyword
+  place.place_keywords
+}
+
+TableGroup room_service {
+  room.room_info
+  room.room_image
+  room.further_detail
+  room.caution_detail
+  room.room_options_mapper
+  room.reservation_field
+}
+
+TableGroup product_service {
+  product.product
+  product.pricing_policy
+  product.room_allowed_product
+}
+
+TableGroup reservation_service {
+  reservation.reservation
+  reservation.reservation_start_times
+  reservation.reservation_product_data
+  reservation.reservation_additional_info
+  reservation.blacklist
+}
+
+TableGroup coupon_service {
+  coupon.coupon_policy
+  coupon.coupon_issue
+  coupon.coupon_reservation
+  coupon.coupon_statistics
+}
+
+TableGroup payment_service {
+  payment.payment
+  payment.payment_event
+  payment.refund
+}
+
+TableGroup chat_service_mongodb {
+  chat.chat_room
+  chat.chat_room_participants
+  chat.message
+  chat.message_read_by
+}
+
+TableGroup review_service_mongodb {
+  review.review
+  review.place_rating
+}
+
+TableGroup notification_service {
+  notification.device_token
+  notification.user_consent
+}
+
+TableGroup support_service {
+  support.report
+  support.report_category
+  support.report_history
+  support.report_statistics
+  support.sanction
+  support.sanction_rule
+  support.inquiry
+  support.answer
+  support.faq
+}
+
+TableGroup activity_service {
+  activity.user_article
+  activity.user_like
+  activity.user_comment
+  activity.user_board_activities_count
+}

@@ -1,0 +1,112 @@
+// Review/Support 도메인 (리뷰/지원) - REVIEW_SERVICE_SERVER
+// 데이터베이스: MongoDB
+// 설명: 리뷰 작성, 별점 관리, 통계, 고객 지원 관리
+
+Project ReviewSupport {
+  database_type: 'MongoDB'
+  Note: 'Review/Support 도메인 - 리뷰 관리, 별점 통계'
+}
+
+// ==================== MongoDB Collections ====================
+
+Table reviews [headercolor: #3498db, note: '리뷰 컬렉션 - immutable'] {
+  reservation_id String [pk, note: '예약 ID (PK, → Reservation)']
+  room_id String [not null, note: '객실 ID (→ Room)']
+  place_id String [not null, note: '업체 ID (→ Place)']
+  writer_id Long [not null, note: '작성자 ID (→ Auth)']
+  rating Integer [not null, note: '별점 (1-5)']
+  content String [not null, note: '리뷰 내용 (최대 1000자)']
+  review_number Integer [not null, note: '객실 내 리뷰 번호']
+  created_at DateTime [not null, note: '생성 시각']
+
+  Note: '''
+    리뷰 특이사항:
+    - 리뷰는 생성 후 수정 불가능 (immutable pattern)
+    - 예약 ID가 PK (하나의 예약에 하나의 리뷰만)
+
+    rating 유효성 검증:
+    - 최소값: 1
+    - 최대값: 5
+    - 정수만 허용
+
+    content 유효성 검증:
+    - 빈 문자열 불가
+    - 최대 1000자
+  '''
+
+  indexes {
+    room_id
+    place_id
+    writer_id
+    rating
+    created_at
+    (room_id, created_at)
+    (place_id, created_at)
+    (writer_id, created_at)
+  }
+}
+
+Table places [headercolor: #e74c3c, note: '업체 통계 컬렉션'] {
+  place_id String [pk, note: '업체 ID']
+
+  Note: '''
+    rooms (embedded array - RoomStatistics):
+    - roomId: String (객실 ID)
+    - averageRating: Double (평균 별점, 소수점 1자리)
+    - reviewCount: Integer (총 리뷰 수)
+    - ratingDistribution: Map (별점별 개수 분포)
+      예: {1: 5, 2: 10, 3: 25, 4: 50, 5: 60}
+    - lastReviewNumber: Integer (마지막 리뷰 번호)
+  '''
+
+  indexes {
+    place_id [pk]
+  }
+}
+
+Table room_statistics [headercolor: #9b59b6, note: '객실 통계 (Embedded Document in places)'] {
+  room_id String [not null, note: '객실 ID']
+  average_rating Double [not null, note: '평균 별점 (소수점 1자리)']
+  review_count Integer [not null, note: '총 리뷰 수']
+  rating_distribution "Map<Integer, Integer>" [not null, note: '별점별 개수 분포']
+  last_review_number Integer [not null, note: '마지막 리뷰 번호']
+
+  Note: '''
+    places.rooms에 embedded로 저장됨
+
+    rating_distribution 예시:
+    {
+      "1": 5,
+      "2": 10,
+      "3": 25,
+      "4": 50,
+      "5": 60
+    }
+  '''
+}
+
+// ==================== 통계 계산 ====================
+
+// Place 전체 통계 (PlaceStatistics) - 계산된 값
+// - placeId: String (업체 ID)
+// - totalReviewCount: Integer (전체 리뷰 수 - 모든 객실 합산)
+// - overallAverageRating: Double (전체 평균 별점 - 가중 평균)
+
+// 가중 평균 계산 공식:
+// overallAverageRating = Σ(room.averageRating × room.reviewCount) / totalReviewCount
+
+// ==================== 리뷰 작성 흐름 ====================
+
+// 1. 예약 완료 (COMPLETED)
+//    ↓
+// 2. 리뷰 작성 가능 (예약 ID 기반)
+//    ↓
+// 3. reviews 컬렉션에 저장
+// 4. places 컬렉션의 해당 객실 통계 업데이트
+
+// ==================== External References ====================
+
+// reviews.reservation_id -> Reservation.reservation_entity.reservation_id
+// reviews.room_id -> Room.room_info.room_id
+// reviews.place_id -> Place.place_info.id
+// reviews.writer_id -> Auth.auth.id

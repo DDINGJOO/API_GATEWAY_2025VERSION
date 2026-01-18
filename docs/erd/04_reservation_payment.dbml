@@ -1,0 +1,215 @@
+// Reservation/Payment 도메인 (예약/결제) - YE_YAK_MANAGER / PAYMENT / COUPON
+// 데이터베이스: PostgreSQL
+// 설명: 예약 생성, 결제 처리, 환불, 쿠폰 적용 관리
+
+Project ReservationPayment {
+  database_type: 'PostgreSQL'
+  Note: 'Reservation/Payment 도메인 - 예약, 결제, 환불, 쿠폰 관리'
+}
+
+// ==================== Enums ====================
+
+Enum reservation_status {
+  AWAITING_USER_INFO [note: '사용자 정보 입력 대기']
+  PENDING            [note: '예약 대기 (결제 대기)']
+  PENDING_CONFIRMED  [note: '영업장 승인 대기']
+  CONFIRMED          [note: '예약 확정']
+  REJECTED           [note: '예약 거절']
+  REFUNDED           [note: '환불 완료']
+}
+
+Enum payment_status {
+  PREPARED  [note: '결제 대기 (Kafka 이벤트로 저장된 상태)']
+  COMPLETED [note: '결제 완료 (Toss 승인 완료)']
+  FAILED    [note: '결제 실패']
+  CANCELLED [note: '결제 취소']
+}
+
+Enum payment_method {
+  CARD            [note: '신용/체크카드']
+  VIRTUAL_ACCOUNT [note: '가상계좌']
+  EASY_PAY        [note: '간편결제']
+}
+
+Enum refund_status {
+  PENDING   [note: '환불 요청 (검증 대기)']
+  APPROVED  [note: '환불 승인 (Toss 환불 요청 전)']
+  COMPLETED [note: '환불 완료 (Toss 환불 완료)']
+  FAILED    [note: '환불 실패']
+}
+
+Enum discount_type {
+  AMOUNT       [note: '고정 금액 할인']
+  FIXED_AMOUNT [note: '고정 금액 할인']
+  PERCENTAGE   [note: '퍼센트 할인']
+}
+
+Enum distribution_type {
+  CODE   [note: '쿠폰 코드 방식 - 공개 코드로 다운로드']
+  DIRECT [note: '직접 발급 - 관리자가 사용자에게 직접 발급']
+  EVENT  [note: '이벤트 발급 - 특정 이벤트 조건 만족시 자동 발급']
+}
+
+Enum coupon_status {
+  ISSUED    [note: '발급됨 - 사용 가능']
+  RESERVED  [note: '예약됨 - 결제 대기중']
+  USED      [note: '사용 완료']
+  EXPIRED   [note: '만료됨']
+  CANCELLED [note: '취소됨']
+}
+
+// ==================== YE_YAK_MANAGER Tables ====================
+
+Table reservation_entity [headercolor: #3498db, note: '예약 정보 - Aggregate Root'] {
+  reservation_id Long [pk, note: '예약 ID (Snowflake)']
+  place_id Long [not null, note: '업체 ID (→ Place)']
+  room_id Long [not null, note: '객실 ID (→ Room)']
+  user_id Long [not null, note: '예약자 ID (→ Auth)']
+  status reservation_status [not null, note: '예약 상태']
+  reservation_date Date [not null, note: '예약 날짜']
+  start_times JSON [note: '시작 시간들 (배열)']
+  total_price Long [not null, note: '총 가격']
+  reservation_time_price Long [note: '시간 가격']
+  product_data JSON [note: '상품 정보']
+  additional_info JSON [note: '추가 정보']
+  reserver_name String [note: '예약자 이름 (암호화)']
+  reserver_phone String [note: '예약자 전화번호 (암호화)']
+  approved_at DateTime [note: '승인 일시']
+  approved_by Long [note: '승인자 ID (0=시스템)']
+  rejected_at DateTime [note: '거절 일시']
+  rejected_reason String [note: '거절 사유 (최소 5자)']
+  rejected_by Long [note: '거절자 ID']
+  created_at DateTime [not null, note: '생성일시']
+  updated_at DateTime [not null, note: '수정일시']
+
+  indexes {
+    user_id
+    place_id
+    room_id
+    status
+    reservation_date
+    (user_id, status)
+    (place_id, status)
+    (room_id, reservation_date)
+  }
+}
+
+// ==================== PAYMENT Tables ====================
+
+Table payments [headercolor: #e74c3c, note: '결제 정보'] {
+  payment_id String(50) [pk, note: '결제 ID']
+  reservation_id String(50) [unique, not null, note: '예약 ID']
+  amount Decimal [not null, note: '결제 금액']
+  method payment_method [note: '결제 수단']
+  status payment_status [not null, note: '결제 상태']
+  order_id String(100) [note: '주문 ID']
+  payment_key String(200) [note: '토스 결제 키']
+  transaction_id String(100) [note: '토스 거래 ID']
+  check_in_date DateTime [not null, note: '체크인 날짜']
+  idempotency_key String(100) [unique, note: '멱등성 키']
+  created_at DateTime [not null, note: '생성 시각']
+  paid_at DateTime [note: '결제 완료 시각']
+  cancelled_at DateTime [note: '취소 시각']
+  failure_reason Text [note: '실패 사유']
+
+  indexes {
+    reservation_id [unique]
+    status
+    order_id
+    payment_key
+    idempotency_key [unique]
+    (status, created_at)
+  }
+}
+
+Table refunds [headercolor: #9b59b6, note: '환불 정보'] {
+  refund_id String(50) [pk, note: '환불 ID']
+  payment_id String(50) [not null, ref: > payments.payment_id, note: '결제 ID']
+  refund_amount Decimal [not null, note: '환불 금액']
+  original_amount Decimal [not null, note: '원래 금액']
+  status refund_status [not null, note: '환불 상태']
+  reason Text [note: '환불 사유']
+  cancel_reason Text [note: '취소 사유']
+  transaction_id String(100) [note: '토스 거래 ID']
+  requested_at DateTime [not null, note: '요청 시각']
+  approved_at DateTime [note: '승인 시각']
+  completed_at DateTime [note: '완료 시각']
+  failure_reason Text [note: '실패 사유']
+
+  indexes {
+    payment_id
+    status
+    (payment_id, status)
+  }
+}
+
+// ==================== COUPON Tables ====================
+
+Table coupon_policies [headercolor: #f39c12, note: '쿠폰 정책'] {
+  id Long [pk, note: 'Snowflake ID']
+  coupon_name String(100) [not null, note: '쿠폰명']
+  coupon_code String(50) [unique, note: '쿠폰 코드 (CODE 타입)']
+  description String(500) [note: '설명']
+  discount_type discount_type [not null, note: '할인 유형']
+  discount_value Decimal [not null, note: '할인 값']
+  max_discount_amount Decimal [note: '최대 할인 금액']
+  minimum_order_amount Decimal [note: '최소 주문 금액']
+  applicable_rule JSON [note: '적용 가능 상품 규칙']
+  distribution_type distribution_type [not null, note: '배포 방식']
+  valid_from DateTime [not null, note: '유효 시작일']
+  valid_until DateTime [not null, note: '유효 종료일']
+  max_issue_count Integer [note: '최대 발급 수량']
+  max_usage_per_user Integer [note: '사용자당 최대 사용 횟수']
+  current_issue_count Integer [not null, default: 0, note: '현재 발급 수량']
+  is_active Boolean [not null, default: true, note: '활성화 여부']
+  created_by Long [note: '생성자 ID']
+  version Long [not null, note: '낙관적 락 버전']
+  created_at DateTime [not null, note: '생성일시']
+  updated_at DateTime [not null, note: '수정일시']
+
+  indexes {
+    coupon_code [unique]
+    distribution_type
+    is_active
+    (valid_from, valid_until)
+    (is_active, valid_until)
+  }
+}
+
+Table coupon_issues [headercolor: #1abc9c, note: '발급된 쿠폰'] {
+  id Long [pk, note: 'Snowflake ID']
+  policy_id Long [not null, ref: > coupon_policies.id, note: '쿠폰 정책 ID']
+  user_id Long [not null, note: '사용자 ID (→ Auth)']
+  status coupon_status [not null, note: '쿠폰 상태']
+  reservation_id String [unique, note: '예약 ID']
+  order_id String [note: '주문 ID']
+  issued_at DateTime [not null, note: '발급 시각']
+  reserved_at DateTime [note: '예약 시각']
+  used_at DateTime [note: '사용 시각']
+  expired_at DateTime [note: '만료 시각']
+  expires_at DateTime [note: '만료 예정일']
+  actual_discount_amount Decimal [note: '실제 할인 금액']
+  coupon_name String(100) [note: '쿠폰명 (denormalized)']
+  discount_value Decimal [note: '할인 값 (denormalized)']
+  discount_type String(20) [note: '할인 유형 (denormalized)']
+  max_discount_amount Decimal [note: '최대 할인 (denormalized)']
+  min_order_amount Decimal [note: '최소 주문 (denormalized)']
+  version Long [not null, note: '낙관적 락 버전']
+
+  indexes {
+    policy_id
+    user_id
+    status
+    reservation_id [unique]
+    (user_id, status)
+    (user_id, policy_id)
+    expires_at
+  }
+}
+
+// ==================== External References ====================
+
+// reservation_entity.user_id -> Auth.auth.id
+// reservation_entity.place_id -> Place.place_info.id
+// reservation_entity.room_id -> Room.room_info.room_id
+// coupon_issues.user_id -> Auth.auth.id

@@ -1,0 +1,116 @@
+// Auth 도메인 (인증/사용자) - Auth_Server
+// 데이터베이스: PostgreSQL
+// 설명: 사용자 인증, 회원가입, 로그인 상태 관리
+
+Project Auth {
+  database_type: 'PostgreSQL'
+  Note: 'Auth 도메인 - 모든 서비스에서 userId로 이 서비스의 사용자를 참조'
+}
+
+// ==================== Enums ====================
+
+Enum provider {
+  LOCAL     [note: '이메일/비밀번호 가입']
+  KAKAO     [note: '카카오 소셜 로그인']
+  GOOGLE    [note: '구글 소셜 로그인']
+  APPLE     [note: '애플 소셜 로그인']
+}
+
+Enum status {
+  ACTIVE    [note: '정상 계정']
+  INACTIVE  [note: '비활성화']
+  SUSPENDED [note: '정지됨']
+  WITHDRAWN [note: '탈퇴함']
+}
+
+Enum user_role {
+  USER        [note: '일반 사용자']
+  PLACE_OWNER [note: '업체 소유자']
+  ADMIN       [note: '관리자']
+}
+
+// ==================== Tables ====================
+
+Table auth [headercolor: #3498db, note: '사용자 계정 - 핵심 테이블. 모든 서비스에서 이 테이블의 id를 userId로 참조'] {
+  id String [pk, note: '사용자 고유 ID (Snowflake)']
+  email String [unique, not null, note: '로그인 이메일']
+  password String [note: '암호화된 비밀번호 (LOCAL 가입시만)']
+  phone_number String [note: '전화번호']
+  provider provider [not null, note: '가입 방식']
+  status status [not null, note: '계정 상태']
+  user_role user_role [not null, note: '사용자 권한']
+  version Long [not null, note: '낙관적 락 버전']
+  created_at DateTime [not null, note: '가입일시']
+  updated_at DateTime [not null, note: '수정일시']
+}
+
+Table consent [headercolor: #9b59b6, note: '사용자 동의 기록'] {
+  id String [pk, note: '동의 기록 ID']
+  user_id String [not null, ref: > auth.id, note: '사용자 ID']
+  consent_id String [not null, ref: > consents_table.id, note: '동의 항목 ID']
+  consented_at DateTime [not null, note: '동의 일시']
+
+  indexes {
+    user_id
+    (user_id, consent_id) [unique]
+  }
+}
+
+Table consents_table [headercolor: #e74c3c, note: '동의 항목 정의 (마스터 테이블)'] {
+  id String [pk, note: '동의 항목 ID']
+  consent_name String [not null, note: '동의 항목명']
+  description String [note: '상세 설명']
+  required Boolean [not null, note: '필수 동의 여부']
+}
+
+Table history [headercolor: #f39c12, note: '계정 변경 이력'] {
+  id String [pk, note: '이력 ID']
+  user_id String [not null, ref: > auth.id, note: '사용자 ID']
+  updated_at DateTime [not null, note: '변경 일시']
+  updated_column String [not null, note: '변경된 필드명']
+  before_value String [note: '변경 전 값']
+  after_value String [note: '변경 후 값']
+
+  indexes {
+    user_id
+    (user_id, updated_at)
+  }
+}
+
+Table login_status [headercolor: #1abc9c, note: '로그인 상태'] {
+  id String [pk, note: '상태 ID']
+  user_id String [unique, not null, ref: - auth.id, note: '사용자 ID (1:1)']
+  last_login_at DateTime [note: '마지막 로그인']
+  login_ip String [note: '로그인 IP']
+  device_info String [note: '디바이스 정보']
+}
+
+Table suspend [headercolor: #e74c3c, note: '계정 정지'] {
+  id String [pk, note: '정지 ID']
+  user_id String [not null, ref: > auth.id, note: '사용자 ID']
+  reason String [not null, note: '정지 사유']
+  suspended_at DateTime [not null, note: '정지 시작일']
+  suspended_until DateTime [note: '정지 종료일 (null=영구)']
+
+  indexes {
+    user_id
+  }
+}
+
+Table withdraw [headercolor: #95a5a6, note: '회원 탈퇴'] {
+  id String [pk, note: '탈퇴 ID']
+  user_id String [unique, not null, ref: - auth.id, note: '사용자 ID (1:1)']
+  reason String [note: '탈퇴 사유']
+  withdrawn_at DateTime [not null, note: '탈퇴 일시']
+}
+
+// ==================== 다른 서비스 참조 ====================
+
+// Auth.id가 참조되는 곳:
+// - Profile.user_info.userId (1:1)
+// - Place.place_info.userId (1:N)
+// - Reservation.reservation.userId (1:N)
+// - Article.article.writerId (1:N)
+// - Comment.comment.writerId (1:N)
+// - Review.review.writerId (1:N)
+// - Chat.chat_room.ownerId (1:N)

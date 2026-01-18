@@ -1,0 +1,250 @@
+// Place & Room 도메인 (업체/공간) - PLACE_INFO / ROOM_INFO / LEE_YONG_GWAN_LEE
+// 데이터베이스: PostgreSQL
+// 설명: 합주실, 연습실 등 업체 정보와 공간 정보 관리
+
+Project PlaceRoom {
+  database_type: 'PostgreSQL'
+  Note: 'Place/Room 도메인 - Place → Room → TimeSlot 순으로 계층 구조'
+}
+
+// ==================== Enums ====================
+
+Enum approval_status {
+  PENDING   [note: '승인 대기']
+  APPROVED  [note: '승인됨']
+  REJECTED  [note: '거절됨']
+}
+
+Enum place_type {
+  BAND_PRACTICE   [note: '밴드 합주실']
+  VOCAL_PRACTICE  [note: '보컬 연습실']
+  RECORDING_STUDIO [note: '녹음실']
+  DANCE_STUDIO    [note: '댄스 연습실']
+}
+
+Enum room_status {
+  OPEN    [note: '운영 중']
+  CLOSE   [note: '운영 종료']
+  PENDING [note: '승인 대기']
+}
+
+Enum time_slot_type {
+  HOUR     [note: '시간 단위 (1시간)']
+  HALFHOUR [note: '30분 단위']
+}
+
+Enum slot_status {
+  AVAILABLE [note: '예약 가능 상태 또는 취소됨']
+  PENDING   [note: '예약 진행중 (결제 대기)']
+  RESERVED  [note: '예약 확정 (결제 완료)']
+  CLOSED    [note: '운영하지 않음 (휴무일)']
+}
+
+Enum input_type {
+  TEXT     [note: '텍스트 입력']
+  NUMBER   [note: '숫자 입력']
+  DATE     [note: '날짜 선택']
+  SELECT   [note: '드롭다운 선택']
+  CHECKBOX [note: '체크박스']
+}
+
+// ==================== PLACE Tables ====================
+
+Table place_info [headercolor: #3498db, note: '업체 정보 - Aggregate Root'] {
+  id Long [pk, note: '업체 ID (Snowflake)']
+  user_id String [not null, note: '업체 소유자 (→ Auth.id)']
+  place_name String [not null, note: '업체명']
+  description String [note: '업체 소개 (최대 2000자)']
+  category String [not null, note: '업체 카테고리']
+  place_type place_type [not null, note: '업체 유형']
+  is_active Boolean [not null, default: true, note: '운영 중 여부']
+  approval_status approval_status [not null, note: '승인 상태']
+  registration_status String [not null, note: '등록 상태']
+  rating_average Decimal [not null, default: 0, note: '평균 평점 (1.0~5.0)']
+  review_count Integer [not null, default: 0, note: '리뷰 수']
+  created_at DateTime [not null, note: '등록일시']
+  updated_at DateTime [not null, note: '수정일시']
+  deleted_at DateTime [note: '삭제일시 (Soft Delete)']
+
+  indexes {
+    user_id
+    approval_status
+    category
+    place_type
+    (approval_status, is_active)
+  }
+}
+
+Table place_contact [headercolor: #9b59b6, note: '업체 연락처 (1:1)'] {
+  id Long [pk, increment, note: 'PK']
+  place_id Long [unique, not null, ref: - place_info.id, note: '업체 ID (1:1)']
+  contact String [not null, note: '대표 전화번호']
+  email String [note: '이메일']
+}
+
+Table place_contact_websites [headercolor: #9b59b6, note: '업체 웹사이트 목록 (최대 10개)'] {
+  place_contact_id Long [not null, ref: > place_contact.id, note: '연락처 ID']
+  website String [not null, note: '웹사이트 URL']
+
+  indexes {
+    place_contact_id
+  }
+}
+
+Table place_location [headercolor: #e74c3c, note: '업체 위치 (1:1)'] {
+  id Long [pk, increment, note: 'PK']
+  place_id Long [unique, not null, ref: - place_info.id, note: '업체 ID (1:1)']
+  address String [not null, note: '도로명 주소']
+  latitude Decimal [not null, note: '위도']
+  longitude Decimal [not null, note: '경도']
+
+  indexes {
+    (latitude, longitude)
+  }
+}
+
+Table place_parking [headercolor: #f39c12, note: '주차 정보 (1:1)'] {
+  id Long [pk, increment, note: 'PK']
+  place_id Long [unique, not null, ref: - place_info.id, note: '업체 ID (1:1)']
+  available_parking_lots Integer [not null, note: '주차 가능 대수']
+  parking_type String [not null, note: '주차 유형 (FREE/PAID/NONE)']
+}
+
+Table place_image [headercolor: #1abc9c, note: '업체 이미지 (1:N, 최대 10개)'] {
+  image_id Long [pk, increment, note: 'PK']
+  place_id Long [not null, ref: > place_info.id, note: '업체 ID']
+  image_url String [not null, note: '이미지 URL']
+  sequence Integer [not null, note: '표시 순서 (0부터)']
+
+  indexes {
+    place_id
+    (place_id, sequence)
+  }
+}
+
+Table keyword [headercolor: #95a5a6, note: '키워드 마스터'] {
+  id Long [pk, increment, note: '키워드 ID']
+  keyword_name String [unique, not null, note: '키워드명']
+
+  Note: '''
+    주요 키워드:
+    - 24시간
+    - 주차가능
+    - 역근처
+    - 장비대여
+    - 녹음가능
+  '''
+}
+
+Table place_keywords [headercolor: #95a5a6, note: '업체 키워드 (M:N)'] {
+  place_id Long [not null, ref: > place_info.id, note: '업체 ID']
+  keyword_id Long [not null, ref: > keyword.id, note: '키워드 ID']
+
+  indexes {
+    (place_id, keyword_id) [pk]
+  }
+}
+
+// ==================== ROOM Tables ====================
+
+Table room_info [headercolor: #2ecc71, note: '객실 정보'] {
+  room_id Long [pk, note: '객실 ID (Snowflake)']
+  place_id Long [not null, ref: > place_info.id, note: '업체 ID']
+  room_name String [not null, note: '객실명']
+  status room_status [not null, note: '객실 상태']
+  time_slot time_slot_type [not null, note: '시간대 유형']
+  max_occupancy Integer [not null, note: '최대 수용 인원']
+  created_at DateTime [not null, note: '등록일시']
+  updated_at DateTime [not null, note: '수정일시']
+
+  indexes {
+    place_id
+    status
+    (place_id, status)
+  }
+}
+
+Table room_image [headercolor: #27ae60, note: '객실 이미지 (1:N)'] {
+  image_id Long [pk, increment, note: 'PK']
+  room_id Long [not null, ref: > room_info.room_id, note: '객실 ID']
+  image_url String [not null, note: '이미지 URL']
+  sequence Integer [not null, note: '표시 순서']
+
+  indexes {
+    room_id
+    (room_id, sequence)
+  }
+}
+
+Table further_detail [headercolor: #16a085, note: '객실 추가 정보'] {
+  id Long [pk, increment, note: 'PK']
+  room_id Long [not null, ref: > room_info.room_id, note: '객실 ID']
+  detail String [not null, note: '상세 내용']
+
+  indexes {
+    room_id
+  }
+}
+
+Table caution_detail [headercolor: #e74c3c, note: '객실 주의사항'] {
+  id Long [pk, increment, note: 'PK']
+  room_id Long [not null, ref: > room_info.room_id, note: '객실 ID']
+  detail String [not null, note: '주의사항']
+
+  indexes {
+    room_id
+  }
+}
+
+Table reservation_field [headercolor: #8e44ad, note: '예약 시 입력 필드'] {
+  field_id Long [pk, increment, note: 'PK']
+  room_id Long [not null, ref: > room_info.room_id, note: '객실 ID']
+  title String [not null, note: '필드 라벨']
+  input_type input_type [not null, note: '입력 타입']
+  required Boolean [not null, note: '필수 여부']
+  max_length Integer [note: '최대 길이']
+  sequence Integer [not null, note: '표시 순서']
+
+  indexes {
+    room_id
+    (room_id, sequence)
+  }
+}
+
+// ==================== TIMESLOT Tables ====================
+
+Table room_operating_policy [headercolor: #3498db, note: '객실별 요일/시간대 운영 정책'] {
+  id Long [pk, increment, note: 'PK']
+  room_id Long [not null, ref: > room_info.room_id, note: '객실 ID']
+  day_of_week String [not null, note: '요일 (MONDAY~SUNDAY)']
+  start_time Time [not null, note: '시작 시간']
+  end_time Time [not null, note: '종료 시간']
+  is_active Boolean [not null, note: '운영 여부']
+
+  indexes {
+    room_id
+    (room_id, day_of_week) [unique]
+  }
+}
+
+Table room_time_slot [headercolor: #e67e22, note: '예약 가능 타임슬롯 (동적 생성)'] {
+  slot_id Long [pk, note: 'PK']
+  room_id Long [not null, ref: > room_info.room_id, note: '객실 ID']
+  reservation_id Long [note: '예약 ID (예약 시 연결)']
+  slot_date Date [not null, note: '슬롯 날짜']
+  start_time Time [not null, note: '시작 시간']
+  end_time Time [not null, note: '종료 시간']
+  status slot_status [not null, note: '슬롯 상태']
+
+  indexes {
+    room_id
+    (room_id, slot_date)
+    (room_id, slot_date, status)
+    reservation_id
+  }
+}
+
+// ==================== External References ====================
+
+// place_info.user_id -> Auth.auth.id (1:N 관계)
+// room_time_slot.reservation_id -> Reservation.reservation_entity.reservation_id

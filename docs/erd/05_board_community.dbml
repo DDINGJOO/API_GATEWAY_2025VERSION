@@ -1,0 +1,193 @@
+// Board/Community 도메인 (게시판/커뮤니티) - Article-server / Comment-server / Activity-Server
+// 데이터베이스: PostgreSQL
+// 설명: 게시판, 게시글, 댓글, 좋아요, 사용자 활동 관리
+
+Project BoardCommunity {
+  database_type: 'PostgreSQL'
+  Note: 'Board/Community 도메인 - 게시글 관리 (Single Table Inheritance)'
+}
+
+// ==================== Enums ====================
+
+Enum article_type {
+  REGULAR [note: '일반 게시글']
+  EVENT   [note: '이벤트 게시글 (기간 정보 포함)']
+  NOTICE  [note: '공지사항']
+}
+
+Enum article_status {
+  ACTIVE  [note: '활성 (공개)']
+  DELETED [note: '삭제됨 (Soft Delete)']
+  BLOCKED [note: '차단됨']
+}
+
+Enum comment_status {
+  ACTIVE         [note: '공개']
+  HIDDEN         [note: '신고/검토로 숨김']
+  BANNED         [note: '정책 위반으로 차단']
+  PENDING_REVIEW [note: '검토 중']
+  DELETED        [note: '삭제됨']
+}
+
+// ==================== Article-server Tables ====================
+
+Table boards [headercolor: #3498db, note: '게시판 - 게시글 분류'] {
+  id Long [pk, increment, note: '게시판 ID']
+  board_name String(50) [unique, not null, note: '게시판 이름']
+  description String(200) [note: '설명']
+  is_active Boolean [not null, default: true, note: '활성화 여부']
+  display_order Integer [note: '표시 순서']
+  created_at DateTime [not null, note: '생성일시']
+  updated_at DateTime [not null, note: '수정일시']
+
+  indexes {
+    board_name [unique]
+    is_active
+    display_order
+  }
+}
+
+Table articles [headercolor: #e74c3c, note: '게시글 - Single Table Inheritance'] {
+  article_id String(50) [pk, note: 'Snowflake ID']
+  article_type article_type [not null, note: '게시글 유형 (Discriminator)']
+  title String(200) [not null, note: '제목']
+  contents Text [not null, note: '내용']
+  writer_id String(50) [not null, note: '작성자 ID (→ Auth)']
+  board_id Long [not null, ref: > boards.id, note: '게시판 ID']
+  status article_status [not null, note: '게시글 상태']
+  view_count Long [not null, default: 0, note: '조회수']
+  first_image_url String(500) [note: '대표 이미지 URL']
+  version Long [not null, note: '낙관적 락 버전']
+  created_at DateTime [not null, note: '생성일시']
+  updated_at DateTime [not null, note: '수정일시']
+  event_start_date DateTime [note: '이벤트 시작일 (EventArticle만)']
+  event_end_date DateTime [note: '이벤트 종료일 (EventArticle만)']
+
+  indexes {
+    writer_id
+    board_id
+    status
+    article_type
+    created_at
+    (board_id, status, created_at)
+    (writer_id, status)
+  }
+}
+
+Table article_images [headercolor: #9b59b6, note: '게시글 이미지'] {
+  image_id String [pk, note: '이미지 ID']
+  article_id String(50) [not null, ref: > articles.article_id, note: '게시글 ID']
+  image_url String(500) [not null, note: '이미지 URL']
+  sequence Long [not null, note: '이미지 순서']
+
+  indexes {
+    article_id
+    (article_id, sequence)
+  }
+}
+
+Table keywords [headercolor: #f39c12, note: '키워드 마스터'] {
+  id Long [pk, increment, note: '키워드 ID']
+  name String [not null, note: '키워드 이름']
+  board_id Long [ref: > boards.id, note: '게시판 ID (null=공통)']
+  is_active Boolean [not null, default: true, note: '활성화 여부']
+  usage_count Integer [not null, default: 0, note: '사용 횟수']
+
+  indexes {
+    name
+    board_id
+    is_active
+    (board_id, is_active)
+  }
+}
+
+Table keyword_mapping_table [headercolor: #f39c12, note: '게시글-키워드 매핑'] {
+  article_id String(50) [not null, ref: > articles.article_id, note: '게시글 ID']
+  keyword_id Long [not null, ref: > keywords.id, note: '키워드 ID']
+
+  indexes {
+    (article_id, keyword_id) [pk]
+  }
+}
+
+// ==================== Comment-server Tables ====================
+
+Table comments [headercolor: #1abc9c, note: '댓글'] {
+  comment_id String(100) [pk, note: '댓글 ID']
+  article_id String(100) [not null, note: '게시글 ID (→ articles)']
+  writer_id String(100) [not null, note: '작성자 ID (→ Auth)']
+  parent_comment_id String(100) [ref: > comments.comment_id, note: '부모 댓글 ID (null=최상위)']
+  root_comment_id String(100) [ref: > comments.comment_id, note: '스레드 루트 ID']
+  depth Integer [not null, default: 0, note: '댓글 깊이 (0: 루트)']
+  contents Text [not null, note: '내용']
+  is_deleted Boolean [not null, default: false, note: '삭제 여부']
+  status comment_status [not null, note: '댓글 상태']
+  reply_count Integer [not null, default: 0, note: '답글 수']
+  created_at DateTime [not null, note: '생성일시']
+  updated_at DateTime [not null, note: '수정일시']
+  deleted_at DateTime [note: '삭제일시']
+
+  indexes {
+    article_id
+    writer_id
+    parent_comment_id
+    root_comment_id
+    status
+    (article_id, status, created_at)
+    (root_comment_id, depth)
+  }
+}
+
+// ==================== Activity-Server Tables ====================
+
+Table user_article [headercolor: #8e44ad, note: '사용자 작성 게시글'] {
+  user_id String [not null, note: '사용자 ID']
+  article_id String [not null, note: '게시글 ID']
+  title String [note: '게시글 제목']
+  version Integer [not null, note: '버전']
+  created_at DateTime [not null, note: '생성일시']
+
+  indexes {
+    (user_id, article_id) [pk]
+    user_id
+    created_at
+  }
+}
+
+Table user_comment [headercolor: #2980b9, note: '사용자 작성 댓글'] {
+  user_id String [not null, note: '사용자 ID']
+  article_id String [not null, note: '게시글 ID']
+  title String [note: '게시글 제목']
+  version Integer [not null, note: '버전']
+  created_at DateTime [not null, note: '생성일시']
+  article_synced Boolean [not null, default: false, note: '동기화 여부']
+
+  indexes {
+    (user_id, article_id) [pk]
+    user_id
+    created_at
+  }
+}
+
+Table user_like [headercolor: #c0392b, note: '사용자 좋아요'] {
+  user_id String [not null, note: '사용자 ID']
+  article_id String [not null, note: '게시글 ID']
+  title String [note: '게시글 제목']
+  version Integer [not null, note: '버전']
+  created_at DateTime [not null, note: '생성일시']
+  article_synced Boolean [not null, default: false, note: '동기화 여부']
+
+  indexes {
+    (user_id, article_id) [pk]
+    user_id
+    created_at
+  }
+}
+
+// ==================== External References ====================
+
+// articles.writer_id -> Auth.auth.id
+// comments.writer_id -> Auth.auth.id
+// user_article.user_id -> Auth.auth.id
+// user_comment.user_id -> Auth.auth.id
+// user_like.user_id -> Auth.auth.id
