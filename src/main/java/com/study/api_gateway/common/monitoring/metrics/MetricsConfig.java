@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class MetricsConfig {
-
+	
 	/**
 	 * 공통 태그 설정
 	 */

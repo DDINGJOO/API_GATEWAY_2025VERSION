@@ -16,17 +16,16 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class ActivityFacadeService {
-
+	
+	private static final String SERVICE_NAME = "activity-service";
 	private final ActivityClient activityClient;
 	private final ResilienceOperator resilience;
-
-	private static final String SERVICE_NAME = "activity-service";
-
+	
 	public Mono<FeedTotalsResponse> getFeedTotals(FeedTotalsRequest request) {
 		return activityClient.getFeedTotals(request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<FeedPageResponse> getFeedByCategory(
 			String category,
 			String viewerId,

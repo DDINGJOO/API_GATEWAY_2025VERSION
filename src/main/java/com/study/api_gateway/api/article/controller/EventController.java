@@ -1,13 +1,12 @@
 package com.study.api_gateway.api.article.controller;
 
-import com.study.api_gateway.api.article.controller.EventApi;
-import com.study.api_gateway.api.article.service.ArticleFacadeService;
 import com.study.api_gateway.api.article.dto.request.EventArticleCreateRequest;
+import com.study.api_gateway.api.article.service.ArticleFacadeService;
 import com.study.api_gateway.common.response.BaseResponse;
-import com.study.api_gateway.enrichment.ImageConfirmService;
-import com.study.api_gateway.enrichment.ProfileEnrichmentUtil;
 import com.study.api_gateway.common.response.ResponseFactory;
 import com.study.api_gateway.common.util.UserIdValidator;
+import com.study.api_gateway.enrichment.ImageConfirmService;
+import com.study.api_gateway.enrichment.ProfileEnrichmentUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +29,7 @@ public class EventController implements EventApi {
 	private final ResponseFactory responseFactory;
 	private final ProfileEnrichmentUtil profileEnrichmentUtil;
 	private final UserIdValidator userIdValidator;
-
+	
 	@Override
 	@PostMapping()
 	public Mono<ResponseEntity<BaseResponse>> postEvent(@RequestBody EventArticleCreateRequest request, ServerHttpRequest req) {
@@ -46,7 +45,7 @@ public class EventController implements EventApi {
 					return Mono.just(responseFactory.ok(result, req));
 				});
 	}
-
+	
 	@Override
 	@PutMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> updateEvent(@PathVariable String articleId, @RequestBody EventArticleCreateRequest request, ServerHttpRequest req) {
@@ -66,7 +65,7 @@ public class EventController implements EventApi {
 					return Mono.just(responseFactory.ok(result, req));
 				});
 	}
-
+	
 	@Override
 	@DeleteMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> deleteEvent(@PathVariable String articleId, ServerHttpRequest req) {
@@ -77,7 +76,7 @@ public class EventController implements EventApi {
 				.then(articleFacadeService.deleteEvent(articleId))
 				.thenReturn(responseFactory.ok("deleted", req, HttpStatus.OK));
 	}
-
+	
 	@Override
 	@GetMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> getEvent(@PathVariable String articleId, ServerHttpRequest req) {
@@ -100,12 +99,12 @@ public class EventController implements EventApi {
 						eventMap.put("eventStartDate", event.getEventStartDate());
 						eventMap.put("eventEndDate", event.getEventEndDate());
 					}
-
+					
 					return profileEnrichmentUtil.enrichArticle(eventMap)
 							.map(enrichedEvent -> responseFactory.ok(enrichedEvent, req));
 				});
 	}
-
+	
 	@Override
 	@GetMapping
 	public Mono<ResponseEntity<BaseResponse>> getEvents(@RequestParam(required = false, defaultValue = "all") String status,

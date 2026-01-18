@@ -105,7 +105,7 @@ public class ProfileClient {
 				.toUriString();
 		
 		log.info("=== ProfileClient.fetchProfile === requesting: {}", uriString);
-
+		
 		return webClient.get()
 				.uri(uriString)
 				.retrieve()

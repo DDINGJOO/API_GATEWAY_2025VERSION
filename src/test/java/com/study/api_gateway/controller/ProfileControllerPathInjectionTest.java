@@ -26,22 +26,22 @@ import java.util.Collections;
 @Import({ResponseFactory.class, RequestPathHelper.class, GlobalExceptionHandler.class, com.study.api_gateway.config.TestConfig.class})
 @Disabled("Needs refactoring to match current architecture")
 class ProfileControllerPathInjectionTest {
-
+	
 	@Autowired
 	private WebTestClient webTestClient;
-
+	
 	@MockBean
 	private ProfileFacadeService profileFacadeService;
-
+	
 	@MockBean
 	private ImageConfirmService imageConfirmService;
-
+	
 	@MockBean
 	private GaechuFacadeService gaechuFacadeService;
-
+	
 	@MockBean
 	private ProfileCache profileCache;
-
+	
 	@Test
 	@DisplayName("프로필 단건 조회: /bff 프리픽스 제거되어 응답.request.path/url 에 반영")
 	void fetchProfilePathFallback() {
@@ -49,7 +49,7 @@ class ProfileControllerPathInjectionTest {
 				.thenReturn(Mono.just(UserResponse.builder().userId("u1").build()));
 		Mockito.when(gaechuFacadeService.getUserLikedCounts(Mockito.anyString(), Mockito.eq("u1")))
 				.thenReturn(Mono.just(Collections.emptyList()));
-
+		
 		webTestClient.get()
 				.uri("/bff/v1/profiles/u1")
 				.exchange()

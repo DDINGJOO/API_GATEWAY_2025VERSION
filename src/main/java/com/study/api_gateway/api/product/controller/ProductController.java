@@ -1,11 +1,10 @@
 package com.study.api_gateway.api.product.controller;
 
-import com.study.api_gateway.api.product.controller.ProductApi;
-import com.study.api_gateway.api.reservation.service.ReservationFacadeService;
-import com.study.api_gateway.common.response.BaseResponse;
 import com.study.api_gateway.api.product.dto.enums.ProductScope;
 import com.study.api_gateway.api.product.dto.request.ProductCreateRequest;
 import com.study.api_gateway.api.product.dto.request.ProductUpdateRequest;
+import com.study.api_gateway.api.reservation.service.ReservationFacadeService;
+import com.study.api_gateway.common.response.BaseResponse;
 import com.study.api_gateway.common.response.ResponseFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,10 +25,10 @@ import java.util.List;
 @RequestMapping("/bff/v1/products")
 @RequiredArgsConstructor
 public class ProductController implements ProductApi {
-
+	
 	private final ReservationFacadeService reservationFacadeService;
 	private final ResponseFactory responseFactory;
-
+	
 	/**
 	 * 상품 등록
 	 * POST /bff/v1/products
@@ -41,11 +40,11 @@ public class ProductController implements ProductApi {
 			ServerHttpRequest req
 	) {
 		log.info("상품 등록: name={}, scope={}", request.getName(), request.getScope());
-
+		
 		return reservationFacadeService.createProduct(request)
 				.map(response -> responseFactory.ok(response, req, org.springframework.http.HttpStatus.CREATED));
 	}
-
+	
 	/**
 	 * 상품 ID로 조회
 	 * GET /bff/v1/products/{productId}
@@ -57,11 +56,11 @@ public class ProductController implements ProductApi {
 			ServerHttpRequest req
 	) {
 		log.info("상품 상세 조회: productId={}", productId);
-
+		
 		return reservationFacadeService.getProductById(productId)
 				.map(response -> responseFactory.ok(response, req));
 	}
-
+	
 	/**
 	 * 상품 목록 조회
 	 * GET /bff/v1/products
@@ -75,11 +74,11 @@ public class ProductController implements ProductApi {
 			ServerHttpRequest req
 	) {
 		log.info("상품 목록 조회: scope={}, placeId={}, roomId={}", scope, placeId, roomId);
-
+		
 		return reservationFacadeService.getProducts(scope, placeId, roomId)
 				.map(response -> responseFactory.ok(response, req));
 	}
-
+	
 	/**
 	 * 상품 재고 가용성 조회
 	 * GET /bff/v1/products/availability
@@ -93,11 +92,11 @@ public class ProductController implements ProductApi {
 			ServerHttpRequest req
 	) {
 		log.info("상품 재고 가용성 조회: roomId={}, placeId={}, timeSlots={}", roomId, placeId, timeSlots);
-
+		
 		return reservationFacadeService.getProductAvailability(roomId, placeId, timeSlots)
 				.map(response -> responseFactory.ok(response, req));
 	}
-
+	
 	/**
 	 * 특정 룸에서 이용 가능한 상품 목록 조회
 	 * GET /bff/v1/products/rooms/{roomId}/available
@@ -110,11 +109,11 @@ public class ProductController implements ProductApi {
 			ServerHttpRequest req
 	) {
 		log.info("룸별 이용 가능 상품 조회: roomId={}, placeId={}", roomId, placeId);
-
+		
 		return reservationFacadeService.getAvailableProductsForRoom(roomId, placeId)
 				.map(response -> responseFactory.ok(response, req));
 	}
-
+	
 	/**
 	 * 상품 수정
 	 * PUT /bff/v1/products/{productId}
@@ -127,11 +126,11 @@ public class ProductController implements ProductApi {
 			ServerHttpRequest req
 	) {
 		log.info("상품 수정: productId={}", productId);
-
+		
 		return reservationFacadeService.updateProduct(productId, request)
 				.map(response -> responseFactory.ok(response, req));
 	}
-
+	
 	/**
 	 * 상품 삭제
 	 * DELETE /bff/v1/products/{productId}
@@ -142,7 +141,7 @@ public class ProductController implements ProductApi {
 			@PathVariable Long productId
 	) {
 		log.info("상품 삭제: productId={}", productId);
-
+		
 		return reservationFacadeService.deleteProduct(productId)
 				.map(response -> ResponseEntity.noContent().build());
 	}

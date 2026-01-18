@@ -19,57 +19,56 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class CommentFacadeService {
-
+	
+	private static final String SERVICE_NAME = "comment-service";
 	private final CommentClient commentClient;
 	private final ResilienceOperator resilience;
-
-	private static final String SERVICE_NAME = "comment-service";
-
+	
 	public Mono<Map<String, Object>> createRootComment(RootCommentCreateRequest request) {
 		return commentClient.createRootComment(request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Map<String, Object>> createReply(String parentId, ReplyCreateRequest request) {
 		return commentClient.createReply(parentId, request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<List<Map<String, Object>>> getCommentsByArticle(String articleId) {
 		return commentClient.getCommentsByArticle(articleId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<List<Map<String, Object>>> getCommentsByArticle(String articleId, Integer page, Integer pageSize, String mode) {
 		return commentClient.getCommentsByArticle(articleId, page, pageSize, mode)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<List<Map<String, Object>>> getReplies(String parentId) {
 		return commentClient.getReplies(parentId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<List<Map<String, Object>>> getThread(String rootId) {
 		return commentClient.getThread(rootId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Map<String, Object>> getOne(String id) {
 		return commentClient.getOne(id)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Map<String, Object>> update(String id, CommentUpdateRequest request) {
 		return commentClient.update(id, request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Void> softDelete(String id, String writerId) {
 		return commentClient.softDelete(id, writerId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Map<String, Integer>> getCountsForArticles(List<String> articleIds) {
 		return commentClient.getCountsForArticles(articleIds)
 				.transform(resilience.protect(SERVICE_NAME));

@@ -24,7 +24,7 @@ import java.util.Set;
  */
 @Tag(name = "Reservation Management", description = "예약 관리 API")
 public interface ReservationManageApi {
-
+	
 	@Operation(summary = "예약 생성", description = "예약 ID 기반으로 예약자 정보(이름, 전화번호)를 업데이트합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "생성 성공",
@@ -36,7 +36,7 @@ public interface ReservationManageApi {
 	Mono<ResponseEntity<BaseResponse>> createReservation(
 			@RequestBody ReservationCreateRequest request,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "예약 사용자 정보 업데이트 (2단계)",
 			description = "예약 ID 기반으로 사용자 정보를 업데이트하고 쿠폰을 적용합니다.")
 	@ApiResponses({
@@ -52,7 +52,7 @@ public interface ReservationManageApi {
 			@PathVariable("reservationId") Long reservationId,
 			@RequestBody UserInfoUpdateRequest request,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "예약 상세 조회", description = "예약 ID로 예약 상세 정보를 조회합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
@@ -64,7 +64,7 @@ public interface ReservationManageApi {
 	Mono<ResponseEntity<BaseResponse>> getReservation(
 			@Parameter(description = "예약 ID", required = true) @PathVariable Long id,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "내 예약 목록 조회", description = "로그인한 사용자의 예약 목록을 커서 기반 페이징으로 조회합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
@@ -80,7 +80,7 @@ public interface ReservationManageApi {
 			@Parameter(description = "상태 필터")
 			@RequestParam(required = false) Set<ReservationStatus> statuses,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "결제 취소 (승인 전)", description = "PENDING_CONFIRMED 상태의 예약에 대해 결제를 취소합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "취소 성공"),
@@ -91,7 +91,7 @@ public interface ReservationManageApi {
 	Mono<ResponseEntity<BaseResponse>> cancelPayment(
 			@Parameter(description = "예약 ID", required = true) @PathVariable Long id,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "환불 요청 (승인 후)", description = "CONFIRMED 또는 REJECTED 상태의 예약에 대해 환불을 요청합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "환불 요청 성공"),

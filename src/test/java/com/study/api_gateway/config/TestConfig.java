@@ -8,13 +8,13 @@ import org.springframework.context.annotation.Primary;
 
 @TestConfiguration
 public class TestConfig {
-
+	
 	@Bean
 	@Primary
 	public JwtTokenValidator jwtTokenValidator() {
 		return new JwtTokenValidator();
 	}
-
+	
 	@Bean
 	@Primary
 	public AuthorizationConfig authorizationConfig() {

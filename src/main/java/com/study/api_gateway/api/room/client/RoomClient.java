@@ -4,8 +4,8 @@ import com.study.api_gateway.api.room.dto.request.ReservationFieldRequest;
 import com.study.api_gateway.api.room.dto.request.RoomCreateRequest;
 import com.study.api_gateway.api.room.dto.response.ReservationFieldResponse;
 import com.study.api_gateway.api.room.dto.response.RoomDetailResponse;
-import com.study.api_gateway.api.room.dto.response.RoomSimpleResponse;
 import com.study.api_gateway.api.room.dto.response.RoomKeywordResponse;
+import com.study.api_gateway.api.room.dto.response.RoomSimpleResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
@@ -147,9 +147,9 @@ public class RoomClient {
 				.bodyToMono(new ParameterizedTypeReference<Map<Long, RoomKeywordResponse>>() {
 				});
 	}
-
+	
 	// ========== Reservation Field APIs ==========
-
+	
 	/**
 	 * 예약 필드 목록 조회
 	 * GET /api/rooms/{roomId}/reservation-fields
@@ -163,7 +163,7 @@ public class RoomClient {
 				.bodyToFlux(ReservationFieldResponse.class)
 				.collectList();
 	}
-
+	
 	/**
 	 * 예약 필드 전체 교체
 	 * PUT /api/rooms/{roomId}/reservation-fields

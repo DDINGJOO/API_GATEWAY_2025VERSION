@@ -1,9 +1,9 @@
 package com.study.api_gateway.api.room.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.study.api_gateway.common.response.ImageInfo;
 import com.study.api_gateway.api.room.dto.enums.RoomStatus;
 import com.study.api_gateway.api.room.dto.enums.TimeSlot;
+import com.study.api_gateway.common.response.ImageInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

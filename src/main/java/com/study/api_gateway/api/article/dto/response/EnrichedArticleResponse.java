@@ -24,12 +24,12 @@ import java.time.LocalDateTime;
 @Schema(name = "EnrichedArticleResponse", description = "프로필 정보가 포함된 게시글 응답",
 		example = "{\n  \"articleId\": \"ART_001\",\n  \"title\": \"게시글 제목\",\n  \"content\": \"게시글 본문 내용입니다.\",\n  \"board\": {\n    \"boardId\": 1,\n    \"boardName\": \"자유게시판\"\n  },\n  \"writerId\": \"user123\",\n  \"createdAt\": \"2025-10-25T10:30:00\",\n  \"writerName\": \"홍길동\",\n  \"writerProfileImage\": \"https://cdn.example.com/profile.jpg\",\n  \"commentCount\": 5,\n  \"likeCount\": 10,\n  \"firstImageUrl\": \"https://cdn.example.com/image.jpg\"\n}")
 public class EnrichedArticleResponse {
-
+	
 	// ========== Article 도메인 정보 ==========
-
+	
 	@Schema(description = "게시글 ID", example = "ART_001")
 	private String articleId;
-
+	
 	@Schema(description = "제목", example = "게시글 제목")
 	private String title;
 	
@@ -38,7 +38,7 @@ public class EnrichedArticleResponse {
 	
 	@Schema(description = "게시판 정보")
 	private BoardInfo board;
-
+	
 	@Schema(description = "작성자 ID", example = "user123")
 	private String writerId;
 	
@@ -61,7 +61,7 @@ public class EnrichedArticleResponse {
 	
 	@Schema(description = "첫 번째 이미지 URL", example = "https://cdn.example.com/image.jpg")
 	private String firstImageUrl;
-
+	
 	/**
 	 * ArticleSimpleResponse로부터 변환 (프로필 정보 없이)
 	 */

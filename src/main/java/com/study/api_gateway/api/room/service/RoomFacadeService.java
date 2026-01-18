@@ -22,31 +22,30 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class RoomFacadeService {
-
+	
+	private static final String SERVICE_NAME = "room-service";
 	private final RoomClient roomClient;
 	private final ResilienceOperator resilience;
-
-	private static final String SERVICE_NAME = "room-service";
-
+	
 	// ========== Command APIs ==========
-
+	
 	public Mono<Long> createRoom(RoomCreateRequest request) {
 		return roomClient.createRoom(request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Long> deleteRoom(Long roomId) {
 		return roomClient.deleteRoom(roomId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	// ========== Query APIs ==========
-
+	
 	public Mono<RoomDetailResponse> getRoomById(Long roomId) {
 		return roomClient.getRoomById(roomId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<List<RoomSimpleResponse>> searchRooms(
 			String roomName,
 			List<Long> keywordIds,
@@ -56,29 +55,29 @@ public class RoomFacadeService {
 		return roomClient.searchRooms(roomName, keywordIds, placeId, minOccupancy)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<List<RoomSimpleResponse>> getRoomsByPlaceId(Long placeId) {
 		return roomClient.getRoomsByPlaceId(placeId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<List<RoomDetailResponse>> getRoomsByIds(List<Long> ids) {
 		return roomClient.getRoomsByIds(ids)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Map<Long, RoomKeywordResponse>> getRoomKeywordMap() {
 		return roomClient.getRoomKeywordMap()
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	// ========== Reservation Field APIs ==========
-
+	
 	public Mono<List<ReservationFieldResponse>> getReservationFields(Long roomId) {
 		return roomClient.getReservationFields(roomId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<List<ReservationFieldResponse>> replaceReservationFields(
 			Long roomId,
 			List<ReservationFieldRequest> requests

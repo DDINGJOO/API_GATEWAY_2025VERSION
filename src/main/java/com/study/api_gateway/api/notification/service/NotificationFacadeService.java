@@ -17,31 +17,30 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class NotificationFacadeService {
-
+	
+	private static final String SERVICE_NAME = "notification-service";
 	private final NotificationClient notificationClient;
 	private final ResilienceOperator resilience;
-
-	private static final String SERVICE_NAME = "notification-service";
-
+	
 	// ==================== 디바이스 토큰 API ====================
-
+	
 	public Mono<Void> registerDeviceToken(RegisterDeviceTokenRequest request) {
 		return notificationClient.registerDeviceToken(request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Void> deleteDeviceToken(DeleteDeviceTokenRequest request) {
 		return notificationClient.deleteDeviceToken(request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	// ==================== 사용자 동의 API ====================
-
+	
 	public Mono<UserConsentResponse> getUserConsent(String userId) {
 		return notificationClient.getUserConsent(userId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<UserConsentResponse> updateNightAdConsent(String userId, UpdateNightAdConsentRequest request) {
 		return notificationClient.updateNightAdConsent(userId, request)
 				.transform(resilience.protect(SERVICE_NAME));

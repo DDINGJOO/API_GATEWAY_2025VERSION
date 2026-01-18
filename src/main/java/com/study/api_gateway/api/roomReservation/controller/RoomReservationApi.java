@@ -22,7 +22,7 @@ import reactor.core.publisher.Mono;
  */
 @Tag(name = "Room Reservation", description = "룸 예약 및 시간 슬롯 관리 API")
 public interface RoomReservationApi {
-
+	
 	@Operation(summary = "룸 운영 정책 설정", description = "룸의 운영 시간 정책을 설정하고 시간 슬롯을 자동으로 생성합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "202", description = "요청 접수됨",
@@ -35,7 +35,7 @@ public interface RoomReservationApi {
 	Mono<ResponseEntity<BaseResponse>> setupRoom(
 			@RequestBody RoomSetupRequest request,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "슬롯 생성 상태 조회", description = "슬롯 생성 요청의 진행 상태를 조회합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
@@ -47,7 +47,7 @@ public interface RoomReservationApi {
 	Mono<ResponseEntity<BaseResponse>> getSlotGenerationStatus(
 			@Parameter(description = "슬롯 생성 요청 ID") @PathVariable String requestId,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "휴무일 설정", description = "룸의 휴무일을 설정하고 해당 날짜의 슬롯 상태를 CLOSED로 변경합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "202", description = "요청 접수됨",
@@ -60,7 +60,7 @@ public interface RoomReservationApi {
 	Mono<ResponseEntity<BaseResponse>> setClosedDates(
 			@RequestBody ClosedDatesRequest request,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "예약 가능 슬롯 조회", description = "특정 룸의 특정 날짜에 예약 가능한 슬롯 목록을 조회합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
@@ -73,7 +73,7 @@ public interface RoomReservationApi {
 			@Parameter(description = "룸 ID", required = true) @RequestParam Long roomId,
 			@Parameter(description = "조회할 날짜 (yyyy-MM-dd)", required = true) @RequestParam String date,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "다중 슬롯 예약", description = "특정 날짜의 여러 시간 슬롯을 한 번에 예약 대기 상태로 변경합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "예약 성공",

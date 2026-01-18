@@ -19,7 +19,7 @@ import reactor.core.publisher.Mono;
  */
 @Tag(name = "Event", description = "이벤트 관련 API")
 public interface EventApi {
-
+	
 	@Operation(summary = "이벤트 생성")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
@@ -30,7 +30,7 @@ public interface EventApi {
 	Mono<ResponseEntity<BaseResponse>> postEvent(
 			@RequestBody EventArticleCreateRequest request,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "이벤트 수정")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
@@ -42,7 +42,7 @@ public interface EventApi {
 			@PathVariable String articleId,
 			@RequestBody EventArticleCreateRequest request,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "이벤트 삭제")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
@@ -53,7 +53,7 @@ public interface EventApi {
 	Mono<ResponseEntity<BaseResponse>> deleteEvent(
 			@PathVariable String articleId,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "이벤트 단건 조회")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
@@ -64,7 +64,7 @@ public interface EventApi {
 	Mono<ResponseEntity<BaseResponse>> getEvent(
 			@PathVariable String articleId,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "이벤트 목록 조회")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",

@@ -22,7 +22,7 @@ import reactor.core.publisher.Mono;
  */
 @Tag(name = "Report", description = "신고 관련 API")
 public interface ReportApi {
-
+	
 	@Operation(summary = "신고 등록", description = "새로운 신고를 등록합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "201", description = "생성됨")
@@ -31,7 +31,7 @@ public interface ReportApi {
 	Mono<ResponseEntity<BaseResponse>> createReport(
 			@RequestBody ReportCreateRequest request,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "신고 상세 조회", description = "신고 ID로 상세 정보를 조회합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공"),
@@ -41,7 +41,7 @@ public interface ReportApi {
 	Mono<ResponseEntity<BaseResponse>> getReport(
 			@PathVariable String reportId,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "신고 목록 검색 (커서 기반 페이징)",
 			description = "필터 조건에 따라 신고 목록을 조회합니다.")
 	@ApiResponses({
@@ -57,7 +57,7 @@ public interface ReportApi {
 			@RequestParam(required = false) String cursor,
 			@RequestParam(required = false) Integer size,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "신고 철회", description = "신고를 철회합니다. PENDING 상태의 신고만 철회 가능합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공"),

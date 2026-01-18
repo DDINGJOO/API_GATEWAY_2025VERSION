@@ -11,11 +11,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class ReservationFieldResponse {
-
-    private Long fieldId;
-    private String title;
-    private FieldType inputType;
-    private Boolean required;
-    private Integer maxLength;
-    private Integer sequence;
+	
+	private Long fieldId;
+	private String title;
+	private FieldType inputType;
+	private Boolean required;
+	private Integer maxLength;
+	private Integer sequence;
 }

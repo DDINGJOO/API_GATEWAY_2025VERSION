@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 /**
  * 보안 헤더를 응답에 추가하는 WebFilter
  * OWASP 권장 보안 헤더를 자동으로 추가합니다.
- *
+ * <p>
  * 적용되는 보안 헤더:
  * - X-XSS-Protection: XSS 공격 방지
  * - X-Frame-Options: Clickjacking 방지
@@ -33,43 +33,43 @@ import reactor.core.publisher.Mono;
 @Order(Ordered.HIGHEST_PRECEDENCE + 5)
 @ConditionalOnProperty(name = "security.headers.enabled", havingValue = "true", matchIfMissing = true)
 public class SecurityHeadersFilter implements WebFilter {
-
+	
 	private final SecurityHeadersProperties properties;
-
+	
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 		return chain.filter(exchange)
 				.doOnSuccess(aVoid -> addSecurityHeaders(exchange.getResponse()));
 	}
-
+	
 	private void addSecurityHeaders(ServerHttpResponse response) {
 		HttpHeaders headers = response.getHeaders();
-
+		
 		// XSS 공격 방지
 		headers.addIfAbsent("X-XSS-Protection", "1; mode=block");
-
+		
 		// Clickjacking 방지
 		headers.addIfAbsent("X-Frame-Options", properties.getFrameOptions());
-
+		
 		// MIME 타입 스니핑 방지
 		headers.addIfAbsent("X-Content-Type-Options", "nosniff");
-
+		
 		// Referrer 정보 제한
 		headers.addIfAbsent("Referrer-Policy", properties.getReferrerPolicy());
-
+		
 		// 권한 정책 설정
 		headers.addIfAbsent("Permissions-Policy", properties.getPermissionsPolicy());
-
+		
 		// Content Security Policy
 		headers.addIfAbsent("Content-Security-Policy", properties.getContentSecurityPolicy());
-
+		
 		// 캐시 제어 (민감한 데이터 캐싱 방지)
 		if (properties.isNoCacheEnabled()) {
 			headers.addIfAbsent("Cache-Control", "no-store, no-cache, must-revalidate, private");
 			headers.addIfAbsent("Pragma", "no-cache");
 			headers.addIfAbsent("Expires", "0");
 		}
-
+		
 		// HTTPS 강제 (HSTS)
 		if (properties.isHstsEnabled()) {
 			String hstsValue = String.format("max-age=%d%s",

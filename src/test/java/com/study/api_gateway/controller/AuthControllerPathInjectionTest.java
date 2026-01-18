@@ -1,7 +1,6 @@
 package com.study.api_gateway.controller;
 
 import com.study.api_gateway.api.auth.controller.AuthController;
-import com.study.api_gateway.api.auth.dto.request.LoginRequest;
 import com.study.api_gateway.api.auth.dto.response.LoginResponse;
 import com.study.api_gateway.api.auth.service.AuthFacadeService;
 import com.study.api_gateway.common.exception.GlobalExceptionHandler;
@@ -23,13 +22,13 @@ import reactor.core.publisher.Mono;
 @Import({ResponseFactory.class, RequestPathHelper.class, GlobalExceptionHandler.class, com.study.api_gateway.config.TestConfig.class})
 @Disabled("Needs refactoring to match current architecture")
 class AuthControllerPathInjectionTest {
-
+	
 	@Autowired
 	private WebTestClient webTestClient;
-
+	
 	@MockBean
 	private AuthFacadeService authFacadeService;
-
+	
 	@Test
 	@DisplayName("X-Original-URI 헤더가 있으면 응답.request.path/url 에 그대로 반영된다")
 	void pathInjectedFromOriginalHeader() {
@@ -39,10 +38,10 @@ class AuthControllerPathInjectionTest {
 				.refreshToken("refresh")
 				.deviceId("d")
 				.build();
-
+		
 		Mockito.when(authFacadeService.login("a@a.com", "pwd"))
 				.thenReturn(Mono.just(resp));
-
+		
 		// when - then
 		webTestClient.post()
 				.uri("/bff/v1/auth/login")
@@ -59,7 +58,7 @@ class AuthControllerPathInjectionTest {
 				.jsonPath("$.request.path").isEqualTo("/v1/auth/login")
 				.jsonPath("$.request.url").isEqualTo("https://api.example.com/v1/auth/login");
 	}
-
+	
 	@Test
 	@DisplayName("헤더가 없으면 /bff 프리픽스가 제거되어 응답.request.path/url 에 반영된다")
 	void pathFallbackByStrippingBff() {
@@ -71,7 +70,7 @@ class AuthControllerPathInjectionTest {
 				.build();
 		Mockito.when(authFacadeService.login("a@a.com", "pwd"))
 				.thenReturn(Mono.just(resp));
-
+		
 		// when - then
 		webTestClient.post()
 				.uri("/bff/v1/auth/login")

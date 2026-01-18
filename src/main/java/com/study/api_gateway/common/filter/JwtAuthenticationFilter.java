@@ -1,9 +1,9 @@
 package com.study.api_gateway.common.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.study.api_gateway.api.auth.dto.enums.Role;
 import com.study.api_gateway.common.config.AuthorizationConfig;
 import com.study.api_gateway.common.response.BaseResponse;
-import com.study.api_gateway.api.auth.dto.enums.Role;
 import com.study.api_gateway.common.util.JwtTokenValidator;
 import com.study.api_gateway.common.util.TokenValidationResult;
 import lombok.RequiredArgsConstructor;
@@ -62,7 +62,7 @@ public class JwtAuthenticationFilter implements WebFilter {
 		ServerHttpRequest request = exchange.getRequest();
 		String path = request.getPath().value();
 		String method = request.getMethod().name();
-
+		
 		// OPTIONS 요청(CORS preflight)은 인증 없이 허용
 		if ("OPTIONS".equals(method)) {
 			log.debug("CORS preflight request: {} {}", method, path);
@@ -71,7 +71,7 @@ public class JwtAuthenticationFilter implements WebFilter {
 		
 		// Public 경로 여부 확인
 		boolean isPublic = isPublicPath(path) || ("GET".equals(method) && isPublicReadPath(path));
-
+		
 		// Authorization 헤더에서 토큰 추출
 		String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 		

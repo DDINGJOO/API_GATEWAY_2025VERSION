@@ -14,12 +14,14 @@
 ## 왜 필요한가?
 
 ### 문제 상황
+
 ```
 사용자: "프로필 조회가 느려요"
 개발자: "어디서 느린지 모르겠는데..."
 ```
 
 ### 분산 추적으로 해결
+
 ```
 Trace ID: abc-123-def
 
@@ -34,15 +36,18 @@ Trace ID: abc-123-def
 ## 핵심 개념
 
 ### 1. Trace
+
 - 하나의 요청에 대한 전체 여정
 - 고유한 Trace ID로 식별
 
 ### 2. Span
+
 - 하나의 작업 단위 (서비스 호출, DB 쿼리 등)
 - Span ID로 식별
 - 부모 Span ID로 계층 구조 표현
 
 ### 3. 전파 (Propagation)
+
 - 서비스 간 호출 시 Trace 정보를 HTTP 헤더로 전달
 - B3 형식 또는 W3C Trace Context 형식 사용
 
@@ -197,23 +202,24 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class WebClientConfig {
-
-    @Bean
-    public WebClient.Builder webClientBuilder(ObservationRegistry observationRegistry) {
-        return WebClient.builder()
-                .observationRegistry(observationRegistry);
-    }
+	
+	@Bean
+	public WebClient.Builder webClientBuilder(ObservationRegistry observationRegistry) {
+		return WebClient.builder()
+				.observationRegistry(observationRegistry);
+	}
 }
 ```
 
 또는 기존 WebClient에 적용:
 
 ```java
+
 @Bean
 public WebClient authWebClient(WebClient.Builder builder) {
-    return builder
-            .baseUrl("http://auth-service:8081")
-            .build();
+	return builder
+			.baseUrl("http://auth-service:8081")
+			.build();
 }
 ```
 
@@ -232,28 +238,28 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class ProfileService {
-
-    private final Tracer tracer;
-
-    public UserProfile getProfile(String userId) {
-        // 새 Span 시작
-        Span span = tracer.nextSpan().name("get-profile-from-cache");
-
-        try (Tracer.SpanInScope ws = tracer.withSpan(span.start())) {
-            // 캐시 조회 로직
-            span.tag("userId", userId);
-            span.tag("cache.type", "redis");
-
-            // ... 실제 로직
-
-            return profile;
-        } catch (Exception e) {
-            span.error(e);
-            throw e;
-        } finally {
-            span.end();
-        }
-    }
+	
+	private final Tracer tracer;
+	
+	public UserProfile getProfile(String userId) {
+		// 새 Span 시작
+		Span span = tracer.nextSpan().name("get-profile-from-cache");
+		
+		try (Tracer.SpanInScope ws = tracer.withSpan(span.start())) {
+			// 캐시 조회 로직
+			span.tag("userId", userId);
+			span.tag("cache.type", "redis");
+			
+			// ... 실제 로직
+			
+			return profile;
+		} catch (Exception e) {
+			span.error(e);
+			throw e;
+		} finally {
+			span.end();
+		}
+	}
 }
 ```
 
@@ -262,11 +268,13 @@ public class ProfileService {
 ## Zipkin UI 사용법
 
 ### 1. 접속
+
 ```
 http://localhost:9411
 ```
 
 ### 2. 검색 옵션
+
 - **Service Name**: 특정 서비스의 trace만 필터
 - **Span Name**: 특정 작업만 필터
 - **Tags**: 커스텀 태그로 검색 (예: userId=123)
@@ -325,6 +333,7 @@ http://localhost:9411
 ## 샘플링 전략
 
 ### 개발 환경
+
 ```yaml
 management:
   tracing:
@@ -333,6 +342,7 @@ management:
 ```
 
 ### 운영 환경
+
 ```yaml
 management:
   tracing:
@@ -351,18 +361,18 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class TracingConfig {
-
-    @Bean
-    public Sampler customSampler() {
-        return new Sampler() {
-            @Override
-            public boolean isSampled(long traceId) {
-                // 에러가 발생한 요청은 항상 샘플링
-                // 또는 특정 조건에 따라 샘플링 결정
-                return true;
-            }
-        };
-    }
+	
+	@Bean
+	public Sampler customSampler() {
+		return new Sampler() {
+			@Override
+			public boolean isSampled(long traceId) {
+				// 에러가 발생한 요청은 항상 샘플링
+				// 또는 특정 조건에 따라 샘플링 결정
+				return true;
+			}
+		};
+	}
 }
 ```
 
@@ -372,24 +382,24 @@ public class TracingConfig {
 
 ### 서비스별 적용 체크리스트
 
-| 서비스 | 의존성 추가 | application.yaml | WebClient 설정 | 테스트 |
-|-------|-----------|-----------------|---------------|-------|
-| API Gateway | ☐ | ☐ | ☐ | ☐ |
-| Auth Service | ☐ | ☐ | ☐ | ☐ |
-| Profile Service | ☐ | ☐ | ☐ | ☐ |
-| Image Service | ☐ | ☐ | ☐ | ☐ |
-| Article Service | ☐ | ☐ | ☐ | ☐ |
-| ... | ☐ | ☐ | ☐ | ☐ |
+| 서비스             | 의존성 추가 | application.yaml | WebClient 설정 | 테스트 |
+|-----------------|--------|------------------|--------------|-----|
+| API Gateway     | ☐      | ☐                | ☐            | ☐   |
+| Auth Service    | ☐      | ☐                | ☐            | ☐   |
+| Profile Service | ☐      | ☐                | ☐            | ☐   |
+| Image Service   | ☐      | ☐                | ☐            | ☐   |
+| Article Service | ☐      | ☐                | ☐            | ☐   |
+| ...             | ☐      | ☐                | ☐            | ☐   |
 
 ### 인프라 체크리스트
 
-| 항목 | 상태 |
-|-----|------|
-| Zipkin 서버 배포 | ☐ |
-| 네트워크 연결 확인 | ☐ |
-| 저장소 설정 (ES/Memory) | ☐ |
-| 샘플링 비율 결정 | ☐ |
-| 모니터링 대시보드 연동 | ☐ |
+| 항목                 | 상태 |
+|--------------------|----|
+| Zipkin 서버 배포       | ☐  |
+| 네트워크 연결 확인         | ☐  |
+| 저장소 설정 (ES/Memory) | ☐  |
+| 샘플링 비율 결정          | ☐  |
+| 모니터링 대시보드 연동       | ☐  |
 
 ---
 

@@ -1,11 +1,9 @@
 package com.study.api_gateway.api.coupon.controller;
 
-import com.study.api_gateway.api.coupon.service.CouponFacadeService;
-import com.study.api_gateway.common.response.BaseResponse;
 import com.study.api_gateway.api.coupon.dto.enums.CouponStatus;
 import com.study.api_gateway.api.coupon.dto.request.*;
-import com.study.api_gateway.api.coupon.dto.response.CouponIssueResponse;
-import com.study.api_gateway.api.coupon.dto.response.CouponPolicyResponse;
+import com.study.api_gateway.api.coupon.service.CouponFacadeService;
+import com.study.api_gateway.common.response.BaseResponse;
 import com.study.api_gateway.common.response.ResponseFactory;
 import com.study.api_gateway.common.util.UserIdValidator;
 import lombok.RequiredArgsConstructor;

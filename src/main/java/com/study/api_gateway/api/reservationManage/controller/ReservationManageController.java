@@ -1,15 +1,14 @@
 package com.study.api_gateway.api.reservationManage.controller;
 
-import com.study.api_gateway.api.reservationManage.controller.ReservationManageApi;
-import com.study.api_gateway.api.coupon.service.CouponFacadeService;
-import com.study.api_gateway.api.reservationManage.service.ReservationManageFacadeService;
-import com.study.api_gateway.common.response.BaseResponse;
 import com.study.api_gateway.api.coupon.dto.request.CouponApplyRequest;
+import com.study.api_gateway.api.coupon.service.CouponFacadeService;
 import com.study.api_gateway.api.reservationManage.dto.enums.ReservationStatus;
 import com.study.api_gateway.api.reservationManage.dto.request.ReservationCreateRequest;
 import com.study.api_gateway.api.reservationManage.dto.request.UserInfoUpdateRequest;
-import com.study.api_gateway.enrichment.ReservationEnrichmentService;
+import com.study.api_gateway.api.reservationManage.service.ReservationManageFacadeService;
+import com.study.api_gateway.common.response.BaseResponse;
 import com.study.api_gateway.common.response.ResponseFactory;
+import com.study.api_gateway.enrichment.ReservationEnrichmentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -29,12 +28,12 @@ import java.util.Set;
 @RequestMapping("/bff/v1/reservations")
 @RequiredArgsConstructor
 public class ReservationManageController implements ReservationManageApi {
-
+	
 	private final ReservationManageFacadeService reservationManageFacadeService;
 	private final CouponFacadeService couponFacadeService;
 	private final ReservationEnrichmentService reservationEnrichmentService;
 	private final ResponseFactory responseFactory;
-
+	
 	/**
 	 * 예약 생성 (예약자 정보 업데이트)
 	 * POST /bff/v1/reservations
@@ -46,11 +45,11 @@ public class ReservationManageController implements ReservationManageApi {
 			ServerHttpRequest req
 	) {
 		log.info("예약 생성: reservationId={}, reserverName={}", request.getReservationId(), request.getReserverName());
-
+		
 		return reservationManageFacadeService.createReservation(request)
 				.map(response -> responseFactory.ok(response, req));
 	}
-
+	
 	/**
 	 * 예약 사용자 정보 업데이트 (예약 생성 2단계)
 	 * POST /bff/v1/reservations/{reservationId}/user-info
@@ -67,7 +66,7 @@ public class ReservationManageController implements ReservationManageApi {
 	) {
 		log.info("예약 사용자 정보 업데이트: reservationId={}, userId={}, couponId={}",
 				reservationId, request.getUserId(), request.getCouponId());
-
+		
 		// 쿠폰이 제공된 경우 쿠폰 적용 처리
 		if (request.getCouponId() != null && request.getRoomId() != null && request.getPlaceId() != null) {
 			// 쿠폰 적용 요청 생성
@@ -77,12 +76,12 @@ public class ReservationManageController implements ReservationManageApi {
 					.couponId(request.getCouponId())
 					.orderAmount(null) // 필요시 금액 추가
 					.build();
-
+			
 			// 쿠폰 적용 후 사용자 정보 업데이트
 			return couponFacadeService.applyCoupon(couponApplyRequest)
 					.flatMap(couponResponse -> {
 						log.info("쿠폰 적용 성공: reservationId={}, couponResponse={}", reservationId, couponResponse);
-
+						
 						// 쿠폰 정보를 UserInfoUpdateRequest에 설정
 						UserInfoUpdateRequest.CouponInfo couponInfo = UserInfoUpdateRequest.CouponInfo.builder()
 								.couponId(String.valueOf(request.getCouponId()))
@@ -91,9 +90,9 @@ public class ReservationManageController implements ReservationManageApi {
 								.discountValue(couponResponse.getDiscountValue())
 								.maxDiscountAmount(couponResponse.getMaxDiscountAmount())
 								.build();
-
+						
 						request.setCouponInfo(couponInfo);
-
+						
 						// YeYakManage 서버로 사용자 정보 업데이트 요청
 						return reservationManageFacadeService.updateUserInfo(reservationId, request)
 								.map(response -> responseFactory.ok(response, req));
@@ -116,7 +115,7 @@ public class ReservationManageController implements ReservationManageApi {
 					});
 		}
 	}
-
+	
 	/**
 	 * 예약 상세 조회
 	 * GET /bff/v1/reservations/detail/{id}
@@ -128,12 +127,12 @@ public class ReservationManageController implements ReservationManageApi {
 			ServerHttpRequest req
 	) {
 		log.info("예약 상세 조회: reservationId={}", id);
-
+		
 		return reservationManageFacadeService.getReservationById(id)
 				.flatMap(reservationEnrichmentService::enrichReservationDetail)
 				.map(response -> responseFactory.ok(response, req));
 	}
-
+	
 	/**
 	 * 내 예약 목록 조회 (커서 페이징)
 	 * GET /bff/v1/reservations/me?cursor={cursor}&size={size}&statuses={statuses}
@@ -152,16 +151,16 @@ public class ReservationManageController implements ReservationManageApi {
 			log.warn("X-User-Id header is missing or empty in /reservations/me request");
 			return Mono.just(responseFactory.error("인증이 필요합니다.", HttpStatus.UNAUTHORIZED, req));
 		}
-
+		
 		Long userId = Long.parseLong(userIdStr);
 		log.info("내 예약 목록 조회: userId={}, cursor={}, size={}, statuses={}",
 				userId, cursor, size, statuses);
-
+		
 		return reservationManageFacadeService.getUserReservations(userId, cursor, size, statuses)
 				.flatMap(reservationEnrichmentService::enrichUserReservations)
 				.map(response -> responseFactory.ok(response, req));
 	}
-
+	
 	/**
 	 * 결제 취소 (승인 전)
 	 * POST /bff/v1/reservations/{id}/cancel
@@ -174,7 +173,7 @@ public class ReservationManageController implements ReservationManageApi {
 			ServerHttpRequest req
 	) {
 		log.info("결제 취소 요청: reservationId={}", id);
-
+		
 		return reservationManageFacadeService.cancelPayment(id)
 				.then(Mono.fromCallable(() -> responseFactory.ok("결제가 취소되었습니다.", req)))
 				.onErrorResume(error -> {
@@ -182,7 +181,7 @@ public class ReservationManageController implements ReservationManageApi {
 					return Mono.just(responseFactory.error(error.getMessage(), HttpStatus.BAD_REQUEST, req));
 				});
 	}
-
+	
 	/**
 	 * 환불 요청 (승인 후)
 	 * POST /bff/v1/reservations/{id}/refund
@@ -195,7 +194,7 @@ public class ReservationManageController implements ReservationManageApi {
 			ServerHttpRequest req
 	) {
 		log.info("환불 요청: reservationId={}", id);
-
+		
 		return reservationManageFacadeService.refundReservation(id)
 				.then(Mono.fromCallable(() -> responseFactory.ok("환불 요청이 접수되었습니다.", req)))
 				.onErrorResume(error -> {

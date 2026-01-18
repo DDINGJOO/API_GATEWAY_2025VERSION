@@ -20,7 +20,7 @@ public class PlaceInquiryResponse {
 	private ChatRoomType type;
 	private ContextInfo context;
 	private LocalDateTime createdAt;
-
+	
 	@Data
 	@NoArgsConstructor
 	@AllArgsConstructor

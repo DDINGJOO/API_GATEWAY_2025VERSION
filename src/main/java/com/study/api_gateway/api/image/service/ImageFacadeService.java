@@ -18,27 +18,26 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class ImageFacadeService {
-
+	
+	private static final String SERVICE_NAME = "image-service";
 	private final ImageClient imageClient;
 	private final ResilienceOperator resilience;
-
-	private static final String SERVICE_NAME = "image-service";
-
+	
 	public Mono<Void> confirmImage(String referenceId, String imageId) {
 		return imageClient.confirmImage(referenceId, imageId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Void> confirmImage(String referenceId, List<String> imageIds) {
 		return imageClient.confirmImage(referenceId, imageIds)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Map<String, ExtensionDto>> getExtensions() {
 		return imageClient.getExtensions()
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Map<String, ReferenceTypeDto>> getReferenceType() {
 		return imageClient.getReferenceType()
 				.transform(resilience.protect(SERVICE_NAME));

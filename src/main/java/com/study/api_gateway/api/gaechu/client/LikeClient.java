@@ -76,7 +76,7 @@ public class LikeClient {
 				.toUriString();
 		
 		log.info("=== LikeClient.getUserLikedCounts === requesting: {}", uri);
-
+		
 		return webClient.get()
 				.uri(uri)
 				.retrieve()

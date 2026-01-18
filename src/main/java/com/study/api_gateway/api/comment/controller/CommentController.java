@@ -1,11 +1,11 @@
 package com.study.api_gateway.api.comment.controller;
 
-import com.study.api_gateway.api.comment.service.CommentFacadeService;
-import com.study.api_gateway.common.response.BaseResponse;
 import com.study.api_gateway.api.comment.dto.request.CombinedCommentCreateRequest;
 import com.study.api_gateway.api.comment.dto.request.CommentUpdateRequest;
 import com.study.api_gateway.api.comment.dto.request.ReplyCreateRequest;
 import com.study.api_gateway.api.comment.dto.request.RootCommentCreateRequest;
+import com.study.api_gateway.api.comment.service.CommentFacadeService;
+import com.study.api_gateway.common.response.BaseResponse;
 import com.study.api_gateway.common.response.ResponseFactory;
 import com.study.api_gateway.common.util.UserIdValidator;
 import lombok.RequiredArgsConstructor;

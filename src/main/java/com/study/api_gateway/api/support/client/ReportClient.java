@@ -32,7 +32,7 @@ public class ReportClient {
 	public Mono<ReportResponse> createReport(ReportCreateRequest request) {
 		String uriString = UriComponentsBuilder.fromPath(PREFIX)
 				.toUriString();
-
+		
 		return webClient.post()
 				.uri(uriString)
 				.bodyValue(request)

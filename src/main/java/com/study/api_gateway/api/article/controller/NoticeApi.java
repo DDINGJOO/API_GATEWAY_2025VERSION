@@ -19,7 +19,7 @@ import reactor.core.publisher.Mono;
  */
 @Tag(name = "Notice", description = "공지사항 관련 API")
 public interface NoticeApi {
-
+	
 	@Operation(summary = "공지사항 생성")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
@@ -30,7 +30,7 @@ public interface NoticeApi {
 	Mono<ResponseEntity<BaseResponse>> postNotice(
 			@RequestBody ArticleCreateRequest request,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "공지사항 수정")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
@@ -42,7 +42,7 @@ public interface NoticeApi {
 			@PathVariable String articleId,
 			@RequestBody ArticleCreateRequest request,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "공지사항 삭제")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
@@ -53,7 +53,7 @@ public interface NoticeApi {
 	Mono<ResponseEntity<BaseResponse>> deleteNotice(
 			@PathVariable String articleId,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "공지사항 단건 조회")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
@@ -64,7 +64,7 @@ public interface NoticeApi {
 	Mono<ResponseEntity<BaseResponse>> getNotice(
 			@PathVariable String articleId,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "공지사항 목록 조회")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",

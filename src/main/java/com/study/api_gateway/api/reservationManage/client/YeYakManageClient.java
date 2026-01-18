@@ -110,15 +110,15 @@ public class YeYakManageClient {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path(PREFIX + "/users/{userId}");
-
+					
 					if (cursor != null) {
 						uriBuilder.queryParam("cursor", cursor);
 					}
-
+					
 					if (size != null) {
 						uriBuilder.queryParam("size", size);
 					}
-
+					
 					if (statuses != null && !statuses.isEmpty()) {
 						String statusesStr = String.join(",", statuses.stream().map(Enum::name).toList());
 						uriBuilder.queryParam("statuses", statusesStr);

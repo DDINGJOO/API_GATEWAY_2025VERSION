@@ -1,17 +1,17 @@
 package com.study.api_gateway.aggregation.articleDetail.controller;
 
 import com.study.api_gateway.api.article.client.ArticleClient;
-import com.study.api_gateway.api.comment.client.CommentClient;
-import com.study.api_gateway.api.gaechu.client.LikeClient;
 import com.study.api_gateway.api.article.dto.request.ArticleCreateRequest;
 import com.study.api_gateway.api.article.dto.response.ArticleResponse;
-import com.study.api_gateway.common.response.BaseResponse;
+import com.study.api_gateway.api.comment.client.CommentClient;
+import com.study.api_gateway.api.gaechu.client.LikeClient;
 import com.study.api_gateway.api.gaechu.dto.LikeCountResponse;
 import com.study.api_gateway.api.gaechu.dto.LikeDetailResponse;
-import com.study.api_gateway.enrichment.ImageConfirmService;
-import com.study.api_gateway.enrichment.ProfileEnrichmentUtil;
+import com.study.api_gateway.common.response.BaseResponse;
 import com.study.api_gateway.common.response.ResponseFactory;
 import com.study.api_gateway.common.util.UserIdValidator;
+import com.study.api_gateway.enrichment.ImageConfirmService;
+import com.study.api_gateway.enrichment.ProfileEnrichmentUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

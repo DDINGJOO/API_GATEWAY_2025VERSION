@@ -1,13 +1,12 @@
 package com.study.api_gateway.api.article.controller;
 
-import com.study.api_gateway.api.article.controller.NoticeApi;
-import com.study.api_gateway.api.article.service.ArticleFacadeService;
 import com.study.api_gateway.api.article.dto.request.ArticleCreateRequest;
+import com.study.api_gateway.api.article.service.ArticleFacadeService;
 import com.study.api_gateway.common.response.BaseResponse;
-import com.study.api_gateway.enrichment.ImageConfirmService;
-import com.study.api_gateway.enrichment.ProfileEnrichmentUtil;
 import com.study.api_gateway.common.response.ResponseFactory;
 import com.study.api_gateway.common.util.UserIdValidator;
+import com.study.api_gateway.enrichment.ImageConfirmService;
+import com.study.api_gateway.enrichment.ProfileEnrichmentUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +29,7 @@ public class NoticeController implements NoticeApi {
 	private final ResponseFactory responseFactory;
 	private final ProfileEnrichmentUtil profileEnrichmentUtil;
 	private final UserIdValidator userIdValidator;
-
+	
 	@Override
 	@PostMapping()
 	public Mono<ResponseEntity<BaseResponse>> postNotice(@RequestBody ArticleCreateRequest request, ServerHttpRequest req) {
@@ -46,7 +45,7 @@ public class NoticeController implements NoticeApi {
 					return Mono.just(responseFactory.ok(result, req));
 				});
 	}
-
+	
 	@Override
 	@PutMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> updateNotice(@PathVariable String articleId, @RequestBody ArticleCreateRequest request, ServerHttpRequest req) {
@@ -66,7 +65,7 @@ public class NoticeController implements NoticeApi {
 					return Mono.just(responseFactory.ok(result, req));
 				});
 	}
-
+	
 	@Override
 	@DeleteMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> deleteNotice(@PathVariable String articleId, ServerHttpRequest req) {
@@ -77,7 +76,7 @@ public class NoticeController implements NoticeApi {
 				.then(articleFacadeService.deleteNotice(articleId))
 				.thenReturn(responseFactory.ok("deleted", req, HttpStatus.OK));
 	}
-
+	
 	@Override
 	@GetMapping("/{articleId}")
 	public Mono<ResponseEntity<BaseResponse>> getNotice(@PathVariable String articleId, ServerHttpRequest req) {
@@ -98,12 +97,12 @@ public class NoticeController implements NoticeApi {
 						articleMap.put("images", article.getImages());
 						articleMap.put("keywords", article.getKeywords());
 					}
-
+					
 					return profileEnrichmentUtil.enrichArticle(articleMap)
 							.map(enrichedArticle -> responseFactory.ok(enrichedArticle, req));
 				});
 	}
-
+	
 	@Override
 	@GetMapping
 	public Mono<ResponseEntity<BaseResponse>> getNotices(@RequestParam(required = false, defaultValue = "0") Integer page,

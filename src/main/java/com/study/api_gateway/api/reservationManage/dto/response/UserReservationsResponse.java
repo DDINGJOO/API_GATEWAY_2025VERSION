@@ -16,13 +16,13 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserReservationsResponse {
-
+	
 	@Schema(description = "예약 항목 목록")
 	private List<UserReservationItem> content;
 	
 	@Schema(description = "커서 정보")
 	private CursorInfo cursor;
-
+	
 	@Schema(description = "페이지 크기", example = "20")
 	private Integer size;
 	
@@ -53,7 +53,7 @@ public class UserReservationsResponse {
 		
 		@Schema(description = "방 정보")
 		private RoomInfo roomInfo;
-
+		
 		@Schema(description = "예약 날짜", example = "2025-01-15")
 		private LocalDate reservationDate;
 		

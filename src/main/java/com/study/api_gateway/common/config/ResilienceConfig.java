@@ -1,6 +1,5 @@
 package com.study.api_gateway.common.config;
 
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig.SlidingWindowType;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
@@ -19,10 +18,10 @@ import java.util.concurrent.TimeoutException;
  */
 @Configuration
 public class ResilienceConfig {
-
+	
 	/**
 	 * Circuit Breaker 레지스트리
-	 *
+	 * <p>
 	 * 설정:
 	 * - 슬라이딩 윈도우: COUNT_BASED, 10개 호출 기준
 	 * - 최소 호출 수: 5
@@ -49,9 +48,9 @@ public class ResilienceConfig {
 						WebClientRequestException.class
 				)
 				.build();
-
+		
 		CircuitBreakerRegistry registry = CircuitBreakerRegistry.of(defaultConfig);
-
+		
 		// 서비스별 커스텀 설정 (필요시)
 		registerCustomCircuitBreaker(registry, "auth-service", defaultConfig);
 		registerCustomCircuitBreaker(registry, "profile-service", defaultConfig);
@@ -69,13 +68,13 @@ public class ResilienceConfig {
 		registerCustomCircuitBreaker(registry, "room-reservation-service", defaultConfig);
 		registerCustomCircuitBreaker(registry, "reservation-manage-service", defaultConfig);
 		registerCustomCircuitBreaker(registry, "support-service", defaultConfig);
-
+		
 		return registry;
 	}
-
+	
 	/**
 	 * Retry 레지스트리
-	 *
+	 * <p>
 	 * 설정:
 	 * - 최대 시도: 3회
 	 * - 대기 시간: 500ms
@@ -91,10 +90,10 @@ public class ResilienceConfig {
 						IOException.class
 				)
 				.build();
-
+		
 		return RetryRegistry.of(defaultConfig);
 	}
-
+	
 	private void registerCustomCircuitBreaker(
 			CircuitBreakerRegistry registry,
 			String name,

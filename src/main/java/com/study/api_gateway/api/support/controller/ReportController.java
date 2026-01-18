@@ -1,16 +1,15 @@
 package com.study.api_gateway.api.support.controller;
 
-import com.study.api_gateway.api.support.controller.ReportApi;
-import com.study.api_gateway.api.support.service.SupportFacadeService;
-import com.study.api_gateway.common.response.BaseResponse;
 import com.study.api_gateway.api.support.dto.report.ReferenceType;
 import com.study.api_gateway.api.support.dto.report.ReportSortType;
 import com.study.api_gateway.api.support.dto.report.ReportStatus;
 import com.study.api_gateway.api.support.dto.report.SortDirection;
 import com.study.api_gateway.api.support.dto.report.request.ReportCreateRequest;
 import com.study.api_gateway.api.support.dto.report.request.ReportWithdrawRequest;
-import com.study.api_gateway.enrichment.ProfileEnrichmentUtil;
+import com.study.api_gateway.api.support.service.SupportFacadeService;
+import com.study.api_gateway.common.response.BaseResponse;
 import com.study.api_gateway.common.response.ResponseFactory;
+import com.study.api_gateway.enrichment.ProfileEnrichmentUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +24,7 @@ public class ReportController implements ReportApi {
 	private final SupportFacadeService supportFacadeService;
 	private final ResponseFactory responseFactory;
 	private final ProfileEnrichmentUtil profileEnrichmentUtil;
-
+	
 	@Override
 	@PostMapping
 	public Mono<ResponseEntity<BaseResponse>> createReport(
@@ -36,7 +35,7 @@ public class ReportController implements ReportApi {
 						.map(enriched -> responseFactory.ok(enriched, req, HttpStatus.CREATED))
 				);
 	}
-
+	
 	@Override
 	@GetMapping("/{reportId}")
 	public Mono<ResponseEntity<BaseResponse>> getReport(
@@ -47,7 +46,7 @@ public class ReportController implements ReportApi {
 						.map(enriched -> responseFactory.ok(enriched, req))
 				);
 	}
-
+	
 	@Override
 	@GetMapping
 	public Mono<ResponseEntity<BaseResponse>> getReports(
@@ -64,7 +63,7 @@ public class ReportController implements ReportApi {
 						.map(enriched -> responseFactory.ok(enriched, req))
 				);
 	}
-
+	
 	@Override
 	@DeleteMapping("/{reportId}")
 	public Mono<ResponseEntity<BaseResponse>> withdrawReport(

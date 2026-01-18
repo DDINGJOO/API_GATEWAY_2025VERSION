@@ -25,7 +25,7 @@ import java.time.LocalDate;
  */
 @Tag(name = "Pricing Policy", description = "가격 정책 관리 API")
 public interface PricingPolicyApi {
-
+	
 	@Operation(summary = "가격 정책 조회", description = "특정 룸의 시간대별 가격 정책을 조회합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
@@ -36,7 +36,7 @@ public interface PricingPolicyApi {
 	Mono<ResponseEntity<BaseResponse>> getPricingPolicy(
 			@Parameter(description = "룸 ID", required = true) @PathVariable Long roomId,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "날짜별 시간대 가격 조회", description = "특정 날짜의 시간대별 가격을 조회합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
@@ -49,7 +49,7 @@ public interface PricingPolicyApi {
 			@Parameter(description = "조회 날짜", required = true)
 			@PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "기본 가격 업데이트", description = "룸의 기본 가격을 업데이트합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "업데이트 성공"),
@@ -60,7 +60,7 @@ public interface PricingPolicyApi {
 			@Parameter(description = "룸 ID", required = true) @PathVariable Long roomId,
 			@RequestBody DefaultPriceUpdateRequest request,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "시간대별 가격 업데이트", description = "특정 시간대의 가격을 업데이트합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "업데이트 성공"),
@@ -71,7 +71,7 @@ public interface PricingPolicyApi {
 			@Parameter(description = "룸 ID", required = true) @PathVariable Long roomId,
 			@RequestBody TimeRangePricesUpdateRequest request,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "가격 정책 복사", description = "다른 룸의 가격 정책을 복사합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "복사 성공"),

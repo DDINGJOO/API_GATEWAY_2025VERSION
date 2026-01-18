@@ -1,10 +1,10 @@
 package com.study.api_gateway.api.notification.controller;
 
-import com.study.api_gateway.api.notification.service.NotificationFacadeService;
-import com.study.api_gateway.common.response.BaseResponse;
 import com.study.api_gateway.api.notification.dto.request.DeleteDeviceTokenRequest;
 import com.study.api_gateway.api.notification.dto.request.RegisterDeviceTokenRequest;
 import com.study.api_gateway.api.notification.dto.request.UpdateNightAdConsentRequest;
+import com.study.api_gateway.api.notification.service.NotificationFacadeService;
+import com.study.api_gateway.common.response.BaseResponse;
 import com.study.api_gateway.common.response.ResponseFactory;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +20,10 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/bff/v1/notification")
 @RequiredArgsConstructor
 public class NotificationController implements NotificationApi {
-
+	
 	private final NotificationFacadeService notificationFacadeService;
 	private final ResponseFactory responseFactory;
-
+	
 	@Override
 	@PostMapping("/devices/token")
 	public Mono<ResponseEntity<BaseResponse>> registerDeviceToken(
@@ -32,13 +32,13 @@ public class NotificationController implements NotificationApi {
 			ServerHttpRequest serverRequest
 	) {
 		log.debug("registerDeviceToken: userId={}, platform={}", userId, request.getPlatform());
-
+		
 		request.setUserId(userId);
-
+		
 		return notificationFacadeService.registerDeviceToken(request)
 				.then(Mono.fromCallable(() -> responseFactory.ok(null, serverRequest, HttpStatus.CREATED)));
 	}
-
+	
 	@Override
 	@DeleteMapping("/devices/token")
 	public Mono<ResponseEntity<BaseResponse>> deleteDeviceToken(
@@ -47,13 +47,13 @@ public class NotificationController implements NotificationApi {
 			ServerHttpRequest serverRequest
 	) {
 		log.debug("deleteDeviceToken: userId={}", userId);
-
+		
 		request.setUserId(userId);
-
+		
 		return notificationFacadeService.deleteDeviceToken(request)
 				.then(Mono.fromCallable(() -> responseFactory.ok(null, serverRequest, HttpStatus.NO_CONTENT)));
 	}
-
+	
 	@Override
 	@GetMapping("/consents")
 	public Mono<ResponseEntity<BaseResponse>> getUserConsent(
@@ -61,11 +61,11 @@ public class NotificationController implements NotificationApi {
 			ServerHttpRequest serverRequest
 	) {
 		log.debug("getUserConsent: userId={}", userId);
-
+		
 		return notificationFacadeService.getUserConsent(String.valueOf(userId))
 				.map(result -> responseFactory.ok(result, serverRequest));
 	}
-
+	
 	@Override
 	@PutMapping("/consents/night-ad")
 	public Mono<ResponseEntity<BaseResponse>> updateNightAdConsent(
@@ -74,7 +74,7 @@ public class NotificationController implements NotificationApi {
 			ServerHttpRequest serverRequest
 	) {
 		log.debug("updateNightAdConsent: userId={}, consented={}", userId, request.getConsented());
-
+		
 		return notificationFacadeService.updateNightAdConsent(String.valueOf(userId), request)
 				.map(result -> responseFactory.ok(result, serverRequest));
 	}

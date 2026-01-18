@@ -2,11 +2,11 @@ package com.study.api_gateway.api.profile.controller;
 
 
 import com.study.api_gateway.api.gaechu.service.GaechuFacadeService;
+import com.study.api_gateway.api.profile.dto.request.ProfileUpdateRequest;
 import com.study.api_gateway.api.profile.service.ProfileFacadeService;
 import com.study.api_gateway.common.response.BaseResponse;
-import com.study.api_gateway.api.profile.dto.request.ProfileUpdateRequest;
-import com.study.api_gateway.enrichment.ImageConfirmService;
 import com.study.api_gateway.common.response.ResponseFactory;
+import com.study.api_gateway.enrichment.ImageConfirmService;
 import com.study.api_gateway.enrichment.cache.ProfileCache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,10 +48,10 @@ public class ProfileController implements ProfileApi {
 	@GetMapping("/me")
 	public Mono<ResponseEntity<BaseResponse>> fetchMyProfile(ServerHttpRequest request) {
 		log.info("=== /profiles/me endpoint called === path: {}", request.getPath());
-
+		
 		// JWT 필터에서 추가한 X-User-Id 헤더에서 userId 추출
 		String userId = request.getHeaders().getFirst("X-User-Id");
-
+		
 		if (userId == null || userId.isEmpty()) {
 			log.warn("X-User-Id header is missing or empty in /profiles/me request");
 			return Mono.just(responseFactory.error("사용자 인증 정보를 찾을 수 없습니다", HttpStatus.UNAUTHORIZED, request));

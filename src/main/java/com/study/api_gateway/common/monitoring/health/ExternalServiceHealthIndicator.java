@@ -13,30 +13,30 @@ import java.time.Duration;
  */
 @Slf4j
 public abstract class ExternalServiceHealthIndicator implements ReactiveHealthIndicator {
-
+	
 	protected final WebClient webClient;
 	protected final String serviceName;
 	protected final String healthCheckPath;
 	protected final Duration timeout;
-
+	
 	protected ExternalServiceHealthIndicator(WebClient webClient, String serviceName, String healthCheckPath) {
 		this.webClient = webClient;
 		this.serviceName = serviceName;
 		this.healthCheckPath = healthCheckPath;
 		this.timeout = Duration.ofSeconds(5);
 	}
-
+	
 	protected ExternalServiceHealthIndicator(WebClient webClient, String serviceName, String healthCheckPath, Duration timeout) {
 		this.webClient = webClient;
 		this.serviceName = serviceName;
 		this.healthCheckPath = healthCheckPath;
 		this.timeout = timeout;
 	}
-
+	
 	@Override
 	public Mono<Health> health() {
 		long startTime = System.currentTimeMillis();
-
+		
 		return webClient.get()
 				.uri(healthCheckPath)
 				.retrieve()
@@ -44,7 +44,7 @@ public abstract class ExternalServiceHealthIndicator implements ReactiveHealthIn
 				.map(response -> {
 					long responseTime = System.currentTimeMillis() - startTime;
 					log.debug("[Health Check] {} - Status: UP, Response Time: {}ms", serviceName, responseTime);
-
+					
 					return Health.up()
 							.withDetail("service", serviceName)
 							.withDetail("status", "UP")
@@ -56,7 +56,7 @@ public abstract class ExternalServiceHealthIndicator implements ReactiveHealthIn
 					long responseTime = System.currentTimeMillis() - startTime;
 					log.warn("[Health Check] {} - Status: DOWN, Error: {}, Response Time: {}ms",
 							serviceName, error.getMessage(), responseTime);
-
+					
 					return Mono.just(Health.down()
 							.withDetail("service", serviceName)
 							.withDetail("status", "DOWN")

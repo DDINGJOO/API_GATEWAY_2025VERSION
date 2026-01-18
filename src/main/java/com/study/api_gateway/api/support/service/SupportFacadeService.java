@@ -30,60 +30,59 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class SupportFacadeService {
-
+	
+	private static final String SERVICE_NAME = "support-service";
 	private final FaqClient faqClient;
 	private final InquiryClient inquiryClient;
 	private final ReportClient reportClient;
 	private final ResilienceOperator resilience;
-
-	private static final String SERVICE_NAME = "support-service";
-
+	
 	// ==================== FAQ API ====================
-
+	
 	public Flux<FaqResponse> getFaqs(FaqCategory category) {
 		return faqClient.getFaqs(category)
 				.transform(resilience.protectFlux(SERVICE_NAME));
 	}
-
+	
 	// ==================== Inquiry API ====================
-
+	
 	public Mono<InquiryResponse> createInquiry(InquiryCreateRequest request) {
 		return inquiryClient.createInquiry(request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<InquiryResponse> getInquiry(String inquiryId) {
 		return inquiryClient.getInquiry(inquiryId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Flux<InquiryResponse> getInquiries(String writerId, InquiryCategory category, InquiryStatus status) {
 		return inquiryClient.getInquiries(writerId, category, status)
 				.transform(resilience.protectFlux(SERVICE_NAME));
 	}
-
+	
 	public Mono<Void> deleteInquiry(String inquiryId, String writerId) {
 		return inquiryClient.deleteInquiry(inquiryId, writerId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<InquiryResponse> confirmInquiry(String inquiryId, String writerId) {
 		return inquiryClient.confirmInquiry(inquiryId, writerId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	// ==================== Report API ====================
-
+	
 	public Mono<ReportResponse> createReport(ReportCreateRequest request) {
 		return reportClient.createReport(request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<ReportResponse> getReport(String reportId) {
 		return reportClient.getReport(reportId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<ReportPageResponse> getReports(
 			ReportStatus status,
 			ReferenceType referenceType,
@@ -96,7 +95,7 @@ public class SupportFacadeService {
 		return reportClient.getReports(status, referenceType, reportCategory, sortType, sortDirection, cursor, size)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<ReportResponse> withdrawReport(String reportId, ReportWithdrawRequest request) {
 		return reportClient.withdrawReport(reportId, request)
 				.transform(resilience.protect(SERVICE_NAME));

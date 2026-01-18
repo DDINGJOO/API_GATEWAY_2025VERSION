@@ -1,10 +1,10 @@
 package com.study.api_gateway.api.chat.controller;
 
+import com.study.api_gateway.api.chat.dto.request.*;
 import com.study.api_gateway.api.chat.service.ChatFacadeService;
 import com.study.api_gateway.common.response.BaseResponse;
-import com.study.api_gateway.api.chat.dto.request.*;
-import com.study.api_gateway.enrichment.ChatEnrichmentService;
 import com.study.api_gateway.common.response.ResponseFactory;
+import com.study.api_gateway.enrichment.ChatEnrichmentService;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/bff/v1/chat")
 @RequiredArgsConstructor
 public class ChatController implements ChatApi {
-
+	
 	private final ChatFacadeService chatFacadeService;
 	private final ChatEnrichmentService chatEnrichmentService;
 	private final ResponseFactory responseFactory;
@@ -59,7 +59,7 @@ public class ChatController implements ChatApi {
 					return responseFactory.ok(result, request, status);
 				});
 	}
-
+	
 	@Override
 	@GetMapping("/conversations")
 	public Mono<ResponseEntity<BaseResponse>> getConversations(
@@ -76,7 +76,7 @@ public class ChatController implements ChatApi {
 		return chatEnrichmentService.getChatRoomsWithProfiles(userId, type)
 				.map(result -> responseFactory.ok(result, request));
 	}
-
+	
 	@Override
 	@GetMapping("/conversations/{conversationId}")
 	public Mono<ResponseEntity<BaseResponse>> getConversation(
@@ -88,11 +88,11 @@ public class ChatController implements ChatApi {
 			return unauthorizedResponse(request);
 		}
 		log.debug("getConversation: conversationId={}, userId={}", conversationId, userId);
-
+		
 		return chatFacadeService.getChatRoom(conversationId, userId)
 				.map(result -> responseFactory.ok(result, request));
 	}
-
+	
 	@Override
 	@GetMapping("/conversations/{conversationId}/messages")
 	public Mono<ResponseEntity<BaseResponse>> getMessages(
@@ -108,11 +108,11 @@ public class ChatController implements ChatApi {
 			return unauthorizedResponse(request);
 		}
 		log.debug("getMessages: conversationId={}, userId={}, cursor={}, limit={}", conversationId, userId, cursor, limit);
-
+		
 		return chatEnrichmentService.getMessagesWithProfiles(conversationId, userId, cursor, limit)
 				.map(result -> responseFactory.ok(result, request));
 	}
-
+	
 	@Override
 	@PostMapping("/conversations/{conversationId}/messages")
 	public Mono<ResponseEntity<BaseResponse>> sendMessage(
@@ -125,11 +125,11 @@ public class ChatController implements ChatApi {
 			return unauthorizedResponse(request);
 		}
 		log.debug("sendMessage: conversationId={}, userId={}", conversationId, userId);
-
+		
 		return chatFacadeService.sendMessage(conversationId, userId, messageRequest)
 				.map(result -> responseFactory.ok(result, request, HttpStatus.CREATED));
 	}
-
+	
 	@Override
 	@PostMapping("/conversations/{conversationId}/messages/read")
 	public Mono<ResponseEntity<BaseResponse>> markAsRead(
@@ -142,11 +142,11 @@ public class ChatController implements ChatApi {
 			return unauthorizedResponse(request);
 		}
 		log.debug("markAsRead: conversationId={}, userId={}", conversationId, userId);
-
+		
 		return chatFacadeService.markAsRead(conversationId, userId, readRequest)
 				.map(result -> responseFactory.ok(result, request));
 	}
-
+	
 	@Override
 	@DeleteMapping("/conversations/{conversationId}/messages/{messageId}")
 	public Mono<ResponseEntity<BaseResponse>> deleteMessage(
@@ -159,11 +159,11 @@ public class ChatController implements ChatApi {
 			return unauthorizedResponse(request);
 		}
 		log.debug("deleteMessage: conversationId={}, messageId={}, userId={}", conversationId, messageId, userId);
-
+		
 		return chatFacadeService.deleteMessage(conversationId, messageId, userId)
 				.map(result -> responseFactory.ok(result, request));
 	}
-
+	
 	@Override
 	@PostMapping("/inquiry")
 	public Mono<ResponseEntity<BaseResponse>> createPlaceInquiry(
@@ -175,11 +175,11 @@ public class ChatController implements ChatApi {
 			return unauthorizedResponse(request);
 		}
 		log.debug("createPlaceInquiry: userId={}, placeId={}", userId, inquiryRequest.getPlaceId());
-
+		
 		return chatFacadeService.createPlaceInquiry(userId, inquiryRequest)
 				.map(result -> responseFactory.ok(result, request, HttpStatus.CREATED));
 	}
-
+	
 	@Override
 	@GetMapping("/inquiry/host")
 	public Mono<ResponseEntity<BaseResponse>> getHostInquiries(
@@ -196,11 +196,11 @@ public class ChatController implements ChatApi {
 			return unauthorizedResponse(request);
 		}
 		log.debug("getHostInquiries: userId={}, placeId={}, cursor={}, limit={}", userId, placeId, cursor, limit);
-
+		
 		return chatEnrichmentService.getHostInquiriesWithProfiles(userId, placeId, cursor, limit)
 				.map(result -> responseFactory.ok(result, request));
 	}
-
+	
 	@Override
 	@PostMapping("/support")
 	public Mono<ResponseEntity<BaseResponse>> createSupportRequest(
@@ -212,11 +212,11 @@ public class ChatController implements ChatApi {
 			return unauthorizedResponse(request);
 		}
 		log.debug("createSupportRequest: userId={}", userId);
-
+		
 		return chatFacadeService.createSupport(userId, supportRequest)
 				.map(result -> responseFactory.ok(result, request, HttpStatus.CREATED));
 	}
-
+	
 	@Override
 	@GetMapping("/support/queue")
 	public Mono<ResponseEntity<BaseResponse>> getSupportQueue(
@@ -227,11 +227,11 @@ public class ChatController implements ChatApi {
 			ServerHttpRequest request
 	) {
 		log.debug("getSupportQueue: cursor={}, limit={}", cursor, limit);
-
+		
 		return chatFacadeService.getSupportQueue(cursor, limit)
 				.map(result -> responseFactory.ok(result, request));
 	}
-
+	
 	@Override
 	@PostMapping("/support/{conversationId}/assign")
 	public Mono<ResponseEntity<BaseResponse>> assignAgent(
@@ -244,11 +244,11 @@ public class ChatController implements ChatApi {
 		}
 		Long agentId = Long.parseLong(agentIdStr);
 		log.debug("assignAgent: conversationId={}, agentId={}", conversationId, agentId);
-
+		
 		return chatFacadeService.assignAgent(conversationId, agentId)
 				.map(result -> responseFactory.ok(result, request));
 	}
-
+	
 	@Override
 	@PostMapping("/support/{conversationId}/close")
 	public Mono<ResponseEntity<BaseResponse>> closeSupportChat(
@@ -260,7 +260,7 @@ public class ChatController implements ChatApi {
 			return unauthorizedResponse(request);
 		}
 		log.debug("closeSupportChat: conversationId={}, userId={}", conversationId, userId);
-
+		
 		return chatFacadeService.closeSupport(conversationId, userId)
 				.map(result -> responseFactory.ok(result, request));
 	}

@@ -37,10 +37,10 @@ public class BaseResponse {
 	
 	@Schema(description = "비즈니스/상태 코드 (대개 HTTP 상태 코드)", example = "200")
 	private int code;
-
+	
 	@Schema(description = "에러 코드 (에러 응답 시에만 포함)", example = "G001")
 	private String errorCode;
-
+	
 	@Schema(description = "실제 응답 데이터. 엔드포인트에 따라 객체/배열/불리언/문자열이 될 수 있습니다.",
 			anyOf = {Object.class, Map.class, List.class, String.class, Boolean.class})
 	private Object data;
@@ -86,7 +86,7 @@ public class BaseResponse {
 	public static ResponseEntity<BaseResponse> error(String errorMessage, Map<String, Object> requestInfo) {
 		return error(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, requestInfo);
 	}
-
+	
 	// 에러 응답 생성 (ErrorCode 기반)
 	public static ResponseEntity<BaseResponse> error(String errorCode, String errorMessage, HttpStatus status, Map<String, Object> requestInfo) {
 		BaseResponse body = BaseResponse.builder()

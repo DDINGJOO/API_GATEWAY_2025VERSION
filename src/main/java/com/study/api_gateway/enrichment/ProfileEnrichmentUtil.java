@@ -1,9 +1,9 @@
 package com.study.api_gateway.enrichment;
 
-import com.study.api_gateway.api.profile.client.ProfileClient;
 import com.study.api_gateway.api.article.dto.response.ArticleResponse;
 import com.study.api_gateway.api.article.dto.response.ArticleSimpleResponse;
 import com.study.api_gateway.api.article.dto.response.EnrichedArticleResponse;
+import com.study.api_gateway.api.profile.client.ProfileClient;
 import com.study.api_gateway.api.profile.dto.response.BatchUserSummaryResponse;
 import com.study.api_gateway.enrichment.cache.ProfileCache;
 import lombok.RequiredArgsConstructor;

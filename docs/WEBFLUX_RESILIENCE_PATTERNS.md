@@ -17,15 +17,16 @@
 
 ### 문서 목적
 
-이 문서는 Spring WebFlux 기반 API Gateway에서 Circuit Breaker, Timeout, Retry 등의 Resilience 패턴을 구현할 때 **상속(Inheritance) 대신 조합(Composition)**을 사용해야 하는 이유와 구체적인 구현 방법을 설명한다.
+이 문서는 Spring WebFlux 기반 API Gateway에서 Circuit Breaker, Timeout, Retry 등의 Resilience 패턴을 구현할 때 **상속(Inheritance) 대신 조합(
+Composition)**을 사용해야 하는 이유와 구체적인 구현 방법을 설명한다.
 
 ### 핵심 요약
 
-| 접근 방식 | WebFlux 적합도 | 테스트 용이성 | 유연성 |
-|-----------|---------------|--------------|--------|
-| 상속 (AbstractFacadeService) | 낮음 | 낮음 | 낮음 |
-| Operator Composition | 높음 | 높음 | 높음 |
-| Decorator 패턴 | 중간 | 중간 | 중간 |
+| 접근 방식                      | WebFlux 적합도 | 테스트 용이성 | 유연성 |
+|----------------------------|-------------|---------|-----|
+| 상속 (AbstractFacadeService) | 낮음          | 낮음      | 낮음  |
+| Operator Composition       | 높음          | 높음      | 높음  |
+| Decorator 패턴               | 중간          | 중간      | 중간  |
 
 ---
 
@@ -58,6 +59,7 @@ public class AuthFacadeService extends AbstractFacadeService {
 ```
 
 **문제점:**
+
 - 부모 클래스의 메서드 호출을 **강제**해야 함
 - 호출을 잊으면 Circuit Breaker가 적용되지 않음
 - 컴파일러가 이를 검증하지 못함
@@ -386,6 +388,7 @@ public class AuthFacadeService extends AbstractFacadeService {
 ```
 
 **평가:**
+
 - 장점: 간단한 구현, 익숙한 패턴
 - 단점: 테스트 어려움, 유연성 부족, 리액티브 패러다임 불일치
 
@@ -431,6 +434,7 @@ public class AuthFacadeService {
 ```
 
 **평가:**
+
 - 장점: 테스트 용이, 유연한 조합, 리액티브 패러다임 일치
 - 단점: 약간의 학습 곡선
 
@@ -474,19 +478,20 @@ public class WebClientConfig {
 ```
 
 **평가:**
+
 - 장점: Client 레벨에서 일괄 적용, 호출부 코드 간결
 - 단점: 기존 Client 전면 수정 필요
 
 ### 패턴 비교표
 
-| 항목 | 상속 | Operator Composition | Decorator |
-|------|------|---------------------|-----------|
-| 리액티브 적합도 | 낮음 | 높음 | 중간 |
-| 테스트 용이성 | 낮음 | 높음 | 높음 |
-| 유연성 | 낮음 | 높음 | 중간 |
-| 구현 복잡도 | 낮음 | 중간 | 중간 |
-| 기존 코드 수정량 | 중간 | 낮음 | 높음 |
-| SOLID 준수 | 낮음 | 높음 | 높음 |
+| 항목        | 상속 | Operator Composition | Decorator |
+|-----------|----|----------------------|-----------|
+| 리액티브 적합도  | 낮음 | 높음                   | 중간        |
+| 테스트 용이성   | 낮음 | 높음                   | 높음        |
+| 유연성       | 낮음 | 높음                   | 중간        |
+| 구현 복잡도    | 낮음 | 중간                   | 중간        |
+| 기존 코드 수정량 | 중간 | 낮음                   | 높음        |
+| SOLID 준수  | 낮음 | 높음                   | 높음        |
 
 ---
 
@@ -905,27 +910,27 @@ class CircuitBreakerIntegrationTest {
 ### 공식 문서
 
 1. **Resilience4j**
-   - [Resilience4j Documentation](https://resilience4j.readme.io/)
-   - [Reactor Integration](https://resilience4j.readme.io/docs/getting-started-6)
-   - [Circuit Breaker](https://resilience4j.readme.io/docs/circuitbreaker)
+	- [Resilience4j Documentation](https://resilience4j.readme.io/)
+	- [Reactor Integration](https://resilience4j.readme.io/docs/getting-started-6)
+	- [Circuit Breaker](https://resilience4j.readme.io/docs/circuitbreaker)
 
 2. **Project Reactor**
-   - [Reactor Reference Guide](https://projectreactor.io/docs/core/release/reference/)
-   - [Transform Operators](https://projectreactor.io/docs/core/release/reference/#_transform)
+	- [Reactor Reference Guide](https://projectreactor.io/docs/core/release/reference/)
+	- [Transform Operators](https://projectreactor.io/docs/core/release/reference/#_transform)
 
 3. **Spring WebFlux**
-   - [Spring WebFlux Documentation](https://docs.spring.io/spring-framework/reference/web/webflux.html)
+	- [Spring WebFlux Documentation](https://docs.spring.io/spring-framework/reference/web/webflux.html)
 
 ### 추천 도서
 
 1. **Reactive Programming with RxJava** - Tomasz Nurkiewicz
-   - 리액티브 패러다임의 근본 이해
+	- 리액티브 패러다임의 근본 이해
 
 2. **Spring in Action (6th Edition)** - Craig Walls
-   - Chapter 11: Introducing Reactor
+	- Chapter 11: Introducing Reactor
 
 3. **Release It! (2nd Edition)** - Michael Nygard
-   - Stability Patterns (Circuit Breaker, Bulkhead, Timeout)
+	- Stability Patterns (Circuit Breaker, Bulkhead, Timeout)
 
 ### 관련 아티클
 

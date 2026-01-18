@@ -17,7 +17,7 @@ import java.util.List;
 public class SupportQueueResponse {
 	private List<SupportQueueItem> queue;
 	private Integer totalCount;
-
+	
 	@Data
 	@NoArgsConstructor
 	@AllArgsConstructor

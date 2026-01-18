@@ -28,37 +28,37 @@ import java.util.Map;
 @Import({ResponseFactory.class, RequestPathHelper.class, GlobalExceptionHandler.class, com.study.api_gateway.config.TestConfig.class})
 @Disabled("Needs refactoring to match current architecture")
 class EnumsControllerPathInjectionTest {
-
+	
 	@Autowired
 	private WebTestClient webTestClient;
-
+	
 	@MockBean
 	private ProfileClient profileClient;
-
+	
 	@MockBean
 	private AuthClient authClient;
-
+	
 	@MockBean
 	private ImageClient imageClient;
-
+	
 	@MockBean
 	private ArticleClient articleClient;
-
+	
 	@MockBean
 	private FaqClient faqClient;
-
+	
 	@MockBean
 	private PlaceClient placeClient;
-
+	
 	@MockBean
 	private RoomClient roomClient;
-
+	
 	@Test
 	@DisplayName("X-Forwarded-Prefix + X-Forwarded-Uri 헤더가 결합되어 응답.request.path/url 에 반영된다")
 	void pathInjectedFromForwardedHeaders() {
 		Mockito.when(profileClient.fetchGenres())
 				.thenReturn(Mono.just(Map.of(1, "Rock")));
-
+		
 		webTestClient.get()
 				.uri("/bff/v1/enums/genres")
 				.header("X-Forwarded-Prefix", "/gateway")

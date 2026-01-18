@@ -4,14 +4,15 @@ import com.study.api_gateway.common.response.BaseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -22,7 +23,7 @@ import java.util.List;
  */
 @Tag(name = "Place", description = "장소 조회 API")
 public interface PlaceApi {
-
+	
 	@Operation(summary = "장소 상세 조회", description = "특정 ID를 가진 장소의 상세 정보를 조회합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공"),
@@ -32,7 +33,7 @@ public interface PlaceApi {
 	Mono<ResponseEntity<BaseResponse>> getPlaceById(
 			@Parameter(description = "공간 ID", required = true) @PathVariable String placeId,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "키워드 목록 조회", description = "활성화된 키워드 목록을 조회합니다. 타입별 필터링을 지원합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공")
@@ -42,7 +43,7 @@ public interface PlaceApi {
 			@Parameter(description = "키워드 타입 필터 (SPACE_TYPE, INSTRUMENT_EQUIPMENT, AMENITY, OTHER_FEATURE)")
 			@RequestParam(required = false) String type,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "장소 통합 검색", description = "다양한 조건으로 장소를 검색합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "검색 성공",
@@ -72,7 +73,7 @@ public interface PlaceApi {
 			@Parameter(description = "등록 상태 필터 (REGISTERED, UNREGISTERED, null)")
 			@RequestParam(required = false) String registrationStatus,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "주변 장소 조회", description = "현재 위치 기반으로 주변 장소를 조회합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
@@ -91,7 +92,7 @@ public interface PlaceApi {
 			@Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") Integer size,
 			@Parameter(description = "등록 상태 필터") @RequestParam(required = false) String registrationStatus,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "지역별 장소 조회", description = "특정 지역 내 장소를 조회합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
@@ -107,7 +108,7 @@ public interface PlaceApi {
 			@Parameter(description = "페이지 크기") @RequestParam(defaultValue = "20") Integer size,
 			@Parameter(description = "등록 상태 필터") @RequestParam(required = false) String registrationStatus,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "인기 장소 조회", description = "평점과 리뷰 기준 인기 장소를 조회합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",
@@ -119,7 +120,7 @@ public interface PlaceApi {
 			@Parameter(description = "조회 개수") @RequestParam(defaultValue = "10") Integer size,
 			@Parameter(description = "등록 상태 필터") @RequestParam(required = false) String registrationStatus,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "최신 장소 조회", description = "최근 등록된 장소를 조회합니다")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공",

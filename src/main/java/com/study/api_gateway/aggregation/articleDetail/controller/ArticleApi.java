@@ -21,7 +21,7 @@ import java.util.List;
  */
 @Tag(name = "Article", description = "일반 게시글 API")
 public interface ArticleApi {
-
+	
 	@Operation(summary = "일반 게시글 생성")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
@@ -32,7 +32,7 @@ public interface ArticleApi {
 	Mono<ResponseEntity<BaseResponse>> postArticle(
 			@RequestBody ArticleCreateRequest request,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "일반 게시글 수정")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
@@ -44,7 +44,7 @@ public interface ArticleApi {
 			@PathVariable String articleId,
 			@RequestBody ArticleCreateRequest request,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "일반 게시글 삭제")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
@@ -55,7 +55,7 @@ public interface ArticleApi {
 	Mono<ResponseEntity<BaseResponse>> deleteArticle(
 			@PathVariable String articleId,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "일반 게시글 단건 조회(댓글 포함)")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",
@@ -66,7 +66,7 @@ public interface ArticleApi {
 	Mono<ResponseEntity<BaseResponse>> getArticle(
 			@PathVariable String articleId,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "일반 게시글 목록 조회")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공",

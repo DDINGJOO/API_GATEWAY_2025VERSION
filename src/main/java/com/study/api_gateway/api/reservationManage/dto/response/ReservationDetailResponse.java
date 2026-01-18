@@ -18,10 +18,10 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReservationDetailResponse {
-
+	
 	@Schema(description = "예약 ID", example = "123456")
 	private Long reservationId;
-
+	
 	@Schema(description = "사용자 ID", example = "1001")
 	private Long userId;
 	
@@ -30,7 +30,7 @@ public class ReservationDetailResponse {
 	
 	@Schema(description = "방 정보")
 	private RoomInfo roomInfo;
-
+	
 	@Schema(description = "예약 상태", example = "CONFIRMED")
 	private ReservationStatus status;
 	
@@ -48,7 +48,7 @@ public class ReservationDetailResponse {
 	
 	@Schema(description = "블랙리스트 여부", example = "false")
 	private Boolean isBlackUser;
-
+	
 	@Schema(description = "예약자 이름", example = "홍길동")
 	private String reserverName;
 	

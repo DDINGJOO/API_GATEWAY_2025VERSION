@@ -78,7 +78,7 @@ public class PlaceController implements PlaceApi {
 	) {
 		log.info("장소 검색: keyword={}, location=({}, {}), radius={}, registrationStatus={}",
 				keyword, latitude, longitude, radius, registrationStatus);
-
+		
 		return placeFacadeService.search(
 				keyword, placeName, category, placeType, keywordIds,
 				parkingAvailable, latitude, longitude, radius,
@@ -103,7 +103,7 @@ public class PlaceController implements PlaceApi {
 			ServerHttpRequest req
 	) {
 		log.info("주변 장소 조회: ({}, {}) 반경 {}m, registrationStatus={}", latitude, longitude, radius, registrationStatus);
-
+		
 		return placeFacadeService.search(
 				keyword, null, null, null, keywordIds,
 				parkingAvailable, latitude, longitude, radius,

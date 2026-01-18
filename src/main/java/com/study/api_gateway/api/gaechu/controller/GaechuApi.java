@@ -10,7 +10,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Mono;
 
 /**
@@ -19,7 +21,7 @@ import reactor.core.publisher.Mono;
  */
 @Tag(name = "Gaechu", description = "좋아요 API")
 public interface GaechuApi {
-
+	
 	@Operation(summary = "좋아요/좋아요 취소",
 			description = "지정된 카테고리(categoryId)와 대상(referenceId)에 대해 특정 사용자의 좋아요 상태를 토글합니다.\n" +
 					"- isLike=true: 좋아요 추가\n" +

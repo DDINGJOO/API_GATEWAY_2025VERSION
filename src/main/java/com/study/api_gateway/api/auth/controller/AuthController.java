@@ -1,8 +1,8 @@
 package com.study.api_gateway.api.auth.controller;
 
+import com.study.api_gateway.api.auth.dto.request.*;
 import com.study.api_gateway.api.auth.service.AuthFacadeService;
 import com.study.api_gateway.common.response.BaseResponse;
-import com.study.api_gateway.api.auth.dto.request.*;
 import com.study.api_gateway.common.response.ResponseFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -77,7 +77,7 @@ public class AuthController implements AuthApi {
 		return authFacadeService.withdraw(userId, withdrawReason)
 				.map(result -> responseFactory.ok(result, request));
 	}
-
+	
 	@Override
 	@PostMapping("/sms/request")
 	public Mono<ResponseEntity<BaseResponse>> requestSmsCode(@RequestBody @Valid SmsCodeRequest req, ServerHttpRequest request) {
@@ -88,7 +88,7 @@ public class AuthController implements AuthApi {
 		return authFacadeService.requestSmsCode(userId, req.getPhoneNumber())
 				.then(Mono.just(responseFactory.ok("인증 코드가 발송되었습니다", request)));
 	}
-
+	
 	@Override
 	@PostMapping("/sms/verify")
 	public Mono<ResponseEntity<BaseResponse>> verifySmsCode(@RequestBody @Valid SmsVerifyRequest req, ServerHttpRequest request) {
@@ -99,7 +99,7 @@ public class AuthController implements AuthApi {
 		return authFacadeService.verifySmsCode(userId, req.getPhoneNumber(), req.getCode())
 				.map(result -> responseFactory.ok(result, request));
 	}
-
+	
 	@Override
 	@PostMapping("/sms/resend")
 	public Mono<ResponseEntity<BaseResponse>> resendSmsCode(@RequestBody @Valid SmsCodeRequest req, ServerHttpRequest request) {
@@ -110,7 +110,7 @@ public class AuthController implements AuthApi {
 		return authFacadeService.resendSmsCode(userId, req.getPhoneNumber())
 				.map(result -> responseFactory.ok(result, request));
 	}
-
+	
 	@Override
 	@GetMapping("/phone-number")
 	public Mono<ResponseEntity<BaseResponse>> hasPhoneNumber(ServerHttpRequest request) {

@@ -19,27 +19,27 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 @Component
 public class FallbackHandler {
-
+	
 	/**
 	 * Mono 에러 핸들링
 	 */
 	public <T> Mono<T> handle(String serviceName, Throwable throwable) {
 		ErrorCode errorCode = mapToErrorCode(throwable);
 		String message = buildErrorMessage(serviceName, throwable);
-
+		
 		log.error("Fallback triggered for {}: [{}] {} - {}",
 				serviceName, errorCode.getCode(), errorCode.getMessage(), throwable.getMessage());
-
+		
 		return Mono.error(new GatewayException(errorCode, message, throwable));
 	}
-
+	
 	/**
 	 * Flux 에러 핸들링
 	 */
 	public <T> Flux<T> handleFlux(String serviceName, Throwable throwable) {
 		return this.<T>handle(serviceName, throwable).flux();
 	}
-
+	
 	/**
 	 * 예외 타입에 따른 ErrorCode 매핑
 	 */
@@ -48,17 +48,17 @@ public class FallbackHandler {
 		if (throwable instanceof CallNotPermittedException) {
 			return ErrorCode.SERVICE_UNAVAILABLE;
 		}
-
+		
 		// Timeout
 		if (throwable instanceof TimeoutException) {
 			return ErrorCode.GATEWAY_TIMEOUT;
 		}
-
+		
 		// Connection 실패
 		if (throwable instanceof WebClientRequestException || throwable instanceof IOException) {
 			return ErrorCode.BAD_GATEWAY;
 		}
-
+		
 		// Backend 5xx 에러
 		if (throwable instanceof WebClientResponseException ex) {
 			if (ex.getStatusCode().is5xxServerError()) {
@@ -68,10 +68,10 @@ public class FallbackHandler {
 				return ErrorCode.INVALID_REQUEST;
 			}
 		}
-
+		
 		return ErrorCode.INTERNAL_ERROR;
 	}
-
+	
 	/**
 	 * 사용자 친화적 에러 메시지 생성
 	 */
@@ -79,19 +79,19 @@ public class FallbackHandler {
 		if (throwable instanceof CallNotPermittedException) {
 			return String.format("%s is temporarily unavailable. Please try again later.", serviceName);
 		}
-
+		
 		if (throwable instanceof TimeoutException) {
 			return String.format("%s did not respond within the expected time.", serviceName);
 		}
-
+		
 		if (throwable instanceof WebClientRequestException) {
 			return String.format("Unable to connect to %s.", serviceName);
 		}
-
+		
 		if (throwable instanceof WebClientResponseException ex) {
 			return String.format("Error response from %s: %s", serviceName, ex.getStatusCode());
 		}
-
+		
 		return String.format("An error occurred while communicating with %s.", serviceName);
 	}
 }

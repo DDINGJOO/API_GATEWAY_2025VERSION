@@ -19,12 +19,11 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PlaceFacadeService {
-
+	
+	private static final String SERVICE_NAME = "place-service";
 	private final PlaceClient placeClient;
 	private final ResilienceOperator resilience;
-
-	private static final String SERVICE_NAME = "place-service";
-
+	
 	public Mono<PlaceSearchResponse> search(
 			String keyword,
 			String placeName,
@@ -48,7 +47,7 @@ public class PlaceFacadeService {
 						latitude, longitude, radius, province, city, district, sortBy, sortDirection, cursor, size, registrationStatus)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<PlaceSearchResponse> searchByRegion(
 			String province,
 			String city,
@@ -60,27 +59,27 @@ public class PlaceFacadeService {
 		return placeClient.searchByRegion(province, city, district, cursor, size, registrationStatus)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<PlaceSearchResponse> getPopularPlaces(Integer size, String registrationStatus) {
 		return placeClient.getPopularPlaces(size, registrationStatus)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<PlaceSearchResponse> getRecentPlaces(Integer size, String registrationStatus) {
 		return placeClient.getRecentPlaces(size, registrationStatus)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<PlaceInfoResponse> getPlaceById(String placeId) {
 		return placeClient.getPlaceById(placeId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<List<KeywordResponse>> getKeywords(String type) {
 		return placeClient.getKeywords(type)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<PlaceBatchDetailResponse> getPlacesByBatch(List<Long> placeIds) {
 		return placeClient.getPlacesByBatch(placeIds)
 				.transform(resilience.protect(SERVICE_NAME));

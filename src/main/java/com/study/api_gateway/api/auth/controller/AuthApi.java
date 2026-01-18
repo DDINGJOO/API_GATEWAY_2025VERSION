@@ -23,7 +23,7 @@ import java.util.List;
  */
 @Tag(name = "Auth", description = "인증 관련 API")
 public interface AuthApi {
-
+	
 	@Operation(summary = "비밀번호 변경", description = "현재 비밀번호를 새 비밀번호로 변경합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "변경 성공"),
@@ -33,7 +33,7 @@ public interface AuthApi {
 	Mono<ResponseEntity<BaseResponse>> changePassword(
 			@RequestBody PasswordChangeRequest req,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "로그인", description = "이메일/비밀번호로 로그인합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "로그인 성공",
@@ -55,7 +55,7 @@ public interface AuthApi {
 	Mono<ResponseEntity<BaseResponse>> login(
 			@RequestBody LoginRequest req,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "토큰 갱신", description = "Refresh Token으로 새로운 Access Token을 발급합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "갱신 성공"),
@@ -65,7 +65,7 @@ public interface AuthApi {
 	Mono<ResponseEntity<BaseResponse>> refreshToken(
 			@RequestBody TokenRefreshRequest req,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "회원가입", description = "새로운 사용자를 등록합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "회원가입 성공"),
@@ -76,7 +76,7 @@ public interface AuthApi {
 	Mono<ResponseEntity<BaseResponse>> signup(
 			@RequestBody SignupRequest req,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "이메일 인증 확인", description = "이메일 인증 코드를 확인합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "인증 성공"),
@@ -87,7 +87,7 @@ public interface AuthApi {
 			@Parameter(description = "확인할 이메일") @PathVariable(name = "email") String email,
 			@Parameter(description = "인증 코드") @RequestParam String code,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "이메일 인증 코드 발송", description = "이메일 인증 코드를 발송합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "발송 성공")
@@ -96,7 +96,7 @@ public interface AuthApi {
 	Mono<ResponseEntity<BaseResponse>> sendCode(
 			@Parameter(description = "이메일 주소") @PathVariable(name = "email") String email,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "회원 탈퇴", description = "회원 탈퇴를 처리합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "탈퇴 성공")
@@ -106,7 +106,7 @@ public interface AuthApi {
 			@Parameter(description = "사용자 ID") @PathVariable String userId,
 			@Parameter(description = "탈퇴 사유") @RequestParam String withdrawReason,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "SMS 인증 코드 요청", description = "전화번호 인증을 위한 SMS 코드를 요청합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "발송 성공"),
@@ -116,7 +116,7 @@ public interface AuthApi {
 	Mono<ResponseEntity<BaseResponse>> requestSmsCode(
 			@RequestBody SmsCodeRequest req,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "SMS 인증 코드 확인", description = "SMS로 받은 인증 코드를 확인합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "인증 성공"),
@@ -127,7 +127,7 @@ public interface AuthApi {
 	Mono<ResponseEntity<BaseResponse>> verifySmsCode(
 			@RequestBody SmsVerifyRequest req,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "SMS 인증 코드 재발송", description = "SMS 인증 코드를 재발송합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "재발송 성공"),
@@ -137,7 +137,7 @@ public interface AuthApi {
 	Mono<ResponseEntity<BaseResponse>> resendSmsCode(
 			@RequestBody SmsCodeRequest req,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "전화번호 등록 여부 확인", description = "사용자의 전화번호 등록 여부를 확인합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "확인 완료"),
@@ -146,7 +146,7 @@ public interface AuthApi {
 	@GetMapping("/phone-number")
 	Mono<ResponseEntity<BaseResponse>> hasPhoneNumber(
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "카카오 소셜 로그인", description = "카카오 계정으로 로그인합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "로그인 성공"),
@@ -156,7 +156,7 @@ public interface AuthApi {
 	Mono<ResponseEntity<BaseResponse>> socialLoginKakao(
 			@RequestBody SocialLoginRequest req,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "동의 항목 조회", description = "사용자의 동의 항목을 조회합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "조회 성공")
@@ -165,7 +165,7 @@ public interface AuthApi {
 	Mono<ResponseEntity<BaseResponse>> getConsents(
 			@Parameter(description = "전체 항목 조회 여부") @RequestParam Boolean all,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "동의 항목 업데이트", description = "사용자의 동의 항목을 업데이트합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "업데이트 성공"),

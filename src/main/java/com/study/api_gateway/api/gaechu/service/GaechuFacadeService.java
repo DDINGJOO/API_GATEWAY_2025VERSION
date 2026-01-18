@@ -17,27 +17,26 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class GaechuFacadeService {
-
+	
+	private static final String SERVICE_NAME = "gaechu-service";
 	private final LikeClient likeClient;
 	private final ResilienceOperator resilience;
-
-	private static final String SERVICE_NAME = "gaechu-service";
-
+	
 	public Mono<Void> likeOrUnlike(String categoryId, String referenceId, String likerId, boolean isLike) {
 		return likeClient.likeOrUnlike(categoryId, referenceId, likerId, isLike)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<LikeDetailResponse> getLikeDetail(String categoryId, String referenceId) {
 		return likeClient.getLikeDetail(categoryId, referenceId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<List<LikeCountResponse>> getLikeCounts(String categoryId, List<String> referenceIds) {
 		return likeClient.getLikeCounts(categoryId, referenceIds)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<List<LikeCountResponse>> getUserLikedCounts(String categoryId, String userId) {
 		return likeClient.getUserLikedCounts(categoryId, userId)
 				.transform(resilience.protect(SERVICE_NAME));

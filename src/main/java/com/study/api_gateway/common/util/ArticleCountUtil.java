@@ -1,8 +1,8 @@
 package com.study.api_gateway.common.util;
 
+import com.study.api_gateway.api.article.dto.response.EnrichedArticleResponse;
 import com.study.api_gateway.api.comment.client.CommentClient;
 import com.study.api_gateway.api.gaechu.client.LikeClient;
-import com.study.api_gateway.api.article.dto.response.EnrichedArticleResponse;
 import com.study.api_gateway.api.gaechu.dto.LikeCountResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

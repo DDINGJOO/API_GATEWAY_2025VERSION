@@ -19,32 +19,31 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class RoomReservationFacadeService {
-
+	
+	private static final String SERVICE_NAME = "room-reservation-service";
 	private final RoomReservationClient roomReservationClient;
 	private final ResilienceOperator resilience;
-
-	private static final String SERVICE_NAME = "room-reservation-service";
-
+	
 	public Mono<RoomSetupResponse> setupRoom(RoomSetupRequest request) {
 		return roomReservationClient.setupRoom(request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<SlotGenerationStatusResponse> getSlotGenerationStatus(String requestId) {
 		return roomReservationClient.getSlotGenerationStatus(requestId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<ClosedDatesResponse> setClosedDates(ClosedDatesRequest request) {
 		return roomReservationClient.setClosedDates(request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<List<AvailableSlotResponse>> getAvailableSlots(Long roomId, String date) {
 		return roomReservationClient.getAvailableSlots(roomId, date)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<MultiReservationResponse> reserveMultipleSlots(MultiReservationRequest request) {
 		return roomReservationClient.reserveMultipleSlots(request)
 				.transform(resilience.protect(SERVICE_NAME));

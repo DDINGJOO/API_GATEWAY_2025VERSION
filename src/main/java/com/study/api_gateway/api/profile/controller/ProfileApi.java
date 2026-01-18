@@ -23,7 +23,7 @@ import java.util.List;
  */
 @Tag(name = "Profile", description = "프로필 관련 API")
 public interface ProfileApi {
-
+	
 	@Operation(summary = "프로필 목록 조회",
 			description = "조건에 맞는 프로필 목록을 페이지네이션 메타데이터와 함께 조회합니다.")
 	@ApiResponses({
@@ -52,7 +52,7 @@ public interface ProfileApi {
 			@Parameter(description = "커서") @RequestParam(required = false) String cursor,
 			@Parameter(description = "페이지 크기") @RequestParam(required = false) Integer size,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "내 프로필 조회",
 			description = "토큰에서 추출한 사용자 ID로 자신의 프로필을 조회합니다.")
 	@ApiResponses({
@@ -73,7 +73,7 @@ public interface ProfileApi {
 	})
 	@GetMapping("/me")
 	Mono<ResponseEntity<BaseResponse>> fetchMyProfile(ServerHttpRequest request);
-
+	
 	@Operation(summary = "프로필 단건 조회",
 			description = "특정 사용자의 프로필을 userId로 조회합니다.")
 	@ApiResponses({
@@ -86,7 +86,7 @@ public interface ProfileApi {
 	Mono<ResponseEntity<BaseResponse>> fetchProfile(
 			@Parameter(description = "사용자 ID") @PathVariable String userId,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "내 프로필 수정",
 			description = "토큰에서 추출한 사용자 ID로 자신의 프로필을 수정합니다.")
 	@ApiResponses({
@@ -98,7 +98,7 @@ public interface ProfileApi {
 	Mono<ResponseEntity<BaseResponse>> updateMyProfile(
 			@RequestBody ProfileUpdateRequest req,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "프로필 필드 검증",
 			description = "닉네임 등 프로필 필드의 중복 여부를 검증합니다.")
 	@ApiResponses({

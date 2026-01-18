@@ -1,15 +1,15 @@
 package com.study.api_gateway.aggregation.enums.controller;
 
 
-import com.study.api_gateway.api.profile.client.ProfileClient;
+import com.study.api_gateway.api.article.client.ArticleClient;
 import com.study.api_gateway.api.auth.client.AuthClient;
 import com.study.api_gateway.api.image.client.ImageClient;
-import com.study.api_gateway.api.article.client.ArticleClient;
-import com.study.api_gateway.api.support.client.FaqClient;
 import com.study.api_gateway.api.place.client.PlaceClient;
+import com.study.api_gateway.api.profile.client.ProfileClient;
 import com.study.api_gateway.api.room.client.RoomClient;
-import com.study.api_gateway.common.response.BaseResponse;
+import com.study.api_gateway.api.support.client.FaqClient;
 import com.study.api_gateway.api.support.dto.faq.FaqCategory;
+import com.study.api_gateway.common.response.BaseResponse;
 import com.study.api_gateway.common.response.ResponseFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

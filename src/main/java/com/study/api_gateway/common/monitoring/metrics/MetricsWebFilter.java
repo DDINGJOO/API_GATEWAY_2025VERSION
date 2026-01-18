@@ -23,9 +23,7 @@ import reactor.core.publisher.Mono;
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
 @ConditionalOnBean(MeterRegistry.class)
 public class MetricsWebFilter implements WebFilter {
-
-	private final ApiGatewayMetrics metrics;
-
+	
 	// 메트릭 수집 제외 경로
 	private static final String[] EXCLUDE_PATHS = {
 			"/actuator",
@@ -34,61 +32,62 @@ public class MetricsWebFilter implements WebFilter {
 			"/health",
 			"/favicon.ico"
 	};
-
+	private final ApiGatewayMetrics metrics;
+	
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 		String path = exchange.getRequest().getPath().value();
-
+		
 		// 제외 경로 체크
 		if (shouldExclude(path)) {
 			return chain.filter(exchange);
 		}
-
+		
 		// 메트릭 수집 시작
 		Timer.Sample sample = metrics.startTimer();
 		metrics.incrementActiveRequests();
-
+		
 		String method = exchange.getRequest().getMethod().name();
 		String endpoint = normalizeEndpoint(path);
-
+		
 		return chain.filter(exchange)
 				.doFinally(signalType -> {
 					// 요청 종료 시 메트릭 기록
 					metrics.decrementActiveRequests();
-
+					
 					HttpStatusCode statusCode = exchange.getResponse().getStatusCode();
 					String status = statusCode != null ? String.valueOf(statusCode.value()) : "unknown";
 					String statusCategory = getStatusCategory(statusCode);
-
+					
 					// 요청 카운트 기록
 					metrics.incrementRequestCount(endpoint, method, statusCategory);
-
+					
 					// 응답 시간 기록
 					metrics.recordRequestDuration(sample, endpoint, method, statusCategory);
-
+					
 					// 에러 발생 시 에러 카운트 기록
 					if (statusCode != null && statusCode.isError()) {
 						metrics.incrementErrorCount(endpoint, statusCategory);
 					}
 				});
 	}
-
+	
 	/**
 	 * 경로 정규화 (Path Variable 제거)
 	 */
 	private String normalizeEndpoint(String path) {
 		// UUID 패턴 정규화
 		String normalized = path.replaceAll("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", "{id}");
-
+		
 		// 숫자 ID 패턴 정규화
 		normalized = normalized.replaceAll("/\\d+", "/{id}");
-
+		
 		// 이메일 패턴 정규화
 		normalized = normalized.replaceAll("/[^/]+@[^/]+\\.[^/]+", "/{email}");
-
+		
 		return normalized;
 	}
-
+	
 	/**
 	 * 상태 코드 카테고리 반환
 	 */
@@ -96,7 +95,7 @@ public class MetricsWebFilter implements WebFilter {
 		if (statusCode == null) {
 			return "unknown";
 		}
-
+		
 		int code = statusCode.value();
 		if (code >= 200 && code < 300) {
 			return "2xx";
@@ -109,7 +108,7 @@ public class MetricsWebFilter implements WebFilter {
 		}
 		return "unknown";
 	}
-
+	
 	/**
 	 * 제외 경로 체크
 	 */

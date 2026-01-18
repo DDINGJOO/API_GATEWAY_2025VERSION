@@ -1,10 +1,10 @@
 package com.study.api_gateway.api.place.client;
 
 import com.study.api_gateway.api.place.dto.request.PlaceBatchDetailRequest;
+import com.study.api_gateway.api.place.dto.response.KeywordResponse;
 import com.study.api_gateway.api.place.dto.response.PlaceBatchDetailResponse;
 import com.study.api_gateway.api.place.dto.response.PlaceInfoResponse;
 import com.study.api_gateway.api.place.dto.response.PlaceSearchResponse;
-import com.study.api_gateway.api.place.dto.response.KeywordResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -53,7 +53,7 @@ public class PlaceClient {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path(PREFIX + "/search");
-
+					
 					if (keyword != null) uriBuilder.queryParam("keyword", keyword);
 					if (placeName != null) uriBuilder.queryParam("placeName", placeName);
 					if (category != null) uriBuilder.queryParam("category", category);
@@ -73,7 +73,7 @@ public class PlaceClient {
 					if (cursor != null) uriBuilder.queryParam("cursor", cursor);
 					if (size != null) uriBuilder.queryParam("size", size);
 					if (registrationStatus != null) uriBuilder.queryParam("registrationStatus", registrationStatus);
-
+					
 					return uriBuilder.build();
 				})
 				.retrieve()
@@ -95,14 +95,14 @@ public class PlaceClient {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path(PREFIX + "/search/region");
-
+					
 					uriBuilder.queryParam("province", province);
 					if (city != null) uriBuilder.queryParam("city", city);
 					if (district != null) uriBuilder.queryParam("district", district);
 					if (cursor != null) uriBuilder.queryParam("cursor", cursor);
 					if (size != null) uriBuilder.queryParam("size", size);
 					if (registrationStatus != null) uriBuilder.queryParam("registrationStatus", registrationStatus);
-
+					
 					return uriBuilder.build();
 				})
 				.retrieve()
@@ -117,10 +117,10 @@ public class PlaceClient {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					uriBuilder.path(PREFIX + "/search/popular");
-
+					
 					if (size != null) uriBuilder.queryParam("size", size);
 					if (registrationStatus != null) uriBuilder.queryParam("registrationStatus", registrationStatus);
-
+					
 					return uriBuilder.build();
 				})
 				.retrieve()
@@ -138,7 +138,7 @@ public class PlaceClient {
 					
 					if (size != null) uriBuilder.queryParam("size", size);
 					if (registrationStatus != null) uriBuilder.queryParam("registrationStatus", registrationStatus);
-
+					
 					return uriBuilder.build();
 				})
 				.retrieve()

@@ -19,7 +19,7 @@ import reactor.core.publisher.Mono;
  */
 @Tag(name = "Inquiry", description = "문의 관련 API")
 public interface InquiryApi {
-
+	
 	@Operation(summary = "문의 생성", description = "새로운 문의를 생성합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "201", description = "생성됨")
@@ -28,7 +28,7 @@ public interface InquiryApi {
 	Mono<ResponseEntity<BaseResponse>> createInquiry(
 			@RequestBody InquiryCreateRequest request,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "문의 상세 조회", description = "문의 ID로 상세 정보를 조회합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공"),
@@ -38,7 +38,7 @@ public interface InquiryApi {
 	Mono<ResponseEntity<BaseResponse>> getInquiry(
 			@PathVariable String inquiryId,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "문의 목록 조회", description = "필터 조건에 따라 문의 목록을 조회합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공")
@@ -49,7 +49,7 @@ public interface InquiryApi {
 			@RequestParam(required = false) InquiryCategory category,
 			@RequestParam(required = false) InquiryStatus status,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "문의 삭제", description = "문의를 삭제합니다. 작성자만 삭제할 수 있습니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "204", description = "삭제됨"),
@@ -60,7 +60,7 @@ public interface InquiryApi {
 	Mono<ResponseEntity<BaseResponse>> deleteInquiry(
 			@PathVariable String inquiryId,
 			ServerHttpRequest req);
-
+	
 	@Operation(summary = "답변 확인", description = "문의에 대한 답변을 확인 처리합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공"),

@@ -18,9 +18,9 @@ import reactor.core.publisher.Mono;
  */
 @Tag(name = "Chat", description = "채팅 API")
 public interface ChatApi {
-
+	
 	// ==================== 채팅방 생성 API ====================
-
+	
 	@Operation(summary = "1:1 DM 채팅방 생성", description = "1:1 채팅방을 생성합니다. 동일한 참여자 조합의 DM이 이미 있으면 기존 방을 반환합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "201", description = "새 채팅방 생성 성공"),
@@ -30,9 +30,9 @@ public interface ChatApi {
 	Mono<ResponseEntity<BaseResponse>> createDmRoom(
 			@RequestBody CreateDmRoomRequest dmRequest,
 			ServerHttpRequest request);
-
+	
 	// ==================== 대화 API ====================
-
+	
 	@Operation(summary = "대화 목록 조회", description = "사용자의 대화 목록을 조회합니다. 참여자 프로필 정보가 포함됩니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공")
@@ -42,7 +42,7 @@ public interface ChatApi {
 			@Parameter(description = "채팅방 타입 필터 (DM, GROUP, PLACE_INQUIRY, SUPPORT)")
 			@RequestParam(required = false) String type,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "대화 상세 조회", description = "특정 대화의 상세 정보를 조회합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공"),
@@ -52,9 +52,9 @@ public interface ChatApi {
 	Mono<ResponseEntity<BaseResponse>> getConversation(
 			@PathVariable String conversationId,
 			ServerHttpRequest request);
-
+	
 	// ==================== 메시지 API ====================
-
+	
 	@Operation(summary = "메시지 목록 조회", description = "대화의 메시지 목록을 조회합니다. 발신자 프로필 정보가 포함됩니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공"),
@@ -68,7 +68,7 @@ public interface ChatApi {
 			@Parameter(description = "조회 개수")
 			@RequestParam(required = false, defaultValue = "50") Integer limit,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "메시지 전송", description = "대화에 메시지를 전송합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "201", description = "메시지 전송 성공"),
@@ -79,7 +79,7 @@ public interface ChatApi {
 			@PathVariable String conversationId,
 			@RequestBody SendMessageRequest messageRequest,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "메시지 읽음 처리", description = "대화의 메시지를 읽음 처리합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공")
@@ -89,7 +89,7 @@ public interface ChatApi {
 			@PathVariable String conversationId,
 			@RequestBody(required = false) ReadMessageRequest readRequest,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "메시지 삭제", description = "메시지를 삭제합니다. 본인이 보낸 메시지만 삭제 가능합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공"),
@@ -100,9 +100,9 @@ public interface ChatApi {
 			@PathVariable String conversationId,
 			@PathVariable String messageId,
 			ServerHttpRequest request);
-
+	
 	// ==================== 공간 문의 API ====================
-
+	
 	@Operation(summary = "공간 문의 생성", description = "호스트에게 공간 문의 채팅을 시작합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "201", description = "문의 생성 성공"),
@@ -112,7 +112,7 @@ public interface ChatApi {
 	Mono<ResponseEntity<BaseResponse>> createPlaceInquiry(
 			@RequestBody PlaceInquiryRequest inquiryRequest,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "호스트 문의 목록 조회", description = "호스트로서 받은 문의 목록을 조회합니다. 게스트 프로필 정보가 포함됩니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공")
@@ -126,9 +126,9 @@ public interface ChatApi {
 			@Parameter(description = "조회 개수")
 			@RequestParam(required = false, defaultValue = "20") Integer limit,
 			ServerHttpRequest request);
-
+	
 	// ==================== 고객 상담 API ====================
-
+	
 	@Operation(summary = "상담 요청 생성", description = "고객 상담을 요청합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "201", description = "상담 요청 성공"),
@@ -138,7 +138,7 @@ public interface ChatApi {
 	Mono<ResponseEntity<BaseResponse>> createSupportRequest(
 			@RequestBody(required = false) SupportRequest supportRequest,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "상담 대기열 조회", description = "상담 대기열을 조회합니다. (관리자/상담원용)")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공")
@@ -150,7 +150,7 @@ public interface ChatApi {
 			@Parameter(description = "조회 개수")
 			@RequestParam(required = false, defaultValue = "20") Integer limit,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "상담원 배정", description = "상담원을 대화에 배정합니다. (관리자/상담원용)")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공"),
@@ -160,7 +160,7 @@ public interface ChatApi {
 	Mono<ResponseEntity<BaseResponse>> assignAgent(
 			@PathVariable String conversationId,
 			ServerHttpRequest request);
-
+	
 	@Operation(summary = "상담 종료", description = "상담을 종료합니다.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "성공"),

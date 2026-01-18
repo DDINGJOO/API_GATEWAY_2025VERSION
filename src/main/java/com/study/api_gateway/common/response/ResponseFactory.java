@@ -35,7 +35,7 @@ public class ResponseFactory {
 		String url = pathHelper.extractClientUrl(request);
 		return BaseResponse.error(message, status, Map.of("path", path, "url", url));
 	}
-
+	
 	/**
 	 * ErrorCode 기반 에러 응답 생성
 	 */
@@ -45,7 +45,7 @@ public class ResponseFactory {
 		return BaseResponse.error(errorCode.getCode(), errorCode.getMessage(), errorCode.getHttpStatus(),
 				Map.of("path", path, "url", url));
 	}
-
+	
 	/**
 	 * ErrorCode 기반 에러 응답 생성 (커스텀 메시지)
 	 */

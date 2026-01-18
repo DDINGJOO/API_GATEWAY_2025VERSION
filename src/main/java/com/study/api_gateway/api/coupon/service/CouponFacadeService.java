@@ -18,63 +18,62 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class CouponFacadeService {
-
+	
+	private static final String SERVICE_NAME = "coupon-service";
 	private final CouponClient couponClient;
 	private final ResilienceOperator resilience;
-
-	private static final String SERVICE_NAME = "coupon-service";
-
+	
 	// ==================== 쿠폰 정책 API ====================
-
+	
 	public Mono<CouponPolicyResponse> createCouponPolicy(CouponPolicyCreateRequest request) {
 		return couponClient.createCouponPolicy(request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<CouponPolicyResponse> getCouponPolicy(Long policyId) {
 		return couponClient.getCouponPolicy(policyId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<CouponPolicyResponse> updateCouponPolicy(Long policyId, CouponPolicyCreateRequest request) {
 		return couponClient.updateCouponPolicy(policyId, request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Void> deleteCouponPolicy(Long policyId) {
 		return couponClient.deleteCouponPolicy(policyId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<PolicyQuantityUpdateResponse> updatePolicyQuantity(Long policyId, PolicyQuantityUpdateRequest request) {
 		return couponClient.updatePolicyQuantity(policyId, request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	// ==================== 쿠폰 발급 API ====================
-
+	
 	public Mono<CouponIssueResponse> downloadCoupon(CouponDownloadRequest request) {
 		return couponClient.downloadCoupon(request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<CouponValidateResponse> validateCouponCode(String couponCode) {
 		return couponClient.validateCouponCode(couponCode)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<CouponDirectIssueResponse> issueDirectCoupon(CouponDirectIssueRequest request) {
 		return couponClient.issueDirectCoupon(request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<CouponIssueResponse> issueFcfsCoupon(Long policyId, Long userId) {
 		return couponClient.issueFcfsCoupon(policyId, userId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	// ==================== 사용자 쿠폰 API ====================
-
+	
 	public Mono<UserCouponCursorResponse> getUserCoupons(
 			Long userId,
 			CouponStatus status,
@@ -85,17 +84,17 @@ public class CouponFacadeService {
 		return couponClient.getUserCoupons(userId, status, productIds, cursor, limit)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<ExpiringCouponsResponse> getExpiringCoupons(Long userId, Integer days, Integer limit) {
 		return couponClient.getExpiringCoupons(userId, days, limit)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<UserCouponStatisticsResponse> getUserCouponStatistics(Long userId) {
 		return couponClient.getUserCouponStatistics(userId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<UserCouponListResponse> getUserCouponsLegacy(
 			Long userId,
 			CouponStatus status,
@@ -106,51 +105,51 @@ public class CouponFacadeService {
 		return couponClient.getUserCouponsLegacy(userId, status, page, size, sort)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	// ==================== 쿠폰 사용 API ====================
-
+	
 	public Mono<CouponReservationResponse> reserveCoupon(CouponReserveRequest request) {
 		return couponClient.reserveCoupon(request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<CouponApplyResponse> applyCoupon(CouponApplyRequest request) {
 		return couponClient.applyCoupon(request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Void> unlockCoupon(String reservationId) {
 		return couponClient.unlockCoupon(reservationId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<CouponUseResponse> useCoupon(CouponUseRequest request) {
 		return couponClient.useCoupon(request)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<CouponReservationResponse> cancelReservation(String reservationId) {
 		return couponClient.cancelReservation(reservationId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	// ==================== 통계 API ====================
-
+	
 	public Mono<Object> getRealtimeStatistics(Long policyId) {
 		return couponClient.getRealtimeStatistics(policyId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Object> getGlobalStatistics() {
 		return couponClient.getGlobalStatistics()
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Object> getUserStatistics(Long userId) {
 		return couponClient.getUserStatistics(userId)
 				.transform(resilience.protect(SERVICE_NAME));
 	}
-
+	
 	public Mono<Object> getDashboardStatistics() {
 		return couponClient.getDashboardStatistics()
 				.transform(resilience.protect(SERVICE_NAME));
